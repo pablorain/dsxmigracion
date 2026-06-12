@@ -1,0 +1,15 @@
+{
+	"name": "dsxmigracion",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "fd2b0357-0261-43a1-b465-1d4c5367a395",
+		"tenantId": "7fd0e6b4-9603-4946-ae06-8a261b793e86"
+	}
+}
