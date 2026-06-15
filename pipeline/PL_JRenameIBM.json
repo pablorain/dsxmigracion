@@ -1,0 +1,84 @@
+{
+  "name": "PL_JRenameIBM",
+  "properties": {
+    "description": "Renombra el archivo IBM para dejarlo listo para el proceso incremental siguiente. Equivalente al job DataStage JRenameIBM. BeforeSubr: DSU.fncCreaArchivoVacio -> crea {PathTemp}Vacio.tmp. AfterSubr: DSU.ExecSH -> FileRename.sh {PathInput} {IBMFileName}. El script FileRename.sh ejecuta el renombrado/movimiento del archivo IBM.",
+    "activities": [
+      {
+        "name": "Custom_Crea_Archivo_Vacio",
+        "description": "Equivalente a BeforeSubr DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp. Crea archivo centinela antes de ejecutar el rename.",
+        "type": "Custom",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('touch ', pipeline().parameters.PathTemp, 'Vacio.tmp')",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      },
+      {
+        "name": "Custom_FileRename",
+        "description": "Equivalente a AfterSubr DSU.ExecSH #{PathShell}#FileRename #{PathInput}# #IBMFileName#. Renombra el archivo IBM en PathInput al nombre especificado en IBMFileName.",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Crea_Archivo_Vacio",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('sh ', pipeline().parameters.PathShell, 'FileRename.sh ', pipeline().parameters.PathInput, ' ', pipeline().parameters.IBMFileName)",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "IBMFileName": {
+        "type": "String",
+        "description": "Nombre del archivo IBM destino (sin ruta). Equivalente a #IBMFileName# (job param sin $) en DataStage."
+      },
+      "PathInput": {
+        "type": "String",
+        "description": "Ruta donde se encuentra el archivo IBM a renombrar. Equivalente a $PathInput en DataStage."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta de scripts shell en Azure Batch. Equivalente a $PathShell en DataStage."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Ruta temporal para crear Vacio.tmp. Equivalente a $PathTemp en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: JRenameIBM (JobType 0 - Server Job, Utilitarios)",
+      "BeforeSubr: DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp",
+      "AfterSubr: DSU.ExecSH #{PathShell}#FileRename #{PathInput}# #IBMFileName#",
+      "Script shell: FileRename.sh {PathInput} {IBMFileName}",
+      "IBMFileName es job-level param (sin $) en DataStage"
+    ]
+  }
+}

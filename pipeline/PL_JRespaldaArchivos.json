@@ -1,0 +1,144 @@
+{
+  "name": "PL_JRespaldaArchivos",
+  "properties": {
+    "description": "Genera respaldo de archivos de Salida, Rechazo, Extract e Input del job, concatenando la fecha de proceso al nombre. Equivalente al job DataStage JRespaldaArchivos. BeforeSubr: fncCreaArchivoVacio. AfterSubr: DSU.ExecSH -> FileRespaldo.sh con 17 parametros: PathOutput PathOutput_Hist PathRejected PathRejected_Hist PathExtract PathExtract_Hist PathInput PathInput_Hist FechaRespaldo FileNamePrefix FilePrefixRejected FileExtractName FileNameIBM FlagRespaldo PathLog PathLog_Hist.",
+    "activities": [
+      {
+        "name": "Custom_Crea_Archivo_Vacio",
+        "description": "Equivalente a BeforeSubr DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp.",
+        "type": "Custom",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('touch ', pipeline().parameters.PathTemp, 'Vacio.tmp')",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      },
+      {
+        "name": "Custom_FileRespaldo",
+        "description": "Equivalente a AfterSubr DSU.ExecSH #{PathShell}#FileRespaldo {PathOutput} {PathOutput_Hist} {PathRejected} {PathRejected_Hist} {PathExtract} {PathExtract_Hist} {PathInput} {PathInput_Hist} {FechaRespaldo} {FileNamePrefix} {FilePrefixRejected} {FileExtractName} {FileNameIBM} {FlagRespaldo} {PathLog} {PathLog_Hist}.",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Crea_Archivo_Vacio",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('sh ', pipeline().parameters.PathShell, 'FileRespaldo.sh ', pipeline().parameters.PathOutput, ' ', pipeline().parameters.PathOutput_Hist, ' ', pipeline().parameters.PathRejected, ' ', pipeline().parameters.PathRejected_Hist, ' ', pipeline().parameters.PathExtract, ' ', pipeline().parameters.PathExtract_Hist, ' ', pipeline().parameters.PathInput, ' ', pipeline().parameters.PathInput_Hist, ' ', pipeline().parameters.FechaRespaldo, ' ', pipeline().parameters.FileNamePrefix, ' ', pipeline().parameters.FilePrefixRejected, ' ', pipeline().parameters.FileExtractName, ' ', pipeline().parameters.FileNameIBM, ' ', pipeline().parameters.FlagRespaldo, ' ', pipeline().parameters.PathLog, ' ', pipeline().parameters.PathLog_Hist)",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "PathOutput": {
+        "type": "String",
+        "description": "Ruta archivos de salida. Equivalente a $PathOutput en DataStage."
+      },
+      "PathOutput_Hist": {
+        "type": "String",
+        "description": "Ruta historico archivos de salida. Equivalente a $PathOutput_Hist en DataStage."
+      },
+      "PathRejected": {
+        "type": "String",
+        "description": "Ruta archivos de rechazo. Equivalente a $PathRejected en DataStage."
+      },
+      "PathRejected_Hist": {
+        "type": "String",
+        "description": "Ruta historico archivos de rechazo. Equivalente a $PathRejected_Hist en DataStage."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta archivos de extraccion. Equivalente a $PathExtract en DataStage."
+      },
+      "PathExtract_Hist": {
+        "type": "String",
+        "description": "Ruta historico archivos de extraccion. Equivalente a $PathExtract_Hist en DataStage."
+      },
+      "PathInput": {
+        "type": "String",
+        "description": "Ruta archivos de entrada IBM. Equivalente a $PathInput en DataStage."
+      },
+      "PathInput_Hist": {
+        "type": "String",
+        "description": "Ruta historico archivos de entrada. Equivalente a $PathInput_Hist en DataStage."
+      },
+      "FechaRespaldo": {
+        "type": "String",
+        "defaultValue": "18000101",
+        "description": "Fecha de respaldo formato YYYYMMDD. Equivalente a $FechaRespaldo en DataStage."
+      },
+      "FileNamePrefix": {
+        "type": "String",
+        "description": "Prefijo del nombre de archivos de salida. Equivalente a #FileNamePrefix# en DataStage."
+      },
+      "FilePrefixRejected": {
+        "type": "String",
+        "description": "Prefijo del nombre de archivos de severidad. Equivalente a #FilePrefixRejected# en DataStage."
+      },
+      "FileExtractName": {
+        "type": "String",
+        "defaultValue": "0",
+        "description": "Nombre de archivo de extraccion (0 si no aplica). Equivalente a #FileExtractName# en DataStage."
+      },
+      "FileNameIBM": {
+        "type": "String",
+        "defaultValue": "0",
+        "description": "Nombre de archivo IBM (0 si no aplica). Equivalente a #FileNameIBM# en DataStage."
+      },
+      "FlagRespaldo": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag respaldo: 0=no respaldar, 1=respaldar archivos. Equivalente a $FlagRespaldo en DataStage."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta scripts shell. Equivalente a $PathShell en DataStage."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Ruta archivos temporales para Vacio.tmp. Equivalente a $PathTemp en DataStage."
+      },
+      "PathLog": {
+        "type": "String",
+        "description": "Ruta archivos de log. Equivalente a $PathLog en DataStage."
+      },
+      "PathLog_Hist": {
+        "type": "String",
+        "description": "Ruta historico archivos de log. Equivalente a $PathLog_Hist en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: JRespaldaArchivos (JobType 0 - Server Job, Utilitarios)",
+      "BeforeSubr: DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp",
+      "AfterSubr: DSU.ExecSH #{PathShell}#FileRespaldo #{PathOutput}# #{PathOutput_Hist}# #{PathRejected}# #{PathRejected_Hist}# #{PathExtract}# #{PathExtract_Hist}# #{PathInput}# #{PathInput_Hist}# #{FechaRespaldo}# #FileNamePrefix# #FilePrefixRejected# #FileExtractName# #FileNameIBM# #{FlagRespaldo}# #{PathLog}# #{PathLog_Hist}#",
+      "Script shell: FileRespaldo.sh con 17 argumentos posicionales",
+      "Parametros sin $ son job-level params de DataStage: FileNamePrefix, FilePrefixRejected, FileExtractName, FileNameIBM"
+    ]
+  }
+}

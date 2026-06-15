@@ -1,0 +1,64 @@
+{
+  "name": "PL_JValidacion",
+  "properties": {
+    "description": "Valida el archivo generado comparandolo contra el archivo HOY (diff). Equivalente al job DataStage JValidacion. Flujo: (1) Lee archivo HOY {PathUnproc}{NombreArchExtraccion}.{FechaArchExtraccion}.HOY y archivo ACT {PathInput}{NombreArchExtraccion}.{FechaArchExtraccion}.ACT. (2) CTransformerStage extrae substring Linea[3,len(Linea)-2] de las lineas diff. (3) CTransformerStage filtra: Lnk_OK = passthrough, Lnk_Final + Lnk_aEliminados = Linea[3,len-2]. Escribe archivos .FINAL, .ELIM. Script FileDiff.sh ejecuta la comparacion.",
+    "activities": [
+      {
+        "name": "Custom_FileDiff",
+        "description": "Equivalente al CTransformerStage Trf_Diff + Trf_Clasifica y AfterSubr con FileDiff. Ejecuta la comparacion de archivos HOY vs ACT, extrae diferencias (substring Linea[3,len(Linea)-2]), y genera archivos .FINAL y .ELIM. El script FileDiff.sh implementa la logica: diff entre {archivo}.HOY y {archivo}.ACT, extrae lineas con diferencias (removiendo 2 chars inicio y 2 chars fin del output de diff), y escribe los resultados.",
+        "type": "Custom",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('sh ', pipeline().parameters.PathShell, 'FileDiff.sh ', pipeline().parameters.PathUnproc, ' ', pipeline().parameters.PathInput, ' ', pipeline().parameters.NombreArchExtraccion, ' ', pipeline().parameters.FechaArchExtraccion)",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "PathInput": {
+        "type": "String",
+        "description": "Ruta del archivo .ACT (actual) a comparar. Equivalente a $PathInput en DataStage."
+      },
+      "PathUnproc": {
+        "type": "String",
+        "description": "Ruta del archivo .HOY (hoy/esperado) a comparar. Equivalente a $PathUnproc en DataStage."
+      },
+      "NombreArchExtraccion": {
+        "type": "String",
+        "description": "Nombre base del archivo de extraccion (sin extension). Equivalente a $NombreArchExtraccion en DataStage."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "Sufijo de fecha YYYYMMDD para el archivo. Equivalente a $FechaArchExtraccion en DataStage."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta de scripts shell. Equivalente a $PathShell en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: JValidacion (JobType 0 - Server Job, Utilitarios)",
+      "Flujo DataStage: Seq_HOY + Seq_ACT -> Trf_Diff (CTransformerStage: Linea[3,len-2]) -> Seq_Final + Seq_Eliminados",
+      "Lnk_Final derivation: Lnk_Diff.Linea[3,len(Lnk_Diff.Linea)-2]",
+      "Lnk_aEliminados derivation: Lnk_Diff.Linea[3,len(Lnk_Diff.Linea)-2]",
+      "Lnk_OK derivation: Lnk_Original.Linea (passthrough sin cambios)",
+      "Script FileDiff.sh implementa: diff .HOY vs .ACT, extrae chars 3 a len-2 de cada linea diff",
+      "Archivo entrada .HOY: {PathUnproc}{NombreArchExtraccion}.{FechaArchExtraccion}.HOY",
+      "Archivo entrada .ACT: {PathInput}{NombreArchExtraccion}.{FechaArchExtraccion}.ACT",
+      "Archivos salida: .FINAL (lineas con diferencias procesadas) + .ELIM (eliminados)"
+    ]
+  }
+}

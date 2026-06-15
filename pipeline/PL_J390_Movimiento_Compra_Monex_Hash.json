@@ -1,0 +1,79 @@
+{
+  "name": "PL_J390_Movimiento_Compra_Monex_Hash",
+  "properties": {
+    "description": "Equivalente al job DataStage J390_Movimiento_Compra_Monex_Hash. Lee el archivo Mov_Com_Monex desde ADLS, aplica filtro de clave hash valida (NOT ISNULL de LTRIM(mmx_idc,'0'):UPPER(mmx_dig_vrf)) y carga los 23 campos en la tabla temporal Teradata TMP_MOVCOM_MONEX. En DataStage: Seq_Mov_Com_Monex (CSeqFileStage) -> Trf_Ext_Iden (CTransformerStage con constraint y clave hash) -> Hsh_Ext_Identification_Num (CHashedFileStage) -> FL_Ext_Identification_Num (TeradataConnector FastLoad -> TMP_MOVCOM_MONEX). En ADF el CHashedFileStage se reemplaza con un Mapping Data Flow + Teradata sink.",
+    "activities": [
+      {
+        "name": "DF_Hash_Mov_Com_a_TMP_MOVCOM_MONEX",
+        "description": "Ejecuta el Mapping Data Flow DF_J390_Movimiento_Compra_Monex_Hash. Aplica filtro NOT(ISNULL(LTRIM(mmx_idc,'0'):UPPER(mmx_dig_vrf))) y carga 23 columnas en TMP_MOVCOM_MONEX con recreate=true (truncate+insert, equivalente al FastLoad con tabla vacia).",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "DF_J390_Movimiento_Compra_Monex_Hash",
+            "type": "DataFlowReference",
+            "parameters": {},
+            "datasetParameters": {
+              "srcMovComMonex": {
+                "StorageAccountUrl":    "@pipeline().parameters.StorageAccountUrl",
+                "PathExtract":          "@pipeline().parameters.PathExtract",
+                "NombreArchExtraccion": "@pipeline().parameters.NombreArchExtraccion",
+                "FechaArchExtraccion":  "@pipeline().parameters.FechaArchExtraccion"
+              },
+              "sinkTmpMovcomMonex": {
+                "Teradata_EDW_DSN":         "@pipeline().parameters.Teradata_EDW_DSN",
+                "Teradata_EDW_User_Grupo1": "@pipeline().parameters.Teradata_EDW_User_Grupo1",
+                "EDW_Wrk":                  "@pipeline().parameters.EDW_Wrk"
+              }
+            }
+          },
+          "staging": null,
+          "compute": {
+            "coreCount": 8,
+            "computeType": "General"
+          },
+          "traceLevel": "Fine"
+        }
+      }
+    ],
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL cuenta ADLS Gen2."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta ADLS del archivo Mov_Com_Monex (generado por Extraccion_Final). Equivalente a $PathExtract."
+      },
+      "NombreArchExtraccion": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex.TXT",
+        "description": "Nombre base del archivo Mov_Com. Equivalente a $NombreArchExtraccion."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "Sufijo fecha YYYYMMDD del archivo. Equivalente a $FechaArchExtraccion."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Base de datos de trabajo Teradata. Equivalente a $EDW_Wrk."
+      }
+    },
+    "annotations": [
+      "DataStage: J390_Movimiento_Compra_Monex_Hash (server job, JobType=0)",
+      "El CHashedFileStage (Hsh_Ext_Identification_Num) se reemplaza con tabla Teradata TMP_MOVCOM_MONEX",
+      "Constraint DataStage Trf_Ext_Iden: NOT(ISNULL(TRIM(TRIM(mmx_idc,\"0\",\"L\")):TRIM(UPCASE(mmx_dig_vrf)))) => implementado en DF como filter not(isNull(...))",
+      "Clave hash DataStage TMP_Ext_Identification_Num (KeyPosition=1) era solo clave de particion del hash file, NO columna en TMP_MOVCOM_MONEX",
+      "FastLoad DataStage (AccessMethod=2) => recreate=true en sink MappingDataFlow (DROP+CREATE+INSERT equivalente)",
+      "Prerequisito: PL_J390_Movimiento_Compra_Monex_Extraccion_Final debe haber generado el archivo Mov_Com antes de ejecutar este pipeline"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "DF_J390_Movimiento_Compra_Monex_Hash",
+  "properties": {
+    "description": "Mapping Data Flow que reemplaza el CHashedFileStage (Hsh_Ext_Identification_Num) en J390_Movimiento_Compra_Monex_Hash de DataStage. Lee el archivo combinado Mov_Com desde ADLS, aplica el filtro de clave hash (NOT ISNULL de LTRIM(mmx_idc,'0'):UPPER(mmx_dig_vrf)) y carga los 23 campos en TMP_MOVCOM_MONEX en Teradata. La clave hash TMP_Ext_Identification_Num era solo la clave de particion del hash file DataStage y NO es una columna destino en Teradata.",
+    "type": "MappingDataFlow",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "srcMovComMonex",
+          "description": "Archivo combinado Movimiento+Compra desde ADLS. Equivalente a Seq_Mov_Com_Monex (CSeqFileStage) en J390_Hash.",
+          "dataset": {
+            "referenceName": "DS_ADLS_Monex_Mov_Com",
+            "type": "DatasetReference",
+            "parameters": {
+              "StorageAccountUrl": { "value": "@pipeline().parameters.StorageAccountUrl", "type": "Expression" },
+              "PathExtract":       { "value": "@pipeline().parameters.PathExtract",       "type": "Expression" },
+              "NombreArchExtraccion": {
+                "value": "@pipeline().parameters.NombreArchExtraccion",
+                "type": "Expression"
+              },
+              "FechaArchExtraccion": {
+                "value": "@pipeline().parameters.FechaArchExtraccion",
+                "type": "Expression"
+              }
+            }
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "sinkTmpMovcomMonex",
+          "description": "Tabla temporal Teradata TMP_MOVCOM_MONEX. Reemplaza CHashedFileStage + FL_Ext_Identification_Num (TeradataConnector FastLoad).",
+          "dataset": {
+            "referenceName": "DS_Teradata_TMP_MOVCOM_MONEX",
+            "type": "DatasetReference",
+            "parameters": {
+              "Teradata_EDW_DSN":          { "value": "@pipeline().parameters.Teradata_EDW_DSN",          "type": "Expression" },
+              "Teradata_EDW_User_Grupo1":  { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1",  "type": "Expression" },
+              "EDW_Wrk":                   { "value": "@pipeline().parameters.EDW_Wrk",                   "type": "Expression" }
+            }
+          },
+          "rejectedDataLinkedService": null
+        }
+      ],
+      "transformations": [
+        {
+          "name": "fltClaveHashNoNula",
+          "description": "Filtro equivalente al Constraint DataStage: NOT(ISNULL(TRIM(TRIM(mmx_idc,'0','L')):TRIM(UPCASE(mmx_dig_vrf)))). Descarta filas donde la clave hash resultante seria nula (mmx_idc o mmx_dig_vrf blancos/nulos). En DataStage TRIM(str,'0','L') = LTRIM; UPCASE = UPPER."
+        }
+      ],
+      "script": "source(output(\n    cnv_idn as string,\n    mmx_srl as string,\n    mmx_trx as string,\n    mmx_idc as string,\n    mmx_dig_vrf as string,\n    mmx_cta_car as string,\n    mmx_mto as string,\n    mmx_fec_pag as string,\n    mmx_fec_est_cua as string,\n    mmx_mnd_ori as string,\n    mmx_tip_cam as string,\n    mmx_cod_err as string,\n    mmx_fec_ctb as string,\n    mmx_idn_ser as string,\n    mmx_fec_pro_rec as string,\n    cmx_idn_prd as string,\n    cmx_cnt as string,\n    cmx_prc as string,\n    cmx_fec_cmp as string,\n    cmx_frm_prd as string,\n    cmx_num_fol as string,\n    cmx_fec_vct as string,\n    cmx_dsc_prd as string\n),\nallowSchemaDrift: false,\nvalidateSchema: true,\nignoreNoFilesFound: false) ~> srcMovComMonex\nsrcMovComMonex filter(\n    not(isNull(ltrim(trim(mmx_idc), '0') + ':' + upper(trim(mmx_dig_vrf))))\n) ~> fltClaveHashNoNula\nfltClaveHashNoNula sink(input(\n    cnv_idn as string,\n    mmx_srl as string,\n    mmx_trx as string,\n    mmx_idc as string,\n    mmx_dig_vrf as string,\n    mmx_cta_car as string,\n    mmx_mto as decimal(18,4),\n    mmx_fec_pag as timestamp,\n    mmx_fec_est_cua as timestamp,\n    mmx_mnd_ori as string,\n    mmx_tip_cam as decimal(18,4),\n    mmx_cod_err as string,\n    mmx_fec_ctb as timestamp,\n    mmx_idn_ser as string,\n    mmx_fec_pro_rec as timestamp,\n    cmx_idn_prd as string,\n    cmx_cnt as integer,\n    cmx_prc as decimal(18,4),\n    cmx_fec_cmp as timestamp,\n    cmx_frm_prd as string,\n    cmx_num_fol as string,\n    cmx_fec_vct as timestamp,\n    cmx_dsc_prd as string\n),\nallowSchemaDrift: false,\nvalidateSchema: true,\ndeletable: false,\ninsertable: true,\nupdateable: false,\nupsertable: false,\nrecreate: true,\nformat: 'table',\nskipDuplicateMapInputs: true,\nskipDuplicateMapOutputs: true) ~> sinkTmpMovcomMonex",
+      "annotations": [
+        "DataStage J390_Movimiento_Compra_Monex_Hash: Seq_Mov_Com_Monex -> Trf_Ext_Iden -> Hsh_Ext_Identification_Num -> FL_Ext_Identification_Num -> TMP_MOVCOM_MONEX",
+        "Constraint DataStage (Trf_Ext_Iden): NOT(ISNULL(TRIM(TRIM(mmx_idc,\"0\",\"L\")):TRIM(UPCASE(mmx_dig_vrf))))",
+        "TMP_Ext_Identification_Num = TRIM(LTRIM(mmx_idc,'0')):TRIM(UPPER(mmx_dig_vrf)) era clave de particion hash (KeyPosition=1), NO columna Teradata",
+        "AccessMethod FastLoad (=2) en DataStage: en ADF se usa recreate=true en sink Teradata (truncate+insert)"
+      ]
+    }
+  }
+}

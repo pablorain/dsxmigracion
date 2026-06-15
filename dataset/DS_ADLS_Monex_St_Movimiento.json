@@ -1,0 +1,71 @@
+{
+  "name": "DS_ADLS_Monex_St_Movimiento",
+  "properties": {
+    "description": "Archivo de entrada con registros de Movimiento Monex. Equivalente al stage Seq_St_Movimiento_Monex (CSeqFileStage, CSeqOutput) en J390_Movimiento_Compra_Monex_Carga_Extraccion. FileName DataStage: #$PathExtract#J390_Seq_St_Movimiento_Monex.txt. Delimitador pipe '|', sin cabecera.",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "LS_ADLS_Monex",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "StorageAccountUrl": {
+          "value": "@dataset().StorageAccountUrl",
+          "type": "Expression"
+        }
+      }
+    },
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL de la cuenta ADLS Gen2."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta en ADLS equivalente a $PathExtract en DataStage."
+      },
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex",
+        "description": "Prefijo del nombre de archivo. Equivalente a $NombreJob en DataStage."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": "J390_Seq_St_Movimiento_Monex.txt",
+        "folderPath": {
+          "value": "@dataset().PathExtract",
+          "type": "Expression"
+        }
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "quoteChar": "",
+      "escapeChar": "",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "schema": [
+      { "name": "cnv_idn",        "type": "String" },
+      { "name": "mmx_srl",        "type": "String" },
+      { "name": "mmx_trx",        "type": "String" },
+      { "name": "mmx_idc",        "type": "String" },
+      { "name": "mmx_dig_vrf",    "type": "String" },
+      { "name": "mmx_cta_car",    "type": "String" },
+      { "name": "mmx_mto",        "type": "String" },
+      { "name": "mmx_fec_pag",    "type": "String" },
+      { "name": "mmx_fec_est_cua","type": "String" },
+      { "name": "mmx_mnd_ori",    "type": "String" },
+      { "name": "mmx_mto_ori",    "type": "String" },
+      { "name": "mmx_tip_cam",    "type": "String" },
+      { "name": "mmx_cod_err",    "type": "String" },
+      { "name": "mmx_fec_ctb",    "type": "String" },
+      { "name": "mmx_idn_ser",    "type": "String" },
+      { "name": "mmx_fec_pro_rec","type": "String" }
+    ],
+    "annotations": [
+      "Origen DataStage: Seq_St_Movimiento_Monex (CSeqFileStage) en J390_Movimiento_Compra_Monex_Carga_Extraccion",
+      "Schema Teradata destino TMP_MOV_MONEX: cnv_idn VARCHAR(10), mmx_srl VARCHAR(50), mmx_trx VARCHAR(6), mmx_idc VARCHAR(12), mmx_dig_vrf CHAR(1), mmx_cta_car VARCHAR(12), mmx_mto DECIMAL(18,4) [quote=none], mmx_fec_pag TIMESTAMP(6), mmx_fec_est_cua TIMESTAMP(6), mmx_mnd_ori CHAR(3) [nullable], mmx_mto_ori DECIMAL(18,4) [nullable quote=none], mmx_tip_cam DECIMAL(18,4) [nullable quote=none], mmx_cod_err VARCHAR(10) [nullable], mmx_fec_ctb TIMESTAMP(6) [nullable], mmx_idn_ser VARCHAR(20) [nullable], mmx_fec_pro_rec TIMESTAMP(6) [nullable]",
+      "APTFieldProp: mmx_mto quote=none; mmx_mto_ori/mmx_tip_cam quote=none null_field=''; campos nullable null_field=''"
+    ]
+  }
+}

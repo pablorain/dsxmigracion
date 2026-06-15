@@ -1,0 +1,66 @@
+{
+  "name": "DS_Teradata_TMP_MOV_MONEX",
+  "properties": {
+    "description": "Tabla temporal Teradata TMP_MOV_MONEX en base de datos de trabajo EDW_Wrk. Destino del FastLoad FL_St_Movimiento_Monex en J390_Movimiento_Compra_Monex_Carga_Extraccion. DDL DataStage: CREATE SET TABLE TMP_MOV_MONEX (cnv_idn VARCHAR(10) NOT NULL, mmx_srl VARCHAR(50) NOT NULL, ...) PRIMARY INDEX (cnv_idn, mmx_srl).",
+    "type": "TeradataTable",
+    "linkedServiceName": {
+      "referenceName": "LS_Teradata_EDW",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "Server": {
+          "value": "@dataset().Teradata_EDW_DSN",
+          "type": "Expression"
+        },
+        "UserName": {
+          "value": "@dataset().Teradata_EDW_User_Grupo1",
+          "type": "Expression"
+        }
+      }
+    },
+    "parameters": {
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Base de datos de trabajo Teradata. Equivalente a $EDW_Wrk."
+      }
+    },
+    "typeProperties": {
+      "database": {
+        "value": "@dataset().EDW_Wrk",
+        "type": "Expression"
+      },
+      "table": "TMP_MOV_MONEX"
+    },
+    "schema": [
+      { "name": "cnv_idn",        "type": "VARCHAR",   "precision": 10,  "nullable": false },
+      { "name": "mmx_srl",        "type": "VARCHAR",   "precision": 50,  "nullable": false },
+      { "name": "mmx_trx",        "type": "VARCHAR",   "precision": 6,   "nullable": false },
+      { "name": "mmx_idc",        "type": "VARCHAR",   "precision": 12,  "nullable": false },
+      { "name": "mmx_dig_vrf",    "type": "CHAR",      "precision": 1,   "nullable": false },
+      { "name": "mmx_cta_car",    "type": "VARCHAR",   "precision": 12,  "nullable": false },
+      { "name": "mmx_mto",        "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": false },
+      { "name": "mmx_fec_pag",    "type": "TIMESTAMP", "precision": 6,   "nullable": false },
+      { "name": "mmx_fec_est_cua","type": "TIMESTAMP", "precision": 6,   "nullable": false },
+      { "name": "mmx_mnd_ori",    "type": "CHAR",      "precision": 3,   "nullable": true  },
+      { "name": "mmx_mto_ori",    "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": true  },
+      { "name": "mmx_tip_cam",    "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": true  },
+      { "name": "mmx_cod_err",    "type": "VARCHAR",   "precision": 10,  "nullable": true  },
+      { "name": "mmx_fec_ctb",    "type": "TIMESTAMP", "precision": 6,   "nullable": true  },
+      { "name": "mmx_idn_ser",    "type": "VARCHAR",   "precision": 20,  "nullable": true  },
+      { "name": "mmx_fec_pro_rec","type": "TIMESTAMP", "precision": 6,   "nullable": true  }
+    ],
+    "annotations": [
+      "Origen DataStage: FL_St_Movimiento_Monex (TeradataConnector FastLoad, Context=target, WriteMode=Insert)",
+      "DDL original DataStage: NO BEFORE/AFTER JOURNAL, CHECKSUM=DEFAULT, DEFAULT MERGEBLOCKRATIO, PRIMARY INDEX (cnv_idn, mmx_srl)",
+      "TD_FL params: TD_FL_ErrorLimit, TD_FL_Sleep, TD_FL_Tenacity, TD_FL_Session_Max, TD_FL_Session_Min, TD_FL_CheckPoint",
+      "En ADF: Copy Activity con sink TeradataTable usa INSERT nativo (no FastLoad); para FastLoad usar Custom Activity con tdload"
+    ]
+  }
+}

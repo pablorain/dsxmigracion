@@ -1,0 +1,321 @@
+{
+  "name": "PL_S390_J390_Movimiento_Compra_Monex",
+  "properties": {
+    "description": "Pipeline orquestador maestro para la migracion completa del flujo J390/S390_Movimiento_Compra_Monex. Encadena en orden los 5 pipelines componentes: (1) Carga_Extraccion [paralelo ADLS->Teradata temp], (2) Extraccion_Final [JOIN Teradata->ADLS], (3) Hash [ADLS->TMP_MOVCOM_MONEX via Mapping Data Flow], (4) J390_Movimiento_Compra_Monex [ALTA COMPLEJIDAD: Bteq bloqueo + Databricks fncSev390MovComMonex], (5) S390_Seq_Carga [3 MLoad secuenciales: Event->Bci_Event_Payment_Electronic->Event_Last]. En DataStage este flujo era coordinado manualmente o via scheduler externo al no existir un sequencer padre unico.",
+    "activities": [
+      {
+        "name": "EP_Carga_Extraccion",
+        "description": "Paso 1: Carga paralela St_Movimiento y St_Compra desde ADLS a TMP_MOV_MONEX y TMP_CMP_MONEX en Teradata.",
+        "type": "ExecutePipeline",
+        "dependsOn": [],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_J390_Movimiento_Compra_Monex_Carga_Extraccion",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "StorageAccountUrl":        { "value": "@pipeline().parameters.StorageAccountUrl",        "type": "Expression" },
+            "PathExtract":              { "value": "@pipeline().parameters.PathExtract",              "type": "Expression" },
+            "NombreJob":                { "value": "@pipeline().parameters.NombreJob",                "type": "Expression" },
+            "Teradata_EDW_DSN":         { "value": "@pipeline().parameters.Teradata_EDW_DSN",         "type": "Expression" },
+            "Teradata_EDW_User_Grupo1": { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1", "type": "Expression" },
+            "EDW_Wrk":                  { "value": "@pipeline().parameters.EDW_Wrk",                  "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_Extraccion_Final",
+        "description": "Paso 2: JOIN TMP_MOV_MONEX + TMP_CMP_MONEX en Teradata -> archivo ADLS Mov_Com_Monex.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_Carga_Extraccion",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_J390_Movimiento_Compra_Monex_Extraccion_Final",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "StorageAccountUrl":        { "value": "@pipeline().parameters.StorageAccountUrl",        "type": "Expression" },
+            "PathExtract":              { "value": "@pipeline().parameters.PathExtract",              "type": "Expression" },
+            "NombreArchExtraccion":     { "value": "@pipeline().parameters.NombreArchExtraccion",     "type": "Expression" },
+            "FechaArchExtraccion":      { "value": "@pipeline().parameters.FechaArchExtraccion",      "type": "Expression" },
+            "Teradata_EDW_DSN":         { "value": "@pipeline().parameters.Teradata_EDW_DSN",         "type": "Expression" },
+            "Teradata_EDW_User_Grupo1": { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1", "type": "Expression" },
+            "EDW_Wrk":                  { "value": "@pipeline().parameters.EDW_Wrk",                  "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_Hash",
+        "description": "Paso 3: Mapping Data Flow filtra Mov_Com y carga TMP_MOVCOM_MONEX en Teradata (reemplaza CHashedFileStage DataStage).",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_Extraccion_Final",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_J390_Movimiento_Compra_Monex_Hash",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "StorageAccountUrl":        { "value": "@pipeline().parameters.StorageAccountUrl",        "type": "Expression" },
+            "PathExtract":              { "value": "@pipeline().parameters.PathExtract",              "type": "Expression" },
+            "NombreArchExtraccion":     { "value": "@pipeline().parameters.NombreArchExtraccion",     "type": "Expression" },
+            "FechaArchExtraccion":      { "value": "@pipeline().parameters.FechaArchExtraccion",      "type": "Expression" },
+            "Teradata_EDW_DSN":         { "value": "@pipeline().parameters.Teradata_EDW_DSN",         "type": "Expression" },
+            "Teradata_EDW_User_Grupo1": { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1", "type": "Expression" },
+            "EDW_Wrk":                  { "value": "@pipeline().parameters.EDW_Wrk",                  "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_J390_Principal",
+        "description": "Paso 4: ALTA COMPLEJIDAD - Bteq_Event_Bloquea + Databricks fncSev390MovComMonex. Genera archivos EVENT, BCI_EVENT_PAYMENT_ELECTR y EVENT_LAST en PathOutput.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_Hash",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_J390_Movimiento_Compra_Monex",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "StorageAccountUrl":        { "value": "@pipeline().parameters.StorageAccountUrl",        "type": "Expression" },
+            "PathExtract":              { "value": "@pipeline().parameters.PathExtract",              "type": "Expression" },
+            "PathOutput":               { "value": "@pipeline().parameters.PathOutput",               "type": "Expression" },
+            "PathLog":                  { "value": "@pipeline().parameters.PathLog",                  "type": "Expression" },
+            "PathShell":                { "value": "@pipeline().parameters.PathShell",                "type": "Expression" },
+            "NombreJob":                { "value": "@pipeline().parameters.NombreJob",                "type": "Expression" },
+            "NombreArchExtraccion":     { "value": "@pipeline().parameters.NombreArchExtraccion",     "type": "Expression" },
+            "FechaArchExtraccion":      { "value": "@pipeline().parameters.FechaArchExtraccion",      "type": "Expression" },
+            "FechaProceso":             { "value": "@pipeline().parameters.FechaProceso",             "type": "Expression" },
+            "Teradata_EDW_DSN":         { "value": "@pipeline().parameters.Teradata_EDW_DSN",         "type": "Expression" },
+            "Teradata_EDW_User_Grupo1": { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1", "type": "Expression" },
+            "Teradata_EDW_PWD_Grupo1":  { "value": "@pipeline().parameters.Teradata_EDW_PWD_Grupo1",  "type": "Expression" },
+            "EDW_Wrk":                  { "value": "@pipeline().parameters.EDW_Wrk",                  "type": "Expression" },
+            "EDW_Event_Bel":            { "value": "@pipeline().parameters.EDW_Event_Bel",            "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_S390_Seq_Carga",
+        "description": "Paso 5: Ejecuta secuenciador MLoad - Event_Bel_Mload -> Bci_Event_Payment_Electronic_Mload -> Event_Last_Bel (secuencial, cada uno depende del anterior exitoso).",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_J390_Principal",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_S390_Movimiento_Compra_Monex_Seq_Carga",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "StorageAccountUrl":        { "value": "@pipeline().parameters.StorageAccountUrl",        "type": "Expression" },
+            "NombreJob":                { "value": "@pipeline().parameters.NombreJob",                "type": "Expression" },
+            "Teradata_EDW_DSN":         { "value": "@pipeline().parameters.Teradata_EDW_DSN",         "type": "Expression" },
+            "Teradata_EDW_User_Grupo1": { "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1", "type": "Expression" },
+            "Teradata_EDW_PWD_Grupo1":  { "value": "@pipeline().parameters.Teradata_EDW_PWD_Grupo1",  "type": "Expression" },
+            "EDW_Wrk":                  { "value": "@pipeline().parameters.EDW_Wrk",                  "type": "Expression" },
+            "EDW_Event_Bel":            { "value": "@pipeline().parameters.EDW_Event_Bel",            "type": "Expression" },
+            "PathLog":                  { "value": "@pipeline().parameters.PathLog",                  "type": "Expression" },
+            "PathShell":                { "value": "@pipeline().parameters.PathShell",                "type": "Expression" },
+            "PathOutput":               { "value": "@pipeline().parameters.PathOutput",               "type": "Expression" },
+            "TD_ML_CheckPoint":         { "value": "@pipeline().parameters.TD_ML_CheckPoint",         "type": "Expression" },
+            "TD_ML_ErrorLimit":         { "value": "@pipeline().parameters.TD_ML_ErrorLimit",         "type": "Expression" },
+            "TD_ML_Session_Max":        { "value": "@pipeline().parameters.TD_ML_Session_Max",        "type": "Expression" },
+            "TD_ML_Session_Min":        { "value": "@pipeline().parameters.TD_ML_Session_Min",        "type": "Expression" },
+            "TD_ML_Sleep":              { "value": "@pipeline().parameters.TD_ML_Sleep",              "type": "Expression" },
+            "TD_ML_Tenacity":           { "value": "@pipeline().parameters.TD_ML_Tenacity",           "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_JBorraTemporales",
+        "description": "Paso 6: Elimina archivos temporales y hash generados durante la ejecucion. Equivalente al job DataStage JBorraTemporales. Se ejecuta despues de EP_S390_Seq_Carga. FlagDelete=1 borra; 0 preserva (debug).",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_S390_Seq_Carga",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_JBorraTemporales",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "JobName":   { "value": "@pipeline().parameters.NombreJob",   "type": "Expression" },
+            "PathShell": { "value": "@pipeline().parameters.PathShell",   "type": "Expression" },
+            "PathHash":  { "value": "@pipeline().parameters.PathHash",    "type": "Expression" },
+            "PathTemp":  { "value": "@pipeline().parameters.PathTemp",    "type": "Expression" },
+            "FlagDelete":{ "value": "@pipeline().parameters.FlagDelete",  "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_JRespaldaArchivos",
+        "description": "Paso 7 (opcional): Genera respaldo de archivos de Salida, Rechazo, Extract e Input concatenando fecha al nombre. Equivalente al job DataStage JRespaldaArchivos. Se ejecuta en paralelo con EP_JBorraTemporales despues de EP_S390_Seq_Carga. Omitir si FlagRespaldo=0.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_S390_Seq_Carga",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_JRespaldaArchivos",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "PathOutput":         { "value": "@pipeline().parameters.PathOutput",         "type": "Expression" },
+            "PathOutput_Hist":    { "value": "@pipeline().parameters.PathOutput_Hist",    "type": "Expression" },
+            "PathRejected":       { "value": "@pipeline().parameters.PathRejected",       "type": "Expression" },
+            "PathRejected_Hist":  { "value": "@pipeline().parameters.PathRejected_Hist",  "type": "Expression" },
+            "PathExtract":        { "value": "@pipeline().parameters.PathExtract",        "type": "Expression" },
+            "PathExtract_Hist":   { "value": "@pipeline().parameters.PathExtract_Hist",   "type": "Expression" },
+            "PathInput":          { "value": "@pipeline().parameters.PathInput",          "type": "Expression" },
+            "PathInput_Hist":     { "value": "@pipeline().parameters.PathInput_Hist",     "type": "Expression" },
+            "FechaRespaldo":      { "value": "@pipeline().parameters.FechaRespaldo",      "type": "Expression" },
+            "FileNamePrefix":     { "value": "@pipeline().parameters.FileNamePrefix",     "type": "Expression" },
+            "FilePrefixRejected": { "value": "@pipeline().parameters.FilePrefixRejected", "type": "Expression" },
+            "FileExtractName":    { "value": "@pipeline().parameters.FileExtractName",    "type": "Expression" },
+            "FileNameIBM":        { "value": "@pipeline().parameters.FileNameIBM",        "type": "Expression" },
+            "FlagRespaldo":       { "value": "@pipeline().parameters.FlagRespaldo",       "type": "Expression" },
+            "PathShell":          { "value": "@pipeline().parameters.PathShell",          "type": "Expression" },
+            "PathTemp":           { "value": "@pipeline().parameters.PathTemp",           "type": "Expression" },
+            "PathLog":            { "value": "@pipeline().parameters.PathLog",            "type": "Expression" },
+            "PathLog_Hist":       { "value": "@pipeline().parameters.PathLog_Hist",       "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_JValidacion",
+        "description": "Paso 8 (opcional): Valida el archivo de extraccion comparando .HOY vs .ACT via FileDiff.sh. Equivalente al job DataStage JValidacion. Se ejecuta en paralelo con EP_JBorraTemporales y EP_JRespaldaArchivos despues de EP_S390_Seq_Carga.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_S390_Seq_Carga",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_JValidacion",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "PathInput":            { "value": "@pipeline().parameters.PathInput",            "type": "Expression" },
+            "PathUnproc":           { "value": "@pipeline().parameters.PathUnproc",           "type": "Expression" },
+            "NombreArchExtraccion": { "value": "@pipeline().parameters.NombreArchExtraccion", "type": "Expression" },
+            "FechaArchExtraccion":  { "value": "@pipeline().parameters.FechaArchExtraccion",  "type": "Expression" },
+            "PathShell":            { "value": "@pipeline().parameters.PathShell",            "type": "Expression" }
+          }
+        }
+      },
+      {
+        "name": "EP_JRenameIBM",
+        "description": "Paso 9 (opcional): Renombra el archivo IBM para dejarlo listo para el proceso incremental siguiente. Equivalente al job DataStage JRenameIBM. Se ejecuta despues de que EP_JBorraTemporales, EP_JRespaldaArchivos y EP_JValidacion hayan completado.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "EP_JBorraTemporales",
+            "dependencyConditions": [ "Succeeded" ]
+          },
+          {
+            "activity": "EP_JRespaldaArchivos",
+            "dependencyConditions": [ "Succeeded" ]
+          },
+          {
+            "activity": "EP_JValidacion",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "PL_JRenameIBM",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "IBMFileName": { "value": "@pipeline().parameters.IBMFileName", "type": "Expression" },
+            "PathInput":   { "value": "@pipeline().parameters.PathInput",   "type": "Expression" },
+            "PathShell":   { "value": "@pipeline().parameters.PathShell",   "type": "Expression" },
+            "PathTemp":    { "value": "@pipeline().parameters.PathTemp",    "type": "Expression" }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "StorageAccountUrl":        { "type": "String", "description": "URL cuenta ADLS Gen2." },
+      "PathExtract":              { "type": "String", "description": "Ruta ADLS archivos entrada/salida extraccion. Equivalente a $PathExtract." },
+      "PathOutput":               { "type": "String", "description": "Ruta ADLS archivos salida MLoad. Equivalente a $PathOutput." },
+      "PathLog":                  { "type": "String", "description": "Ruta log. Equivalente a $PathLog." },
+      "PathShell":                { "type": "String", "description": "Ruta scripts shell. Equivalente a $PathShell." },
+      "NombreJob":                { "type": "String", "defaultValue": "J390_Movimiento_Compra_Monex", "description": "Nombre job. Equivalente a $NombreJob." },
+      "NombreArchExtraccion":     { "type": "String", "defaultValue": "J390_Movimiento_Compra_Monex.TXT", "description": "Nombre archivo Mov_Com. Equivalente a $NombreArchExtraccion." },
+      "FechaArchExtraccion":      { "type": "String", "description": "Sufijo fecha YYYYMMDD. Equivalente a $FechaArchExtraccion." },
+      "FechaProceso":             { "type": "String", "description": "Fecha proceso para derivaciones. Equivalente a $FechaProceso." },
+      "Teradata_EDW_DSN":         { "type": "String", "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN." },
+      "Teradata_EDW_User_Grupo1": { "type": "String", "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1." },
+      "Teradata_EDW_PWD_Grupo1":  { "type": "String", "description": "Contrasena Teradata (pasar desde Key Vault). Equivalente a $Teradata_EDW_PWD_Grupo1." },
+      "EDW_Wrk":                  { "type": "String", "description": "BD trabajo Teradata. Equivalente a $EDW_Wrk." },
+      "EDW_Event_Bel":            { "type": "String", "description": "BD EVENT_BEL Teradata. Equivalente a $EDW_Event_Bel." },
+      "TD_ML_CheckPoint":         { "type": "String", "description": "MLoad checkpoint. Equivalente a $TD_ML_CheckPoint." },
+      "TD_ML_ErrorLimit":         { "type": "String", "description": "MLoad error limit. Equivalente a $TD_ML_ErrorLimit." },
+      "TD_ML_Session_Max":        { "type": "String", "description": "MLoad max sessions. Equivalente a $TD_ML_Session_Max." },
+      "TD_ML_Session_Min":        { "type": "String", "description": "MLoad min sessions. Equivalente a $TD_ML_Session_Min." },
+      "TD_ML_Sleep":              { "type": "String", "description": "MLoad sleep. Equivalente a $TD_ML_Sleep." },
+      "TD_ML_Tenacity":           { "type": "String", "description": "MLoad tenacity. Equivalente a $TD_ML_Tenacity." },
+      "PathHash":                 { "type": "String", "description": "Ruta archivos hash en ADLS. Usado por JBorraTemporales para eliminar hash files. Equivalente a $PathHash." },
+      "PathTemp":                 { "type": "String", "description": "Ruta archivos temporales en ADLS. Usado por JBorraTemporales y utilitarios. Equivalente a $PathTemp." },
+      "FlagDelete":               { "type": "String", "defaultValue": "1", "description": "Flag borrado JBorraTemporales: 0=preservar, 1=eliminar. Equivalente a $FlagDelete." },
+      "PathInput":                { "type": "String", "description": "Ruta archivos entrada IBM. Usado por JRenameIBM y JValidacion. Equivalente a $PathInput." },
+      "PathOutput_Hist":          { "type": "String", "description": "Ruta historico archivos salida. Usado por JRespaldaArchivos. Equivalente a $PathOutput_Hist." },
+      "PathRejected":             { "type": "String", "description": "Ruta archivos rechazo. Usado por JRespaldaArchivos. Equivalente a $PathRejected." },
+      "PathRejected_Hist":        { "type": "String", "description": "Ruta historico archivos rechazo. Usado por JRespaldaArchivos. Equivalente a $PathRejected_Hist." },
+      "PathExtract_Hist":         { "type": "String", "description": "Ruta historico archivos extraccion. Usado por JRespaldaArchivos. Equivalente a $PathExtract_Hist." },
+      "PathInput_Hist":           { "type": "String", "description": "Ruta historico archivos entrada. Usado por JRespaldaArchivos. Equivalente a $PathInput_Hist." },
+      "PathLog_Hist":             { "type": "String", "description": "Ruta historico archivos log. Usado por JRespaldaArchivos. Equivalente a $PathLog_Hist." },
+      "FechaRespaldo":            { "type": "String", "defaultValue": "18000101", "description": "Fecha respaldo YYYYMMDD. Usado por JRespaldaArchivos. Equivalente a $FechaRespaldo." },
+      "FileNamePrefix":           { "type": "String", "description": "Prefijo archivos salida. Usado por JRespaldaArchivos. Equivalente a #FileNamePrefix#." },
+      "FilePrefixRejected":       { "type": "String", "description": "Prefijo archivos severidad. Usado por JRespaldaArchivos. Equivalente a #FilePrefixRejected#." },
+      "FileExtractName":          { "type": "String", "defaultValue": "0", "description": "Nombre archivo extraccion (0 si no aplica). Usado por JRespaldaArchivos. Equivalente a #FileExtractName#." },
+      "FileNameIBM":              { "type": "String", "defaultValue": "0", "description": "Nombre archivo IBM (0 si no aplica). Usado por JRespaldaArchivos y JRenameIBM. Equivalente a #FileNameIBM#." },
+      "FlagRespaldo":             { "type": "String", "defaultValue": "1", "description": "Flag respaldo: 0=no respaldar, 1=respaldar. Usado por JRespaldaArchivos. Equivalente a $FlagRespaldo." },
+      "PathUnproc":               { "type": "String", "description": "Ruta archivo .HOY para JValidacion. Equivalente a $PathUnproc." },
+      "IBMFileName":              { "type": "String", "description": "Nombre destino del archivo IBM renombrado. Usado por JRenameIBM. Equivalente a #IBMFileName#." }
+    },
+    "annotations": [
+      "Pipeline orquestador maestro de J390/S390_Movimiento_Compra_Monex",
+      "Flujo completo: EP_Carga_Extraccion -> EP_Extraccion_Final -> EP_Hash -> EP_J390_Principal -> EP_S390_Seq_Carga -> [EP_JBorraTemporales || EP_JRespaldaArchivos || EP_JValidacion] -> EP_JRenameIBM",
+      "Pasos 1-5 secuenciales; Pasos 6-8 paralelos; Paso 9 (JRenameIBM) espera a 6+7+8",
+      "EP_J390_Principal es ALTA COMPLEJIDAD - notebook Databricks /Notebooks/J390/fncSev390MovComMonex_{NombreJob}",
+      "Jobs utilitarios incorporados: JBorraTemporales (paso 6), JRespaldaArchivos (paso 7), JValidacion (paso 8), JRenameIBM (paso 9)",
+      "Categoria DataStage: Jobs\\Fase_6\\Hito_0\\Event\\390_Movimiento_Compra_Monex"
+    ]
+  }
+}

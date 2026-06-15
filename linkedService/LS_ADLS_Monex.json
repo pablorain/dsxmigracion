@@ -1,0 +1,29 @@
+{
+  "name": "LS_ADLS_Monex",
+  "properties": {
+    "description": "Azure Data Lake Storage Gen2 para archivos de la fuente 390_Movimiento_Compra_Monex. Reemplaza los paths Linux $PathExtract, $PathOutput, $PathRejected, $PathUnproc del DataStage.",
+    "type": "AzureBlobFS",
+    "typeProperties": {
+      "url": "@{linkedService().StorageAccountUrl}",
+      "accountKey": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "LS_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "ADLS-Monex-AccountKey"
+      }
+    },
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL de la cuenta ADLS Gen2. Ej: https://<account>.dfs.core.windows.net"
+      }
+    },
+    "annotations": [
+      "Origen DataStage: Paths Linux $PathExtract, $PathOutput, $PathRejected, $PathUnproc en servidor LNX-DTSTGENGDES",
+      "Fuente: 390_Movimiento_Compra_Monex",
+      "AutoResolveIntegrationRuntime (datos en Azure - no requiere IR self-hosted)"
+    ]
+  }
+}

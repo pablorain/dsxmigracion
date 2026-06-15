@@ -1,0 +1,94 @@
+{
+  "name": "PL_JPreparaArchivoReInjeccion",
+  "properties": {
+    "description": "Prepara el archivo de reinyeccion copiandolo con extension .REINJ y aplicando transformacion de lineas. Equivalente al job DataStage JPreparaArchivoReInjeccion. BeforeSubr: cp {ReInjPath}{ReInjNombre} {ReInjPath}{ReInjNombre}.REINJ. CTransformerStage: segun ReInjArchivoSeveridades y ReInjSeparadorPipe, transforma cada linea (quita el ultimo campo pipe-delimitado o extrae campo 1 backslash-delimitado). Salida: archivo {NombreArchivoSalida} con lineas transformadas.",
+    "activities": [
+      {
+        "name": "Custom_Copia_REINJ",
+        "description": "Equivalente a BeforeSubr DSU.ExecSH: cp {ReInjPath}{ReInjNombre} {ReInjPath}{ReInjNombre}.REINJ. Crea copia de respaldo del archivo antes de transformar.",
+        "type": "Custom",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('cp ', pipeline().parameters.ReInjPathArchivoEntrada, pipeline().parameters.ReInjNombreArchivoEntrada, ' ', pipeline().parameters.ReInjPathArchivoEntrada, pipeline().parameters.ReInjNombreArchivoEntrada, '.REINJ')",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      },
+      {
+        "name": "Custom_Transforma_ReInjeccion",
+        "description": "Equivalente a CTransformerStage + CSeqFileStage Seq_Reinjecta. Aplica la logica de transformacion de lineas segun los parametros ReInjArchivoSeveridades y ReInjSeparadorPipe, y escribe el archivo de salida. Linea = IF (ReInjArchivoSeveridades=1) THEN (IF (ReInjSeparadorPipe=1) THEN linea[1,INDEX(linea,'|',Count(linea,'|'))-1] ELSE FIELD(linea,'\\',1)) ELSE linea.",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Copia_REINJ",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('sh ', pipeline().parameters.PathShell, 'PrepareReInjeccion.sh ', pipeline().parameters.ReInjPathArchivoEntrada, ' ', pipeline().parameters.ReInjNombreArchivoEntrada, ' ', pipeline().parameters.NombreArchivoSalida, ' ', pipeline().parameters.ReInjArchivoSeveridades, ' ', pipeline().parameters.ReInjSeparadorPipe)",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "ReInjPathArchivoEntrada": {
+        "type": "String",
+        "description": "Ruta del archivo de entrada a reinyectar. Equivalente a $ReInjPathArchivoEntrada en DataStage."
+      },
+      "ReInjNombreArchivoEntrada": {
+        "type": "String",
+        "description": "Nombre del archivo de entrada a reinyectar. Equivalente a $ReInjNombreArchivoEntrada en DataStage."
+      },
+      "NombreArchivoSalida": {
+        "type": "String",
+        "description": "Nombre del archivo de salida transformado. Equivalente a #NombreArchivoSalida# en DataStage."
+      },
+      "ReInjArchivoSeveridades": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag que indica si el archivo de entrada es un archivo de severidades (1=si, 0=no). Determina el tipo de transformacion de lineas."
+      },
+      "ReInjSeparadorPipe": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag que indica el tipo de separador: 1=pipe (|), 0=backslash (\\). Equivalente a $ReInjSeparadorPipe en DataStage."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta de scripts shell en Azure Batch. Equivalente a $PathShell en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: JPreparaArchivoReInjeccion (JobType 0 - Server Job, Utilitarios)",
+      "BeforeSubr: DSU.ExecSH cp #{ReInjPath}##ReInjNombre# #{ReInjPath}##ReInjNombre#.REINJ",
+      "CTransformerStage: IF (ReInjArchivoSeveridades=1) THEN (IF (ReInjSeparadorPipe=1) THEN linea[1,INDEX-1] ELSE FIELD(linea,chr(92),1)) ELSE linea",
+      "El script PrepareReInjeccion.sh implementa la logica del CTransformerStage en shell",
+      "Parametros sin $ son job-level params de DataStage: NombreArchivoSalida, ReInjArchivoSeveridades, ReInjSeparadorPipe"
+    ]
+  }
+}

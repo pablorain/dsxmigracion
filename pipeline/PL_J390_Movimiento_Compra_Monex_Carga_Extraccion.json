@@ -1,0 +1,196 @@
+{
+  "name": "PL_J390_Movimiento_Compra_Monex_Carga_Extraccion",
+  "properties": {
+    "description": "Equivalente al job DataStage J390_Movimiento_Compra_Monex_Carga_Extraccion. Carga en paralelo los archivos planos St_Movimiento y St_Compra desde ADLS a las tablas temporales Teradata TMP_MOV_MONEX y TMP_CMP_MONEX. En DataStage: FL_St_Movimiento_Monex y FL_St_Compra_Monex (TeradataConnector FastLoad, AccessMethod=Bulk). En ADF: dos Copy Activities paralelas con sink TeradataTable (INSERT). Pre-copy: DELETE ALL para truncar la tabla antes de la carga.",
+    "activities": [
+      {
+        "name": "Copy_St_Movimiento_a_TMP_MOV_MONEX",
+        "description": "Carga St_Movimiento_Monex.txt (ADLS) -> TMP_MOV_MONEX (Teradata). Equivalente a FL_St_Movimiento_Monex en DataStage (FastLoad, 16 columnas). PreCopyScript elimina todos los registros previos de la tabla temporal.",
+        "type": "Copy",
+        "dependsOn": [],
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": false,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "TeradataSink",
+            "writeSettings": {
+              "type": "TeradataWriteSettings",
+              "writeBatchSize": 10000
+            },
+            "preCopyScript": {
+              "value": "@concat('DELETE FROM ', pipeline().parameters.EDW_Wrk, '.TMP_MOV_MONEX ALL')",
+              "type": "Expression"
+            }
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "DS_ADLS_Monex_St_Movimiento",
+            "type": "DatasetReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              },
+              "PathExtract": {
+                "value": "@pipeline().parameters.PathExtract",
+                "type": "Expression"
+              },
+              "NombreJob": {
+                "value": "@pipeline().parameters.NombreJob",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "DS_Teradata_TMP_MOV_MONEX",
+            "type": "DatasetReference",
+            "parameters": {
+              "Teradata_EDW_DSN": {
+                "value": "@pipeline().parameters.Teradata_EDW_DSN",
+                "type": "Expression"
+              },
+              "Teradata_EDW_User_Grupo1": {
+                "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Copy_St_Compra_a_TMP_CMP_MONEX",
+        "description": "Carga St_Compra_Monex.txt (ADLS) -> TMP_CMP_MONEX (Teradata). Equivalente a FL_St_Compra_Monex en DataStage (FastLoad, 10 columnas). Corre en paralelo con Copy_St_Movimiento_a_TMP_MOV_MONEX.",
+        "type": "Copy",
+        "dependsOn": [],
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": false,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "TeradataSink",
+            "writeSettings": {
+              "type": "TeradataWriteSettings",
+              "writeBatchSize": 10000
+            },
+            "preCopyScript": {
+              "value": "@concat('DELETE FROM ', pipeline().parameters.EDW_Wrk, '.TMP_CMP_MONEX ALL')",
+              "type": "Expression"
+            }
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "DS_ADLS_Monex_St_Compra",
+            "type": "DatasetReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              },
+              "PathExtract": {
+                "value": "@pipeline().parameters.PathExtract",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "DS_Teradata_TMP_CMP_MONEX",
+            "type": "DatasetReference",
+            "parameters": {
+              "Teradata_EDW_DSN": {
+                "value": "@pipeline().parameters.Teradata_EDW_DSN",
+                "type": "Expression"
+              },
+              "Teradata_EDW_User_Grupo1": {
+                "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL cuenta ADLS Gen2. Equivalente a configuracion de Linked Service ADLS."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta ADLS donde residen St_Movimiento y St_Compra. Equivalente a $PathExtract en DataStage."
+      },
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex",
+        "description": "Prefijo del job. Equivalente a $NombreJob en DataStage."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Base de datos de trabajo Teradata. Equivalente a $EDW_Wrk."
+      }
+    },
+    "annotations": [
+      "DataStage: J390_Movimiento_Compra_Monex_Carga_Extraccion (server job, JobType=0)",
+      "Stages origen DataStage: Seq_St_Movimiento_Monex (CSeqFileStage) y Seq_St_Compra_Monex (CSeqFileStage)",
+      "Stages destino DataStage: FL_St_Movimiento_Monex y FL_St_Compra_Monex (TeradataConnector FastLoad)",
+      "Paralelismo: ambas Copy Activities sin dependsOn => ejecucion simultanea (equivalente al paralelismo DataStage)",
+      "NOTA: ADF TeradataSink usa INSERT nativo, no FastLoad. Para FastLoad real usar Custom Activity con tdload CLI."
+    ]
+  }
+}

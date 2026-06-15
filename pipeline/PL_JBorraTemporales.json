@@ -1,0 +1,89 @@
+{
+  "name": "PL_JBorraTemporales",
+  "properties": {
+    "description": "Elimina archivos temporales (PathTemp) y hash (PathHash) generados durante la ejecucion. Equivalente al job DataStage JBorraTemporales (utilitario de limpieza). BeforeSubr: DSU.fncCreaArchivoVacio -> crea {PathTemp}Vacio.tmp. AfterSubr: DSU.ExecSH -> FileDelete.sh {PathTemp} {PathHash} {JobName} {FlagDelete}. FlagDelete=1 borra; FlagDelete=0 preserva (debug).",
+    "activities": [
+      {
+        "name": "Custom_Crea_Archivo_Vacio",
+        "description": "Equivalente a BeforeSubr DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp. Crea archivo centinela Vacio.tmp en PathTemp para verificar acceso al directorio antes de ejecutar la limpieza.",
+        "type": "Custom",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('touch ', pipeline().parameters.PathTemp, 'Vacio.tmp')",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      },
+      {
+        "name": "Custom_FileDelete",
+        "description": "Equivalente a AfterSubr DSU.ExecSH #{PathShell}#FileDelete #{PathTemp}# #{PathHash}# #JobName# #{FlagDelete}#. Elimina archivos temporales y hash al finalizar el proceso.",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Crea_Archivo_Vacio",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "command": {
+            "value": "@concat('sh ', pipeline().parameters.PathShell, 'FileDelete.sh ', pipeline().parameters.PathTemp, ' ', pipeline().parameters.PathHash, ' ', pipeline().parameters.JobName, ' ', pipeline().parameters.FlagDelete)",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_AzureBatch",
+            "type": "LinkedServiceReference"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "JobName": {
+        "type": "String",
+        "description": "Nombre del job principal. Equivalente a #JobName# en DataStage AfterSubr."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta de scripts shell. Equivalente a $PathShell en DataStage."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "Ruta de archivos hash a eliminar. Equivalente a $PathHash en DataStage."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Ruta de archivos temporales a eliminar. Equivalente a $PathTemp en DataStage."
+      },
+      "FlagDelete": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag de borrado: 1=eliminar archivos, 0=preservar (modo debug). Equivalente a $FlagDelete en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: JBorraTemporales (JobType 0 - Server Job, Utilitarios)",
+      "BeforeSubr: DSU.fncCreaArchivoVacio #{PathTemp}#Vacio.tmp",
+      "AfterSubr: DSU.ExecSH #{PathShell}#FileDelete #{PathTemp}# #{PathHash}# #JobName# #{FlagDelete}#",
+      "Script shell: FileDelete.sh",
+      "Patron identico al JBorraTemporales de S990_BCI_JEN"
+    ]
+  }
+}

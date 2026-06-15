@@ -1,0 +1,73 @@
+{
+  "name": "DS_Teradata_TMP_MOVCOM_MONEX",
+  "properties": {
+    "description": "Tabla temporal Teradata TMP_MOVCOM_MONEX en EDW_Wrk. Destino del stage Hash/CHashedFileStage en DataStage (J390_Hash). En ADF se reemplaza el CHashedFileStage con una Copy Activity que carga los 23 campos del JOIN Mov_Com desde ADLS a Teradata, aplicando la derivacion de clave: LTRIM(mmx_idc,'0') y UPPER(mmx_dig_vrf). Tabla usada como fuente de lookup en J390_Movimiento_Compra_Monex.",
+    "type": "TeradataTable",
+    "linkedServiceName": {
+      "referenceName": "LS_Teradata_EDW",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "Server": {
+          "value": "@dataset().Teradata_EDW_DSN",
+          "type": "Expression"
+        },
+        "UserName": {
+          "value": "@dataset().Teradata_EDW_User_Grupo1",
+          "type": "Expression"
+        }
+      }
+    },
+    "parameters": {
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Base de datos de trabajo Teradata. Equivalente a $EDW_Wrk."
+      }
+    },
+    "typeProperties": {
+      "database": {
+        "value": "@dataset().EDW_Wrk",
+        "type": "Expression"
+      },
+      "table": "TMP_MOVCOM_MONEX"
+    },
+    "schema": [
+      { "name": "cnv_idn",         "type": "VARCHAR",   "precision": 10,  "nullable": false },
+      { "name": "mmx_srl",         "type": "VARCHAR",   "precision": 50,  "nullable": false },
+      { "name": "mmx_trx",         "type": "VARCHAR",   "precision": 6,   "nullable": false },
+      { "name": "mmx_idc",         "type": "VARCHAR",   "precision": 12,  "nullable": false },
+      { "name": "mmx_dig_vrf",     "type": "CHAR",      "precision": 1,   "nullable": false },
+      { "name": "mmx_cta_car",     "type": "VARCHAR",   "precision": 12,  "nullable": false },
+      { "name": "mmx_mto",         "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": false },
+      { "name": "mmx_fec_pag",     "type": "TIMESTAMP", "precision": 6,   "nullable": false },
+      { "name": "mmx_fec_est_cua", "type": "TIMESTAMP", "precision": 6,   "nullable": false },
+      { "name": "mmx_mnd_ori",     "type": "CHAR",      "precision": 3,   "nullable": true  },
+      { "name": "mmx_tip_cam",     "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": true  },
+      { "name": "mmx_cod_err",     "type": "VARCHAR",   "precision": 10,  "nullable": true  },
+      { "name": "mmx_fec_ctb",     "type": "TIMESTAMP", "precision": 6,   "nullable": true  },
+      { "name": "mmx_idn_ser",     "type": "VARCHAR",   "precision": 20,  "nullable": true  },
+      { "name": "mmx_fec_pro_rec", "type": "TIMESTAMP", "precision": 6,   "nullable": true  },
+      { "name": "cmx_idn_prd",     "type": "VARCHAR",   "precision": 20,  "nullable": true  },
+      { "name": "cmx_cnt",         "type": "INTEGER",                      "nullable": true  },
+      { "name": "cmx_prc",         "type": "DECIMAL",   "precision": 18,  "scale": 4, "nullable": true  },
+      { "name": "cmx_fec_cmp",     "type": "TIMESTAMP", "precision": 6,   "nullable": true  },
+      { "name": "cmx_frm_prd",     "type": "VARCHAR",   "precision": 20,  "nullable": true  },
+      { "name": "cmx_num_fol",     "type": "VARCHAR",   "precision": 20,  "nullable": true  },
+      { "name": "cmx_fec_vct",     "type": "TIMESTAMP", "precision": 6,   "nullable": true  },
+      { "name": "cmx_dsc_prd",     "type": "VARCHAR",   "precision": 30,  "nullable": true  }
+    ],
+    "annotations": [
+      "Origen DataStage: CHashedFileStage (hash en disco) en J390_Hash — reemplazado en ADF por Copy Activity + Teradata table",
+      "Clave hash DataStage: TRIM(LTRIM(mmx_idc,'0')):TRIM(UPPER(mmx_dig_vrf)) — en ADF se aplica en SQL del Copy Activity source con LTRIM(mmx_idc,'0') y UPPER(mmx_dig_vrf)",
+      "23 columnas: JOIN TMP_MOV_MONEX + TMP_CMP_MONEX; mmx_mto_ori excluido segun SELECT DataStage (Extraccion_Final)",
+      "PRIMARY INDEX recomendado: (cnv_idn, mmx_srl) — heredado de las tablas origen"
+    ]
+  }
+}

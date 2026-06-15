@@ -1,0 +1,39 @@
+{
+  "name": "LS_Teradata_EDW",
+  "properties": {
+    "description": "Teradata EDW - conexion a la base de datos corporativa EDW. Compartido con S990_BCI_JEN. Usado para: tablas de lookup (EDW_Agreement, EDW_Party, EDW_Event, EDW_Event_Bel, EDW_Finance, EDW_Param_and_Others, EDW_Wrk) y tablas temporales TMP_MOV_MONEX, TMP_CMP_MONEX, TMP_MOVCOM_MONEX.",
+    "type": "Teradata",
+    "typeProperties": {
+      "server": "@{linkedService().Server}",
+      "username": "@{linkedService().UserName}",
+      "password": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "LS_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Teradata-EDW-Password-Grupo1"
+      },
+      "sslMode": 0
+    },
+    "connectVia": {
+      "referenceName": "SelfHostedIntegrationRuntime",
+      "type": "IntegrationRuntimeReference"
+    },
+    "parameters": {
+      "Server": {
+        "type": "String",
+        "description": "DSN / servidor Teradata. Equivalente a $Teradata_EDW_DSN en DataStage."
+      },
+      "UserName": {
+        "type": "String",
+        "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1 en DataStage."
+      }
+    },
+    "annotations": [
+      "Origen DataStage: TeradataConnector (cctera12 v1.0), ClientCharacterSet=UTF8, TransactionMode=Teradata",
+      "Self-Hosted IR requerido: Teradata no disponible en Azure nativo",
+      "Reutilizado de S990_BCI_JEN - mismo servidor y credenciales Grupo1"
+    ]
+  }
+}

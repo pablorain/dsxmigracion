@@ -1,0 +1,60 @@
+{
+  "name": "DS_ADLS_Monex_St_Compra",
+  "properties": {
+    "description": "Archivo de entrada con registros de Compra Monex. Equivalente al stage Seq_St_Compra_Monex (CSeqFileStage, CSeqOutput) en J390_Movimiento_Compra_Monex_Carga_Extraccion. FileName DataStage: #$PathExtract#J390_Seq_St_Compra_Monex.txt. Delimitador pipe '|', sin cabecera.",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "LS_ADLS_Monex",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "StorageAccountUrl": {
+          "value": "@dataset().StorageAccountUrl",
+          "type": "Expression"
+        }
+      }
+    },
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL de la cuenta ADLS Gen2."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta en ADLS equivalente a $PathExtract en DataStage."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": "J390_Seq_St_Compra_Monex.txt",
+        "folderPath": {
+          "value": "@dataset().PathExtract",
+          "type": "Expression"
+        }
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "quoteChar": "",
+      "escapeChar": "",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "schema": [
+      { "name": "cnv_idn",     "type": "String" },
+      { "name": "mmx_srl",     "type": "String" },
+      { "name": "cmx_idn_prd", "type": "String" },
+      { "name": "cmx_cnt",     "type": "String" },
+      { "name": "cmx_prc",     "type": "String" },
+      { "name": "cmx_fec_cmp", "type": "String" },
+      { "name": "cmx_frm_prd", "type": "String" },
+      { "name": "cmx_num_fol", "type": "String" },
+      { "name": "cmx_fec_vct", "type": "String" },
+      { "name": "cmx_dsc_prd", "type": "String" }
+    ],
+    "annotations": [
+      "Origen DataStage: Seq_St_Compra_Monex (CSeqFileStage) en J390_Movimiento_Compra_Monex_Carga_Extraccion",
+      "Schema Teradata destino TMP_CMP_MONEX: cnv_idn VARCHAR(10), mmx_srl VARCHAR(50), cmx_idn_prd VARCHAR(20), cmx_cnt INTEGER [quote=none], cmx_prc DECIMAL(18,4) [quote=none], cmx_fec_cmp TIMESTAMP(6), cmx_frm_prd VARCHAR(20) [nullable], cmx_num_fol VARCHAR(20) [nullable], cmx_fec_vct TIMESTAMP(6) [nullable], cmx_dsc_prd VARCHAR(30) [nullable]",
+      "PRIMARY INDEX: (cnv_idn, mmx_srl)"
+    ]
+  }
+}

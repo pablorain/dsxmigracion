@@ -1,0 +1,86 @@
+{
+  "name": "DS_ADLS_Monex_Mov_Com",
+  "properties": {
+    "description": "Archivo combinado Movimiento+Compra Monex (resultado del JOIN Teradata en Extraccion_Final). Equivalente al stage Mov_Com_Monex (CSeqFileStage sink) en J390_Extraccion_Final y Seq_Mov_Com_Monex (CSeqFileStage source) en J390_Hash y J390_Movimiento_Compra_Monex. FileName DataStage: #$PathExtract##$NombreArchExtraccion#.#$FechaArchExtraccion# (ej: J390_Movimiento_Compra_Monex.TXT.20240222).",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "LS_ADLS_Monex",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "StorageAccountUrl": {
+          "value": "@dataset().StorageAccountUrl",
+          "type": "Expression"
+        }
+      }
+    },
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL de la cuenta ADLS Gen2."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta en ADLS equivalente a $PathExtract en DataStage."
+      },
+      "NombreArchExtraccion": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex.TXT",
+        "description": "Nombre del archivo de extraccion. Equivalente a $NombreArchExtraccion en DataStage (default: J390_Movimiento_Compra_Monex.TXT)."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "Sufijo de fecha del archivo formato YYYYMMDD. Equivalente a $FechaArchExtraccion en DataStage."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": {
+          "value": "@{concat(dataset().NombreArchExtraccion, '.', dataset().FechaArchExtraccion)}",
+          "type": "Expression"
+        },
+        "folderPath": {
+          "value": "@dataset().PathExtract",
+          "type": "Expression"
+        }
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "quoteChar": "",
+      "escapeChar": "",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "schema": [
+      { "name": "cnv_idn",         "type": "String" },
+      { "name": "mmx_srl",         "type": "String" },
+      { "name": "mmx_trx",         "type": "String" },
+      { "name": "mmx_idc",         "type": "String" },
+      { "name": "mmx_dig_vrf",     "type": "String" },
+      { "name": "mmx_cta_car",     "type": "String" },
+      { "name": "mmx_mto",         "type": "String" },
+      { "name": "mmx_fec_pag",     "type": "String" },
+      { "name": "mmx_fec_est_cua", "type": "String" },
+      { "name": "mmx_mnd_ori",     "type": "String" },
+      { "name": "mmx_tip_cam",     "type": "String" },
+      { "name": "mmx_cod_err",     "type": "String" },
+      { "name": "mmx_fec_ctb",     "type": "String" },
+      { "name": "mmx_idn_ser",     "type": "String" },
+      { "name": "mmx_fec_pro_rec", "type": "String" },
+      { "name": "cmx_idn_prd",     "type": "String" },
+      { "name": "cmx_cnt",         "type": "String" },
+      { "name": "cmx_prc",         "type": "String" },
+      { "name": "cmx_fec_cmp",     "type": "String" },
+      { "name": "cmx_frm_prd",     "type": "String" },
+      { "name": "cmx_num_fol",     "type": "String" },
+      { "name": "cmx_fec_vct",     "type": "String" },
+      { "name": "cmx_dsc_prd",     "type": "String" }
+    ],
+    "annotations": [
+      "23 columnas: JOIN de TMP_MOV_MONEX (M) y TMP_CMP_MONEX (C) por cnv_idn+mmx_srl",
+      "NOTA: mmx_mto_ori de TMP_MOV_MONEX NO se incluye en el SELECT de EDW_Mov_Com_Monex (DataStage)",
+      "APTFieldProp en Trf_LimpiaRegistros: mmx_mto quote=none; mmx_tip_cam/cmx_cnt/cmx_prc quote=none; varios campos nullable null_field=''",
+      "Usado como: (1) SINK en PL_J390_Extraccion_Final, (2) SOURCE en PL_J390_Hash, (3) SOURCE en PL_J390_Movimiento_Compra_Monex"
+    ]
+  }
+}

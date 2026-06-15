@@ -1,0 +1,148 @@
+{
+  "name": "PL_J390_Movimiento_Compra_Monex_Extraccion_Final",
+  "properties": {
+    "description": "Equivalente al job DataStage J390_Movimiento_Compra_Monex_Extraccion_Final. Ejecuta un JOIN entre TMP_MOV_MONEX y TMP_CMP_MONEX en Teradata y escribe los 23 campos resultantes al archivo combinado Mov_Com_Monex en ADLS. En DataStage: TeradataConnector (Context=source, AccessMethod=1=SELECT) -> Trf_LimpiaRegistros (CTransformerStage passthrough) -> Seq_Mov_Com_Monex (CSeqFileStage, delimitador pipe, sin cabecera). El transformer es un passthrough puro (todas las derivaciones son referencias directas de columna).",
+    "activities": [
+      {
+        "name": "Copy_Extraccion_Final",
+        "description": "JOIN TMP_MOV_MONEX M + TMP_CMP_MONEX C por (cnv_idn, mmx_srl) -> archivo ADLS Mov_Com_Monex. 23 columnas. mmx_mto_ori de TMP_MOV_MONEX NO incluida segun SELECT DataStage original.",
+        "type": "Copy",
+        "dependsOn": [],
+        "typeProperties": {
+          "source": {
+            "type": "TeradataSource",
+            "query": {
+              "value": "@concat(\n  'SELECT M.cnv_idn, M.mmx_srl, M.mmx_trx, M.mmx_idc, M.mmx_dig_vrf, M.mmx_cta_car, ',\n  'M.mmx_mto, M.mmx_fec_pag, M.mmx_fec_est_cua, M.mmx_mnd_ori, M.mmx_tip_cam, ',\n  'M.mmx_cod_err, M.mmx_fec_ctb, M.mmx_idn_ser, M.mmx_fec_pro_rec, ',\n  'C.cmx_idn_prd, C.cmx_cnt, C.cmx_prc, C.cmx_fec_cmp, C.cmx_frm_prd, ',\n  'C.cmx_num_fol, C.cmx_fec_vct, C.cmx_dsc_prd ',\n  'FROM ', pipeline().parameters.EDW_Wrk, '.TMP_MOV_MONEX M, ',\n  pipeline().parameters.EDW_Wrk, '.TMP_CMP_MONEX C ',\n  'WHERE M.cnv_idn=C.cnv_idn AND M.mmx_srl=C.mmx_srl'\n)",
+              "type": "Expression"
+            },
+            "partitionOption": "None"
+          },
+          "sink": {
+            "type": "DelimitedTextSink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            },
+            "formatSettings": {
+              "type": "DelimitedTextWriteSettings",
+              "quoteAllText": false,
+              "fileExtension": ""
+            }
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "mappings": [
+              { "source": { "name": "cnv_idn" },         "sink": { "name": "cnv_idn" } },
+              { "source": { "name": "mmx_srl" },         "sink": { "name": "mmx_srl" } },
+              { "source": { "name": "mmx_trx" },         "sink": { "name": "mmx_trx" } },
+              { "source": { "name": "mmx_idc" },         "sink": { "name": "mmx_idc" } },
+              { "source": { "name": "mmx_dig_vrf" },     "sink": { "name": "mmx_dig_vrf" } },
+              { "source": { "name": "mmx_cta_car" },     "sink": { "name": "mmx_cta_car" } },
+              { "source": { "name": "mmx_mto" },         "sink": { "name": "mmx_mto" } },
+              { "source": { "name": "mmx_fec_pag" },     "sink": { "name": "mmx_fec_pag" } },
+              { "source": { "name": "mmx_fec_est_cua" }, "sink": { "name": "mmx_fec_est_cua" } },
+              { "source": { "name": "mmx_mnd_ori" },     "sink": { "name": "mmx_mnd_ori" } },
+              { "source": { "name": "mmx_tip_cam" },     "sink": { "name": "mmx_tip_cam" } },
+              { "source": { "name": "mmx_cod_err" },     "sink": { "name": "mmx_cod_err" } },
+              { "source": { "name": "mmx_fec_ctb" },     "sink": { "name": "mmx_fec_ctb" } },
+              { "source": { "name": "mmx_idn_ser" },     "sink": { "name": "mmx_idn_ser" } },
+              { "source": { "name": "mmx_fec_pro_rec" }, "sink": { "name": "mmx_fec_pro_rec" } },
+              { "source": { "name": "cmx_idn_prd" },     "sink": { "name": "cmx_idn_prd" } },
+              { "source": { "name": "cmx_cnt" },         "sink": { "name": "cmx_cnt" } },
+              { "source": { "name": "cmx_prc" },         "sink": { "name": "cmx_prc" } },
+              { "source": { "name": "cmx_fec_cmp" },     "sink": { "name": "cmx_fec_cmp" } },
+              { "source": { "name": "cmx_frm_prd" },     "sink": { "name": "cmx_frm_prd" } },
+              { "source": { "name": "cmx_num_fol" },     "sink": { "name": "cmx_num_fol" } },
+              { "source": { "name": "cmx_fec_vct" },     "sink": { "name": "cmx_fec_vct" } },
+              { "source": { "name": "cmx_dsc_prd" },     "sink": { "name": "cmx_dsc_prd" } }
+            ]
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "DS_Teradata_TMP_MOV_MONEX",
+            "type": "DatasetReference",
+            "parameters": {
+              "Teradata_EDW_DSN": {
+                "value": "@pipeline().parameters.Teradata_EDW_DSN",
+                "type": "Expression"
+              },
+              "Teradata_EDW_User_Grupo1": {
+                "value": "@pipeline().parameters.Teradata_EDW_User_Grupo1",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "DS_ADLS_Monex_Mov_Com",
+            "type": "DatasetReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              },
+              "PathExtract": {
+                "value": "@pipeline().parameters.PathExtract",
+                "type": "Expression"
+              },
+              "NombreArchExtraccion": {
+                "value": "@pipeline().parameters.NombreArchExtraccion",
+                "type": "Expression"
+              },
+              "FechaArchExtraccion": {
+                "value": "@pipeline().parameters.FechaArchExtraccion",
+                "type": "Expression"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL cuenta ADLS Gen2."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Ruta ADLS destino del archivo Mov_Com. Equivalente a $PathExtract en DataStage."
+      },
+      "NombreArchExtraccion": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex.TXT",
+        "description": "Nombre base del archivo resultado. Equivalente a $NombreArchExtraccion en DataStage."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "Sufijo fecha YYYYMMDD del archivo. Equivalente a $FechaArchExtraccion en DataStage."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Base de datos de trabajo Teradata. Equivalente a $EDW_Wrk."
+      }
+    },
+    "annotations": [
+      "DataStage: J390_Movimiento_Compra_Monex_Extraccion_Final (server job, JobType=0)",
+      "Stage fuente DataStage: V262S0 = TeradataConnector (Context=source, AccessMethod=1, SelectStatement=JOIN entre TMP_MOV_MONEX M y TMP_CMP_MONEX C)",
+      "Stage transformer DataStage: V0S0 = Trf_LimpiaRegistros (CTransformerStage) - passthrough puro, todas las derivaciones son referencias directas de columna",
+      "Stage destino DataStage: V0S1 = Seq_Mov_Com_Monex (CSeqFileStage, delimitador pipe |, sin cabecera)",
+      "SQL DataStage original: SELECT M.cnv_idn, ..., C.cmx_dsc_prd FROM EDW_Wrk.TMP_MOV_MONEX M, EDW_Wrk.TMP_CMP_MONEX C WHERE M.cnv_idn=C.cnv_idn AND M.mmx_srl=C.mmx_srl",
+      "NOTA: mmx_mto_ori de TMP_MOV_MONEX NO aparece en el SELECT DataStage original - confirmado omision intencional",
+      "NOTA: No hay LOCK FOR ACCESS en DataStage original para este job - el SELECT es directo sin hint de bloqueo"
+    ]
+  }
+}

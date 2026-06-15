@@ -1,0 +1,183 @@
+{
+  "name": "PL_S390_Movimiento_Compra_Monex_Seq_Carga",
+  "properties": {
+    "description": "Equivalente al sequencer DataStage S390_Movimiento_Compra_Monex_Seq_Carga (JobType=2). Orquesta 3 jobs MLoad en secuencia estricta: Event -> Bci_Event_Payment_Electronic -> Event_Last. Cada job MLoad solo se ejecuta si el anterior finalizo exitosamente (TriggerExpression=\"Executed OK\" en DataStage = dependencyCondition Succeeded en ADF). En ADF cada CJSJobActivity se traduce a Custom Activity (Azure Batch) ejecutando el script shell MLoad correspondiente.",
+    "activities": [
+      {
+        "name": "Custom_Event_Bel_Mload",
+        "description": "Ejecuta Event_Bel_Mload.sh en Azure Batch. Carga el archivo EVENT a Teradata via MultiLoad. Equivalente al CJSJobActivity 'Event' (V0S0, Jobname=Event_Bel_Mload) en DataStage. Archivo de entrada: $NombreJob_EVENT.TXT. Params MLoad: Teradata_EDW_DSN, User_Grupo1, PWD_Grupo1, EDW_Wrk, EDW_Event_Bel, PathLog, PathShell, PathOutput, TD_ML_CheckPoint, ErrorLimit, Session_Max, Session_Min, Sleep, Tenacity.",
+        "type": "Custom",
+        "dependsOn": [],
+        "typeProperties": {
+          "command": {
+            "value": "@concat(\n  'sh Event_Bel_Mload.sh ',\n  pipeline().parameters.NombreJob, '_EVENT.TXT ',\n  pipeline().parameters.Teradata_EDW_DSN, ' ',\n  pipeline().parameters.Teradata_EDW_User_Grupo1, ' ',\n  pipeline().parameters.Teradata_EDW_PWD_Grupo1, ' ',\n  pipeline().parameters.EDW_Wrk, ' ',\n  pipeline().parameters.EDW_Event_Bel, ' ',\n  pipeline().parameters.PathLog, ' ',\n  pipeline().parameters.PathShell, ' ',\n  pipeline().parameters.PathOutput, ' ',\n  pipeline().parameters.TD_ML_CheckPoint, ' ',\n  pipeline().parameters.TD_ML_ErrorLimit, ' ',\n  pipeline().parameters.TD_ML_Session_Max, ' ',\n  pipeline().parameters.TD_ML_Session_Min, ' ',\n  pipeline().parameters.TD_ML_Sleep, ' ',\n  pipeline().parameters.TD_ML_Tenacity\n)",
+            "type": "Expression"
+          },
+          "folderPath": {
+            "value": "@pipeline().parameters.PathShell",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_ADLS_Monex",
+            "type": "LinkedServiceReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              }
+            }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "LS_AzureBatch",
+          "type": "LinkedServiceReference"
+        }
+      },
+      {
+        "name": "Custom_Bci_Event_Payment_Electronic_Mload",
+        "description": "Ejecuta Bci_Event_Payment_Electronic_Mload.sh en Azure Batch. Carga el archivo BCI_EVENT_PAYMENT_ELECTR a Teradata via MultiLoad. Equivalente al CJSJobActivity 'Bci_Event_Payment_Electronic' (V0S5, Jobname=Bci_Event_Payment_Electronic_Mload) en DataStage. Archivo de entrada: $NombreJob_BCI_EVENT_PAYMENT_ELECTR.TXT. Solo se ejecuta si Custom_Event_Bel_Mload termino con Succeeded (TriggerExpression=\"Executed OK\" en DataStage).",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Event_Bel_Mload",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "command": {
+            "value": "@concat(\n  'sh Bci_Event_Payment_Electronic_Mload.sh ',\n  pipeline().parameters.NombreJob, '_BCI_EVENT_PAYMENT_ELECTR.TXT ',\n  pipeline().parameters.Teradata_EDW_DSN, ' ',\n  pipeline().parameters.Teradata_EDW_User_Grupo1, ' ',\n  pipeline().parameters.Teradata_EDW_PWD_Grupo1, ' ',\n  pipeline().parameters.EDW_Wrk, ' ',\n  pipeline().parameters.EDW_Event_Bel, ' ',\n  pipeline().parameters.PathLog, ' ',\n  pipeline().parameters.PathShell, ' ',\n  pipeline().parameters.PathOutput, ' ',\n  pipeline().parameters.TD_ML_CheckPoint, ' ',\n  pipeline().parameters.TD_ML_ErrorLimit, ' ',\n  pipeline().parameters.TD_ML_Session_Max, ' ',\n  pipeline().parameters.TD_ML_Session_Min, ' ',\n  pipeline().parameters.TD_ML_Sleep, ' ',\n  pipeline().parameters.TD_ML_Tenacity\n)",
+            "type": "Expression"
+          },
+          "folderPath": {
+            "value": "@pipeline().parameters.PathShell",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_ADLS_Monex",
+            "type": "LinkedServiceReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              }
+            }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "LS_AzureBatch",
+          "type": "LinkedServiceReference"
+        }
+      },
+      {
+        "name": "Custom_Event_Last_Bel",
+        "description": "Ejecuta Event_Last_Bel.sh en Azure Batch. Carga el archivo EVENT_LAST a Teradata via API. Equivalente al CJSJobActivity 'Event_Last' (V3S0, Jobname=Event_Last_Bel, FullDescription='Job de que carga a la Tabla Event_Last de Teradata Via Api.') en DataStage. Archivo de entrada: $NombreJob_EVENT_LAST.TXT. Solo se ejecuta si Custom_Bci_Event_Payment_Electronic_Mload termino con Succeeded. Notar: este job NO tiene params TD_ML (usa API Teradata, no MLoad).",
+        "type": "Custom",
+        "dependsOn": [
+          {
+            "activity": "Custom_Bci_Event_Payment_Electronic_Mload",
+            "dependencyConditions": [ "Succeeded" ]
+          }
+        ],
+        "typeProperties": {
+          "command": {
+            "value": "@concat(\n  'sh Event_Last_Bel.sh ',\n  pipeline().parameters.NombreJob, '_EVENT_LAST.TXT ',\n  pipeline().parameters.Teradata_EDW_DSN, ' ',\n  pipeline().parameters.Teradata_EDW_User_Grupo1, ' ',\n  pipeline().parameters.Teradata_EDW_PWD_Grupo1, ' ',\n  pipeline().parameters.EDW_Wrk, ' ',\n  pipeline().parameters.EDW_Event_Bel, ' ',\n  pipeline().parameters.PathLog, ' ',\n  pipeline().parameters.PathShell, ' ',\n  pipeline().parameters.PathOutput\n)",
+            "type": "Expression"
+          },
+          "folderPath": {
+            "value": "@pipeline().parameters.PathShell",
+            "type": "Expression"
+          },
+          "resourceLinkedService": {
+            "referenceName": "LS_ADLS_Monex",
+            "type": "LinkedServiceReference",
+            "parameters": {
+              "StorageAccountUrl": {
+                "value": "@pipeline().parameters.StorageAccountUrl",
+                "type": "Expression"
+              }
+            }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "LS_AzureBatch",
+          "type": "LinkedServiceReference"
+        }
+      }
+    ],
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "description": "URL cuenta ADLS Gen2 (para resourceLinkedService scripts)."
+      },
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J390_Movimiento_Compra_Monex",
+        "description": "Prefijo de archivos de entrada MLoad. DataStage: $NombreJob:'_EVENT.TXT', etc."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "DSN/servidor Teradata. Equivalente a $Teradata_EDW_DSN."
+      },
+      "Teradata_EDW_User_Grupo1": {
+        "type": "String",
+        "description": "Usuario Teradata Grupo1. Equivalente a $Teradata_EDW_User_Grupo1."
+      },
+      "Teradata_EDW_PWD_Grupo1": {
+        "type": "String",
+        "description": "Contrasena Teradata Grupo1 (pasar desde Key Vault). Equivalente a $Teradata_EDW_PWD_Grupo1."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "BD trabajo Teradata. Equivalente a $EDW_Wrk."
+      },
+      "EDW_Event_Bel": {
+        "type": "String",
+        "description": "BD EVENT_BEL Teradata. Equivalente a $EDW_Event_Bel."
+      },
+      "PathLog": {
+        "type": "String",
+        "description": "Ruta log. Equivalente a $PathLog."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Ruta scripts shell. Equivalente a $PathShell."
+      },
+      "PathOutput": {
+        "type": "String",
+        "description": "Ruta archivos output MLoad. Equivalente a $PathOutput."
+      },
+      "TD_ML_CheckPoint": {
+        "type": "String",
+        "description": "MLoad checkpoint. Equivalente a $TD_ML_CheckPoint. Solo aplica a Event y Bci_Event_Payment_Electronic."
+      },
+      "TD_ML_ErrorLimit": {
+        "type": "String",
+        "description": "MLoad error limit. Equivalente a $TD_ML_ErrorLimit."
+      },
+      "TD_ML_Session_Max": {
+        "type": "String",
+        "description": "MLoad max sessions. Equivalente a $TD_ML_Session_Max."
+      },
+      "TD_ML_Session_Min": {
+        "type": "String",
+        "description": "MLoad min sessions. Equivalente a $TD_ML_Session_Min."
+      },
+      "TD_ML_Sleep": {
+        "type": "String",
+        "description": "MLoad sleep. Equivalente a $TD_ML_Sleep."
+      },
+      "TD_ML_Tenacity": {
+        "type": "String",
+        "description": "MLoad tenacity. Equivalente a $TD_ML_Tenacity."
+      }
+    },
+    "annotations": [
+      "DataStage: S390_Movimiento_Compra_Monex_Seq_Carga (sequencer, JobType=2)",
+      "Secuencia estricta DataStage: Event (V0S0) -[Executed OK]-> Bci_Event_Payment_Electronic (V0S5) -[Executed OK]-> Event_Last (V3S0)",
+      "Event_Bel_Mload: carga EVENT via MLoad, FileName=$NombreJob:'_EVENT.TXT'",
+      "Bci_Event_Payment_Electronic_Mload: carga BCI_EVENT_PAYMENT_ELECTR via MLoad, FileName=$NombreJob:'_BCI_EVENT_PAYMENT_ELECTR.TXT'",
+      "Event_Last_Bel: carga EVENT_LAST via API (no MLoad), FileName=$NombreJob:'_EVENT_LAST.TXT', NO tiene params TD_ML_*",
+      "Prerequisito: PL_J390_Movimiento_Compra_Monex debe haber generado los archivos EVENT, BCI_EVENT_PAYMENT_ELECTR y EVENT_LAST en PathOutput"
+    ]
+  }
+}
