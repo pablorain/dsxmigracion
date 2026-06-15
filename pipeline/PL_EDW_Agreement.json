@@ -1,0 +1,39 @@
+{
+    "name": "PL_EDW_Agreement",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Construye el hash file EDW_Agreement. DS: CSeqFileStage (leer archivo Agreement) -> CTransformerStage (transformacion) -> CHashedFileStage (escritura hash file). ADF: ExecuteDataFlow DF_EDW_Agreement (ADLS DelimitedText source -> transformaciones -> ADLS Parquet sink que actua como 'hash file' para lookups en otros dataflows). MANUAL_INTERVENTION: CTransformerStage con logica de transformacion.",
+        "activities": [{
+            "name": "Exec_DF_EDW_Agreement",
+            "description": "MANUAL_INTERVENTION: CTransformerStage entre CSeqFileStage y CHashedFileStage tiene logica de transformacion/mapeo que debe replicarse en el DataFlow DF_EDW_Agreement. El CHashedFileStage en DS es un lookup hash en memoria; en ADF se reemplaza por un archivo Parquet/Delimited en ADLS que es leido como cached source en los DataFlows que lo usan (DF_J390_Mov_Com_Monex_Valida, etc.).",
+            "type": "ExecuteDataFlow",
+            "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+            "typeProperties": {
+                "dataflow": { "referenceName": "DF_EDW_Agreement", "type": "DataFlowReference",
+                    "parameters": {
+                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                        "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                        "PathHash": { "value": "@pipeline().parameters.PathHash", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                    }
+                },
+                "compute": { "coreCount": 8, "computeType": "General" },
+                "traceLevel": "Fine"
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta del archivo Agreement de entrada. DS: $PathOutput" },
+            "FileName": { "type": "String", "defaultValue": "J139_TRANSBK_MCF_CUENTAS_AGREEMENT.TXT", "description": "Nombre archivo Agreement." },
+            "PathHash": { "type": "String", "defaultValue": "", "description": "Ruta ADLS donde guardar el archivo Parquet del hash (reemplazo del CHashedFileStage). Este archivo sera usado como cached source en otros DataFlows." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Hash_Management" },
+        "annotations": [
+            "ORIGEN_DS: EDW_Agreement (CSeqFileStage -> CTransformerStage -> CHashedFileStage)",
+            "PATRON_DS: Hash File = tabla de lookup en memoria cargada desde un archivo secuencial con transformacion previa.",
+            "MAPEO_ADF: CHashedFileStage -> Archivo Parquet en ADLS (PathHash). Los DataFlows que hacen lookup en este hash usan este archivo como 'cached source' (store: cache, format: parquet).",
+            "MANUAL_INTERVENTION: Crear el DataFlow DF_EDW_Agreement con: (1) source DelimitedText desde PathOutput/FileName, (2) transformaciones equivalentes al CTransformerStage del DSX, (3) sink Parquet a PathHash. Extraer logica exacta del CTransformerStage del DSX original."
+        ]
+    }
+}

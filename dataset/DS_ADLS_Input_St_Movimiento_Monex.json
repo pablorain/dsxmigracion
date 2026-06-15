@@ -1,0 +1,46 @@
+{
+    "name": "DS_ADLS_Input_St_Movimiento_Monex",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset entrada Job 2 J390_Mov_Com_Monex_Carga_Extraccion. Origen DS: Seq_St_Movimiento_Monex (CSeqFileStage). Archivo: #$PathExtract#J390_Seq_St_Movimiento_Monex.txt. Cargado a Teradata via FastLoad en FL_St_Movimiento_Monex.",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathExtract": {
+                "type": "String",
+                "description": "Ruta extraccion. DS: $PathExtract"
+            },
+            "ADLS_Container": {
+                "type": "String"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathExtract",
+                    "type": "Expression"
+                },
+                "fileName": "J390_Seq_St_Movimiento_Monex.txt"
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Seq_St_Movimiento_Monex (CSeqFileStage) Job J390_Movimiento_Compra_Monex_Carga_Extraccion",
+            "ARCHIVO_DS: #$PathExtract#J390_Seq_St_Movimiento_Monex.txt",
+            "DESTINO_DS: FL_St_Movimiento_Monex (TeradataConnector FastLoad) — MANUAL_INTERVENTION requerido"
+        ]
+    }
+}

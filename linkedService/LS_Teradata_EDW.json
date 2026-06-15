@@ -1,0 +1,52 @@
+{
+    "name": "LS_Teradata_EDW",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "description": "Conexion Teradata EDW. Origen DS: TeradataConnector (cctera12) usado en J390_Movimiento_Compra_Monex como fuente de lookups y en J390_Mov_Com_Monex_Carga_Extraccion como destino FastLoad. Parametros DS: $Teradata_EDW_DSN, $Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1.",
+        "type": "Teradata",
+        "typeProperties": {
+            "connectionString": {
+                "value": "@{concat('Server=', linkedService().Teradata_EDW_DSN, ';')}",
+                "type": "Expression"
+            },
+            "authenticationType": "Basic",
+            "username": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "LS_AzureKeyVault",
+                    "type": "LinkedServiceReference",
+                    "parameters": {
+                        "AKV_BaseUrl": "@{linkedService().AKV_BaseUrl}"
+                    }
+                },
+                "secretName": "teradata-edw-user-grupo1"
+            },
+            "password": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "LS_AzureKeyVault",
+                    "type": "LinkedServiceReference",
+                    "parameters": {
+                        "AKV_BaseUrl": "@{linkedService().AKV_BaseUrl}"
+                    }
+                },
+                "secretName": "teradata-edw-pwd-grupo1"
+            }
+        },
+        "parameters": {
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "description": "DSN/Host Teradata EDW. DS: $Teradata_EDW_DSN"
+            },
+            "AKV_BaseUrl": {
+                "type": "String",
+                "description": "URL del Azure Key Vault"
+            }
+        },
+        "annotations": [
+            "ORIGEN_DS: TeradataConnector VariantName=12 (cctera12) ClientCharacterSet=UTF8 TransactionMode=Teradata",
+            "MANUAL_INTERVENTION: Requiere driver Teradata ODBC/JDBC en el Integration Runtime. Si Teradata no es accesible desde Azure, usar Self-hosted IR en red corporativa.",
+            "CREDENTIALS: Migrar $Teradata_EDW_User_Grupo1 y $Teradata_EDW_PWD_Grupo1 a secretos AKV 'teradata-edw-user-grupo1' y 'teradata-edw-pwd-grupo1'."
+        ]
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "name": "DS_ADLS_Output_EventLast_J390",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset salida EVENT_LAST Job 1 J390. Origen DS: Seq_Event_Last (CSeqFileStage) link Lnk_Seq_Event_Last. Archivo: #$PathOutput##$NombreJob#_EVENT_LAST.TXT. Nota: en DS se escribe via Hsh_EventLast (CHashedFileStage) que acumula el ultimo evento por clave.",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathOutput": {
+                "type": "String",
+                "description": "DS: $PathOutput"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J390_Movimiento_Compra_Monex",
+                "description": "DS: $NombreJob"
+            },
+            "ADLS_Container": {
+                "type": "String"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathOutput",
+                    "type": "Expression"
+                },
+                "fileName": {
+                    "value": "@concat(dataset().NombreJob, '_EVENT_LAST.TXT')",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Seq_Event_Last (CSeqFileStage) via Hsh_EventLast (CHashedFileStage) link Lnk_Seq_Event_Last",
+            "ARCHIVO_DS: #$PathOutput##$NombreJob#_EVENT_LAST.TXT",
+            "MANUAL_INTERVENTION: En DS Hsh_EventLast actua como tabla de lookup en memoria (EVENT_LAST de Teradata) y al final se vuelca a archivo. En ADF el equivalente es una Lookup + Aggregate (last row per key). Verificar si Hsh_EventLast ya existe como tabla Teradata o si se construye solo en memoria durante el job."
+        ]
+    }
+}

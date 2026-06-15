@@ -1,0 +1,319 @@
+{
+    "name": "PL_J390_Movimiento_Compra_Monex",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline orquestador Job 1 J390_Movimiento_Compra_Monex. Flujo: (1) WebActivity BTEQ BeforeSubr Bteq_Event_Bloquea.sh, (2) ExecuteDataFlow DF_J390_Mov_Com_Monex_Valida. BeforeSubr DS: DSU.ExecSH {PathShell}/Bteq_Event_Bloquea.sh {Teradata_EDW_DSN}/{User},{PWD} {EDW_Event_Bel} {PathLog} J390_Mov_Cmp Fase_4",
+        "activities": [
+            {
+                "name": "Execute_BTEQ_Event_Bloquea",
+                "description": "MANUAL_INTERVENTION: Equivale al BeforeSubr DS: DSU.ExecSH #$PathShell#Bteq_Event_Bloquea.sh #$Teradata_EDW_DSN#/#$Teradata_EDW_User_Grupo1#,#$Teradata_EDW_PWD_Grupo1# #$EDW_Event_Bel# #$PathLog# 'J390_Mov_Cmp' 'Fase_4'. El script BTEQ bloquea la tabla de eventos en Teradata antes de iniciar el procesamiento. Requiere Azure Function o Self-hosted IR con Teradata Client instalado. Completar la URL y Key del Azure Function.",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_Bteq_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_Bteq_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"script\":\"Bteq_Event_Bloquea.sh\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Event_Bel\":\"', pipeline().parameters.EDW_Event_Bel, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\",\"JobName\":\"J390_Mov_Cmp\",\"Fase\":\"Fase_4\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Execute_DF_J390_Valida",
+                "description": "Ejecuta Data Flow de validacion y reglas de negocio J390. Mapea los stages Trf_Traductor + Trf_Valida con 7 lookups Teradata y 5 outputs. MANUAL_INTERVENTION: fncSev390MovComMonex debe reimplementarse en DeriveReglasSeveridad del data flow.",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [
+                    {
+                        "activity": "Execute_BTEQ_Event_Bloquea",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "DF_J390_Mov_Com_Monex_Valida",
+                        "type": "DataFlowReference",
+                        "parameters": {
+                            "EDW_Event": {
+                                "value": "@pipeline().parameters.EDW_Event",
+                                "type": "Expression"
+                            },
+                            "EDW_Finance": {
+                                "value": "@pipeline().parameters.EDW_Finance",
+                                "type": "Expression"
+                            },
+                            "EDW_Agreement": {
+                                "value": "@pipeline().parameters.EDW_Agreement",
+                                "type": "Expression"
+                            },
+                            "EDW_Party": {
+                                "value": "@pipeline().parameters.EDW_Party",
+                                "type": "Expression"
+                            },
+                            "EDW_Wrk": {
+                                "value": "@pipeline().parameters.EDW_Wrk",
+                                "type": "Expression"
+                            },
+                            "Teradata_EDW_DSN": {
+                                "value": "@pipeline().parameters.Teradata_EDW_DSN",
+                                "type": "Expression"
+                            },
+                            "AKV_BaseUrl": {
+                                "value": "@pipeline().parameters.AKV_BaseUrl",
+                                "type": "Expression"
+                            }
+                        },
+                        "datasetParameters": {
+                            "SrcMovComMonex": {
+                                "PathExtract": {
+                                    "value": "@pipeline().parameters.PathExtract",
+                                    "type": "Expression"
+                                },
+                                "NombreArchExtraccion": {
+                                    "value": "@pipeline().parameters.NombreArchExtraccion",
+                                    "type": "Expression"
+                                },
+                                "FechaArchExtraccion": {
+                                    "value": "@pipeline().parameters.FechaArchExtraccion",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkEvent": {
+                                "PathOutput": {
+                                    "value": "@pipeline().parameters.PathOutput",
+                                    "type": "Expression"
+                                },
+                                "NombreJob": {
+                                    "value": "@pipeline().parameters.NombreJob",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkBciEventElectr": {
+                                "PathOutput": {
+                                    "value": "@pipeline().parameters.PathOutput",
+                                    "type": "Expression"
+                                },
+                                "NombreJob": {
+                                    "value": "@pipeline().parameters.NombreJob",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkEventLast": {
+                                "PathOutput": {
+                                    "value": "@pipeline().parameters.PathOutput",
+                                    "type": "Expression"
+                                },
+                                "NombreJob": {
+                                    "value": "@pipeline().parameters.NombreJob",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkSeveridad3": {
+                                "PathRejected": {
+                                    "value": "@pipeline().parameters.PathRejected",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkSeveridad2": {
+                                "PathRejected": {
+                                    "value": "@pipeline().parameters.PathRejected",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkNoProcesados": {
+                                "PathUnproc": {
+                                    "value": "@pipeline().parameters.PathUnproc",
+                                    "type": "Expression"
+                                },
+                                "FechaArchExtraccion": {
+                                    "value": "@pipeline().parameters.FechaArchExtraccion",
+                                    "type": "Expression"
+                                },
+                                "ADLS_Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Fine"
+                }
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha proceso YYYY-MM-DD. DS: $FechaProceso"
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha archivo YYYYMMDD. DS: $FechaArchExtraccion"
+            },
+            "NombreArchExtraccion": {
+                "type": "String",
+                "defaultValue": "J390_Movimiento_Compra_Monex.TXT",
+                "description": "Nombre archivo extraccion. DS: $NombreArchExtraccion"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J390_Movimiento_Compra_Monex",
+                "description": "Nombre job prefijo. DS: $NombreJob"
+            },
+            "PathExtract": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta extraccion. DS: $PathExtract"
+            },
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta output. DS: $PathOutput"
+            },
+            "PathRejected": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta rechazados. DS: $PathRejected"
+            },
+            "PathUnproc": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta no procesados. DS: $PathUnproc"
+            },
+            "PathLog": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta logs. DS: $PathLog"
+            },
+            "PathShell": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta scripts shell. DS: $PathShell"
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DSN Teradata. DS: $Teradata_EDW_DSN"
+            },
+            "EDW_Event": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata EVENT. DS: $EDW_Event"
+            },
+            "EDW_Event_Bel": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata EVENT_BEL (usado en BTEQ). DS: $EDW_Event_Bel"
+            },
+            "EDW_Finance": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata FINANCE. DS: $EDW_Finance (contiene TRADUCTOR, CURRENCY)"
+            },
+            "EDW_Agreement": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata AGREEMENT. DS: $EDW_Agreement (contiene BCI_ELECTRONIC_PAYMENT_BUTTON)"
+            },
+            "EDW_Party": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata PARTY. DS: $EDW_Party"
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata WORK (TMP_MOVCOM_MONEX). DS: $EDW_Wrk"
+            },
+            "EDW_Param_and_Others": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Parametros adicionales EDW. DS: $EDW_Param_and_Others"
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Nombre contenedor ADLS"
+            },
+            "AKV_BaseUrl": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "URL Azure Key Vault"
+            },
+            "AzureFunction_Bteq_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: URL Azure Function para Bteq_Event_Bloquea.sh"
+            },
+            "AzureFunction_Bteq_Key": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: Key Azure Function BTEQ"
+            }
+        },
+        "folder": {
+            "name": "J390_Movimiento_Compra_Monex"
+        },
+        "annotations": [
+            "ORIGEN_DS: J390_Movimiento_Compra_Monex (JobType=0 Server Job, Category: Jobs/Fase_6/Hito_0/Event/390_Movimiento_Compra_Monex)",
+            "BEFORESUBR_DS: DSU.ExecSH {PathShell}/Bteq_Event_Bloquea.sh {Teradata_EDW_DSN}/{Teradata_EDW_User_Grupo1},{Teradata_EDW_PWD_Grupo1} {EDW_Event_Bel} {PathLog} J390_Mov_Cmp Fase_4",
+            "MANUAL_INTERVENTION_1: Completar AzureFunction_Bteq_Url y AzureFunction_Bteq_Key para el BTEQ BeforeSubr. Credenciales Teradata deben inyectarse desde AKV.",
+            "MANUAL_INTERVENTION_2: fncSev390MovComMonex en DF_J390_Mov_Com_Monex_Valida requiere reimplementacion. Ver anotaciones del data flow.",
+            "MANUAL_INTERVENTION_3: Parametro $EDW_Param_and_Others de DS no tiene uso explicito identificado en el job. Revisar si se usa en BTEQ o en Teradata queries."
+        ]
+    }
+}

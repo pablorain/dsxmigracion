@@ -1,0 +1,27 @@
+{
+    "name": "DS_ADLS_Hash_Card",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset Parquet que representa el CHashedFileStage EDW_Card de DataStage. En ADF, el hash file se almacena como Parquet en ADLS y se usa como 'cached source' en DataFlows que necesitan lookup sobre CARD.",
+        "linkedServiceName": { "referenceName": "LS_ADLS_Staging", "type": "LinkedServiceReference" },
+        "parameters": {
+            "PathHash": { "type": "String", "description": "Ruta ADLS donde se almacena el archivo Parquet del hash EDW_Card." },
+            "ADLS_Container": { "type": "String" }
+        },
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": { "value": "@dataset().ADLS_Container", "type": "Expression" },
+                "folderPath": { "value": "@dataset().PathHash", "type": "Expression" }
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: CHashedFileStage EDW_Card de DataStage",
+            "PATRON: El hash file DS se reemplaza por archivo Parquet en ADLS. Los DataFlows que hacen lookup en CARD usan este dataset como cached source (store: cache).",
+            "MANUAL_INTERVENTION: Verificar el schema de columnas del CHashedFileStage EDW_Card en el DSX original y agregar el schema aqui."
+        ]
+    }
+}

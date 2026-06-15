@@ -1,0 +1,41 @@
+{
+    "name": "PL_J139_Transbk_Mcf_Extraccion_Hash",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Ejecuta el DataFlow de extraccion de hash files. DS: J139_Transbk_Mcf_Extraccion_Hash (Teradata LDM -> CHashedFileStage x2). ADF: ExecuteDataFlow DF_J139_Transbk_Mcf_Extraccion_Hash -> Parquet ADLS x2.",
+        "activities": [{
+            "name": "Exec_DF_ExtraccionHash",
+            "type": "ExecuteDataFlow",
+            "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+            "typeProperties": {
+                "dataflow": { "referenceName": "DF_J139_Transbk_Mcf_Extraccion_Hash", "type": "DataFlowReference",
+                    "parameters": {
+                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                        "AKV_BaseUrl": { "value": "@pipeline().parameters.AKV_BaseUrl", "type": "Expression" },
+                        "PathHash_Agreement": { "value": "@pipeline().parameters.PathHash_Agreement", "type": "Expression" },
+                        "PathHash_Card": { "value": "@pipeline().parameters.PathHash_Card", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                    }
+                },
+                "compute": { "coreCount": 8, "computeType": "General" },
+                "traceLevel": "Fine",
+                "linkedService": { "referenceName": "LS_Teradata_EDW", "type": "LinkedServiceReference" }
+            }
+        }],
+        "parameters": {
+            "EDW_Agreement": { "type": "String", "defaultValue": "" }, "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" }, "AKV_BaseUrl": { "type": "String", "defaultValue": "" },
+            "PathHash_Agreement": { "type": "String", "defaultValue": "", "description": "Ruta ADLS donde guardar hash EDW_Agreement (Parquet)." },
+            "PathHash_Card": { "type": "String", "defaultValue": "", "description": "Ruta ADLS donde guardar hash EDW_Card (Parquet)." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Extraccion_Hash (Teradata LDM -> 2 CHashedFileStage)",
+            "MANUAL_INTERVENTION: El DataFlow DF_J139_Transbk_Mcf_Extraccion_Hash requiere completar las queries/tablas Teradata y el schema. Ver anotaciones en el DataFlow."
+        ]
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "name": "DS_ADLS_Output_Event_J390",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset salida registros EVENT validos Job 1 J390. Origen DS: Seq_Event (CSeqFileStage) link Lnk_Event. Archivo: #$PathOutput##$NombreJob#_EVENT.TXT (registros con RuleSeveridad<>3). Delimitador: |",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathOutput": {
+                "type": "String",
+                "description": "Ruta output en ADLS. DS: $PathOutput"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J390_Movimiento_Compra_Monex",
+                "description": "Nombre job prefijo. DS: $NombreJob"
+            },
+            "ADLS_Container": {
+                "type": "String"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathOutput",
+                    "type": "Expression"
+                },
+                "fileName": {
+                    "value": "@concat(dataset().NombreJob, '_EVENT.TXT')",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Seq_Event (CSeqFileStage) link Lnk_Event — registros validos (RuleSeveridad[2,1]<>3)",
+            "ARCHIVO_DS: #$PathOutput##$NombreJob#_EVENT.TXT",
+            "DESTINO_TERADATA: Tabla EVENT en schema $EDW_Event"
+        ]
+    }
+}

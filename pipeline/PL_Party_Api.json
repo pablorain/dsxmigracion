@@ -1,0 +1,29 @@
+{
+    "name": "PL_Party_Api",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Api (INSERT directo) para Party. DS: CSeqFileStage -> TeradataConnector API mode. Tabla: $EDW_Party.PARTY. MANUAL_INTERVENTION.",
+        "activities": [{
+            "name": "Exec_FastLoad_Api_Party",
+            "description": "MANUAL_INTERVENTION: INSERT directo via JDBC. En ADF: CopyActivity Teradata sink o Azure Function batch INSERT.",
+            "type": "WebActivity",
+            "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": true, "secureInput": true },
+            "typeProperties": {
+                "url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                "method": "POST",
+                "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                "body": { "value": "@json(concat('{\"operation\":\"TeradataInsertApi\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FileName\":\"', pipeline().parameters.FileName, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Party\":\"', pipeline().parameters.EDW_Party, '\",\"TablaNombre\":\"PARTY\",\"Tabla\":\"', pipeline().parameters.Tabla, '\"}'))", "type": "Expression" }
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "" }, "FileName": { "type": "String", "defaultValue": "" },
+            "Tabla": { "type": "String", "defaultValue": "J139_MCF" }, "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" },
+            "EDW_Wrk": { "type": "String", "defaultValue": "" }, "EDW_Agreement": { "type": "String", "defaultValue": "" },
+            "EDW_Party": { "type": "String", "defaultValue": "" }, "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_FastLoad_Url": { "type": "String", "defaultValue": "" }, "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Api_Variants" },
+        "annotations": ["ORIGEN_DS: Party Api variant (TeradataConnector INSERT/API mode)", "MANUAL_INTERVENTION: Tabla: $EDW_Party.PARTY."]
+    }
+}

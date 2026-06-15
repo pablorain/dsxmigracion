@@ -1,0 +1,63 @@
+{
+    "name": "PL_Loan_Account_FL",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Dual CExecCommandActivity para Loan_Account_FL. DS: 2 etapas CExecCommandActivity secuenciales. Mapeo ADF: 2 WebActivity secuenciales. MANUAL_INTERVENTION: verificar nombres exactos de los 2 scripts en el DSX original.",
+        "activities": [
+            {
+                "name": "Exec_Cmd_Loan_Account_1",
+                "description": "MANUAL_INTERVENTION: Primera CExecCommandActivity de Loan_Account_FL. Verificar nombre exacto del script en DSX.",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": { "timeout": "0.04:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": true, "secureInput": true },
+                "typeProperties": {
+                    "url": { "value": "@pipeline().parameters.AzureFunction_Bteq_Url", "type": "Expression" },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"operation\":\"ExecCmd\",\"Script\":\"', pipeline().parameters.Script_1, '\",\"PathShell\":\"', pipeline().parameters.PathShell, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"EDW_Agreement\":\"', pipeline().parameters.EDW_Agreement, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Exec_Cmd_Loan_Account_2",
+                "description": "MANUAL_INTERVENTION: Segunda CExecCommandActivity de Loan_Account_FL. Depende del exito de la primera.",
+                "type": "WebActivity",
+                "dependsOn": [{ "activity": "Exec_Cmd_Loan_Account_1", "dependencyConditions": ["Succeeded"] }],
+                "policy": { "timeout": "0.04:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": true, "secureInput": true },
+                "typeProperties": {
+                    "url": { "value": "@pipeline().parameters.AzureFunction_Bteq_Url", "type": "Expression" },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"operation\":\"ExecCmd\",\"Script\":\"', pipeline().parameters.Script_2, '\",\"PathShell\":\"', pipeline().parameters.PathShell, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"EDW_Agreement\":\"', pipeline().parameters.EDW_Agreement, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "Script_1": { "type": "String", "defaultValue": "Loan_Account_FL_Step1.sh", "description": "MANUAL_INTERVENTION: Verificar en DSX." },
+            "Script_2": { "type": "String", "defaultValue": "Loan_Account_FL_Step2.sh", "description": "MANUAL_INTERVENTION: Verificar en DSX." },
+            "PathShell": { "type": "String", "defaultValue": "" },
+            "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" },
+            "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "EDW_Agreement": { "type": "String", "defaultValue": "" },
+            "PathLog": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Bteq_Url": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/FLoad_LDM" },
+        "annotations": [
+            "ORIGEN_DS: Loan_Account_FL (2 x CExecCommandActivity)",
+            "MANUAL_INTERVENTION: Extraer nombres exactos de los 2 scripts del DSX original y actualizar Script_1 y Script_2."
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "name": "PL_External_Identification_Hist_Api",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Api (FastLoad directo) para External_Identification_Hist. DS: CSeqFileStage -> TeradataConnector (API/INSERT mode, NO BTEQ AfterSubr). Tablas destino: $EDW_Party.EXTERNAL_IDENTIFICATION_HIST. MANUAL_INTERVENTION: sin tabla tmp, insert directo en Teradata.",
+        "activities": [{
+            "name": "Exec_FastLoad_Api_ExtIdHist",
+            "description": "MANUAL_INTERVENTION: Modo API en DS = INSERT directo via JDBC/TeradataConnector sin FastLoad ni tmp table. En ADF: opcion 1 = ADF CopyActivity con Teradata sink (Self-hosted IR). Opcion 2 = Azure Function con insert batch. Verificar modo exacto en DSX.",
+            "type": "WebActivity",
+            "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": true, "secureInput": true },
+            "typeProperties": {
+                "url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                "method": "POST",
+                "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                "body": {
+                    "value": "@json(concat('{\"operation\":\"TeradataInsertApi\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FileName\":\"', pipeline().parameters.FileName, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Party\":\"', pipeline().parameters.EDW_Party, '\",\"TablaNombre\":\"EXTERNAL_IDENTIFICATION_HIST\",\"Tabla\":\"', pipeline().parameters.Tabla, '\"}'))",
+                    "type": "Expression"
+                }
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "" }, "FileName": { "type": "String", "defaultValue": "" },
+            "Tabla": { "type": "String", "defaultValue": "J139_MCF" }, "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" },
+            "EDW_Wrk": { "type": "String", "defaultValue": "" }, "EDW_Agreement": { "type": "String", "defaultValue": "" },
+            "EDW_Party": { "type": "String", "defaultValue": "", "description": "Schema Teradata EDW Party. DS: $EDW_Party" },
+            "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_FastLoad_Url": { "type": "String", "defaultValue": "" }, "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Api_Variants" },
+        "annotations": [
+            "ORIGEN_DS: External_Identification_Hist Api variant (CSeqFileStage -> TeradataConnector INSERT/API mode, NO FastLoad, NO BTEQ)",
+            "MANUAL_INTERVENTION: El modo API en DS TeradataConnector usa INSERT fila a fila o batch via JDBC. En ADF implementar como: (1) CopyActivity con Teradata sink (Self-hosted IR, schema $EDW_Party.EXTERNAL_IDENTIFICATION_HIST), o (2) Azure Function con batch INSERT. La tabla destino es la real (NO tmp). Validar schema EDW_Party."
+        ]
+    }
+}

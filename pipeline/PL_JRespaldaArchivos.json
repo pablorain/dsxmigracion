@@ -1,0 +1,46 @@
+{
+    "name": "PL_JRespaldaArchivos",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Respaldo de archivos. DS: CExecCommandActivity FileRespaldo (copia archivos a directorio de backup). ADF: CopyActivity ADLS -> ADLS (PathOutput -> PathBackup). No requiere Azure Function.",
+        "activities": [{
+            "name": "Copy_FileRespaldo",
+            "description": "Copia el archivo desde el directorio de procesamiento al directorio de backup. DS: FileRespaldo en DSX. ADF: CopyActivity ADLS to ADLS es equivalente nativo y no requiere Azure Function.",
+            "type": "Copy",
+            "dependsOn": [],
+            "policy": { "timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
+            "typeProperties": {
+                "source": {
+                    "type": "DelimitedTextSource",
+                    "storeSettings": {
+                        "type": "AzureDataLakeStoreReadSettings",
+                        "recursive": false,
+                        "wildcardFileName": { "value": "@pipeline().parameters.FilePattern", "type": "Expression" }
+                    }
+                },
+                "sink": {
+                    "type": "DelimitedTextSink",
+                    "storeSettings": {
+                        "type": "AzureDataLakeStoreWriteSettings",
+                        "copyBehavior": "PreserveHierarchy"
+                    }
+                },
+                "enableStaging": false
+            },
+            "inputs": [{ "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference", "parameters": { "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" }, "FileName": { "value": "@pipeline().parameters.FilePattern", "type": "Expression" }, "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" } } }],
+            "outputs": [{ "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference", "parameters": { "PathOutput": { "value": "@pipeline().parameters.PathBackup", "type": "Expression" }, "FileName": { "value": "@pipeline().parameters.FilePattern", "type": "Expression" }, "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" } } }]
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta origen del archivo. DS: $PathOutput" },
+            "PathBackup": { "type": "String", "defaultValue": "", "description": "Ruta destino del backup. DS: $PathBackup o similar." },
+            "FilePattern": { "type": "String", "defaultValue": "*", "description": "Patron de archivos a respaldar. MANUAL_INTERVENTION: verificar en DSX." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Utility" },
+        "annotations": [
+            "ORIGEN_DS: JRespaldaArchivos (CExecCommandActivity FileRespaldo)",
+            "NOTA: Unico pipeline de utilidad que NO necesita Azure Function. CopyActivity ADF es equivalente nativo directo del FileRespaldo de DataStage.",
+            "MANUAL_INTERVENTION: Confirmar PathBackup (ruta destino del backup) que en DS es un parametro de job o variable del secuenciador."
+        ]
+    }
+}

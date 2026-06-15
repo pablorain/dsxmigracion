@@ -1,0 +1,56 @@
+{
+    "name": "DS_ADLS_S139_FLoad_Input",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset generico de entrada para todos los jobs FLoad de S139_Transbk_Mcf. Patron DS: Seq_{Tabla} (CSeqFileStage) lee {PathOutput}{FileName}. Todos los FLoad jobs del DSX usan ColDelim='|', UnixFormat=1, UnicodeBOM=1. El parametro FileName se pasa desde el secuenciador padre con el nombre del archivo especifico (ej: J139_TRANSBK_MCF_CUENTAS_AGREEMENT.TXT).",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathOutput": {
+                "type": "String",
+                "description": "Ruta directorio en ADLS. DS: $PathOutput. Equivale a la carpeta de output donde el job extractor deposita el archivo."
+            },
+            "FileName": {
+                "type": "String",
+                "description": "Nombre del archivo a cargar. DS: #FileName# (parametro local). Ej: J139_TRANSBK_MCF_CUENTAS_AGREEMENT.TXT"
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "description": "Nombre del contenedor ADLS"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathOutput",
+                    "type": "Expression"
+                },
+                "fileName": {
+                    "value": "@dataset().FileName",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Todos los jobs CSeqFileStage del patron FLoad en S139_Transbk_Mcf",
+            "PATRON_DS: CSeqFileStage (read {PathOutput}{FileName}) -> TeradataConnector (FastLoad) + AfterSubr BTEQ (INSERT/UPDATE real table, DROP tmp table)",
+            "NOTA: AllowSchemaDrift=true porque cada job carga a una tabla Teradata distinta con schema propio. La validacion de schema ocurre en el BTEQ AfterSubr, no en ADF.",
+            "UNICODEBOM_DS: UnicodeBOM=1 en DataStage. Verificar si los archivos tienen BOM UTF-8 al migrarlos a ADLS.",
+            "COLDELIM_DS: Pipe '|' en DataStage. QuoteChar=000 (sin comillas). EnforceMetaData=0 (schema drift permitido)."
+        ]
+    }
+}

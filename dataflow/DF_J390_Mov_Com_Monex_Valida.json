@@ -1,0 +1,561 @@
+{
+    "name": "DF_J390_Mov_Com_Monex_Valida",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Data Flow Job 1 J390_Movimiento_Compra_Monex. Mapea los stages: Seq_Mov_Com_Monex (input) -> Trf_Traductor (traduccion moneda) -> Trf_Valida (reglas negocio, 7 lookups Teradata) -> 5 outputs. MANUAL_INTERVENTION: fncSev390MovComMonex (funcion custom DataStage) debe reimplementarse con logica ADF derivedColumn. BTEQ BeforeSubr se maneja en el pipeline padre PL_J390_Movimiento_Compra_Monex.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "SrcMovComMonex",
+                    "description": "Origen DS: Seq_Mov_Com_Monex (CSeqFileStage). Archivo: {PathExtract}/{NombreArchExtraccion}.{FechaArchExtraccion}. 21 columnas pipe-delimitadas.",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Input_Mov_Com_Monex",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SrcTraductor",
+                    "description": "Origen DS: Datos_EDW (TeradataConnector) link Lnk_Traductor -> Hsh_Consultas (CHashedFileStage). Tabla Teradata TRADUCTOR en schema $EDW_Finance. Se usa para traducir codigo moneda (mmx_mnd_ori) al Currency_Cd del EDW.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Currency_Cd, Currency_Cd_Source, Exchange_Rate FROM @{dataflow().EDW_Finance}.TRADUCTOR WHERE Source_Id = 390",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcEventActivityType",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_Event_Activity_Type. Tabla EVENT_ACTIVITY_TYPE en $EDW_Event.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Event_Activity_Type_Cd, Event_Activity_Type_Dsc FROM @{dataflow().EDW_Event}.EVENT_ACTIVITY_TYPE",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcEventLast",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_Event_Last. Tabla EVENT_LAST en $EDW_Event. Tambien se actualiza al final del job (Hsh_EventLast -> Seq_Event_Last).",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Event_Last_Id, Identifier_Id, Party_Id, Last_Event_Dt FROM @{dataflow().EDW_Event}.EVENT_LAST",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcEventPaymentType",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_Event_Payment_Type. Tabla EVENT_PAYMENT_TYPE en $EDW_Event.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Event_Payment_Type_Cd, Event_Payment_Type_Dsc FROM @{dataflow().EDW_Event}.EVENT_PAYMENT_TYPE",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcExtIdenHist",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_Ext_Iden_Hist. Tabla EXTERNAL_IDENTIFICATION_HIST join con TMP_MOVCOM_MONEX en $EDW_Wrk.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT h.Identifier_Id, h.Party_Id, t.cnv_idn, t.cmx_idn_prd FROM @{dataflow().EDW_Wrk}.TMP_MOVCOM_MONEX t JOIN @{dataflow().EDW_Event}.EXTERNAL_IDENTIFICATION_HIST h ON t.cnv_idn = h.External_Identifier_Nr AND t.cmx_idn_prd = h.Product_Id",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcBEPB",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_BEPB. Tabla BCI_ELECTRONIC_PAYMENT_BUTTON en $EDW_Agreement.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Agreement_Id, Bci_Electronic_Payment_Button_Cd FROM @{dataflow().EDW_Agreement}.BCI_ELECTRONIC_PAYMENT_BUTTON",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcCurrency",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_Currency. Tabla CURRENCY en $EDW_Finance.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Currency_Cd, Currency_Dsc FROM @{dataflow().EDW_Finance}.CURRENCY",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                {
+                    "name": "SrcBTT",
+                    "description": "Lookup DS: Datos_EDW -> Hsh_Datos link Lnk_BTT. Tabla BCI_TRANSACTION_TYPE_390 en $EDW_Event.",
+                    "linkedService": {
+                        "referenceName": "LS_Teradata_EDW",
+                        "type": "LinkedServiceReference"
+                    },
+                    "typeProperties": {
+                        "query": {
+                            "value": "SELECT Trx_Code_Cd, Trx_Code_Dsc, Event_Activity_Type_Cd, Event_Payment_Type_Cd FROM @{dataflow().EDW_Event}.BCI_TRANSACTION_TYPE_390",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "SinkEvent",
+                    "description": "Destino DS: Seq_Event link Lnk_Event. Registros validos (RuleSeveridad<>3). Archivo: {PathOutput}/{NombreJob}_EVENT.TXT",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_Event_J390",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SinkBciEventElectr",
+                    "description": "Destino DS: Seq_Event link Lnk_Bci_Event_Payment_Electronic. Archivo: {PathOutput}/{NombreJob}_BCI_EVENT_PAYMENT_ELECTR.TXT",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_BciEventElectr_J390",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SinkEventLast",
+                    "description": "Destino DS: Seq_Event_Last via Hsh_EventLast. Archivo: {PathOutput}/{NombreJob}_EVENT_LAST.TXT",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_EventLast_J390",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SinkSeveridad3",
+                    "description": "Destino DS: Seq_Severidad3 link Lnk_a_Severidad3. Registros con RuleSeveridad=3. Archivo: {PathRejected}/390_Movimiento_Compra_Monex_grd3.txt",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_Severidad_J390_Grd3",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SinkSeveridad2",
+                    "description": "Destino DS: Seq_Severidad3 link Lnk_a_Severidad2. Registros con RuleSeveridad=2. Archivo: {PathRejected}/390_Movimiento_Compra_Monex_grd2.txt",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_Severidad_J390_Grd2",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SinkNoProcesados",
+                    "description": "Destino DS: Seq_No_Procesados link Lnk_No_Procesados. Registros sin traduccion de moneda. Archivo: {PathUnproc}/390_MOVIMIENTO_MONEDA_SIN_TRADUCCION.TXT.{FechaArchExtraccion}",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Output_NoProcesados_J390",
+                        "type": "DatasetReference"
+                    }
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "LookupTraductor",
+                    "description": "DS: Trf_Traductor lookup en Hsh_Consultas. Join: mmx_mnd_ori = Currency_Cd_Source. Left outer join para separar registros sin traduccion."
+                },
+                {
+                    "name": "SplitTraduccion",
+                    "description": "DS: Trf_Traductor salida condicional. Condition1=traducido: !isNull(SrcTraductor@Currency_Cd). Condition2=noProcesados: isNull(SrcTraductor@Currency_Cd)."
+                },
+                {
+                    "name": "LookupExtIdenHist",
+                    "description": "DS: Hsh_Datos lookup EVENT/EXTERNAL_IDENTIFICATION_HIST. Join: cnv_idn+cmx_idn_prd. Obtiene Identifier_Id y Party_Id para funcion fncSev390MovComMonex."
+                },
+                {
+                    "name": "LookupBTT",
+                    "description": "DS: Hsh_Datos lookup BCI_TRANSACTION_TYPE_390. Join: mmx_trx = Trx_Code_Cd. Obtiene Event_Activity_Type_Cd, Event_Payment_Type_Cd."
+                },
+                {
+                    "name": "LookupEAT",
+                    "description": "DS: Hsh_Datos lookup EVENT_ACTIVITY_TYPE. Join: Trx_Code_Cd -> Event_Activity_Type_Cd."
+                },
+                {
+                    "name": "LookupEPT",
+                    "description": "DS: Hsh_Datos lookup EVENT_PAYMENT_TYPE. Join: Event_Payment_Type_Cd."
+                },
+                {
+                    "name": "LookupCurrency",
+                    "description": "DS: Hsh_Datos lookup CURRENCY. Join: mmx_mnd_ori = Currency_Cd."
+                },
+                {
+                    "name": "LookupBEPB",
+                    "description": "DS: Hsh_Datos lookup BCI_ELECTRONIC_PAYMENT_BUTTON. Join: cmx_frm_prd = Agreement_Id."
+                },
+                {
+                    "name": "LookupEventLast",
+                    "description": "DS: Hsh_Datos lookup EVENT_LAST. Join: Identifier_Id + Party_Id. Verifica si ya existe un evento previo."
+                },
+                {
+                    "name": "DeriveReglasSeveridad",
+                    "description": "DS: Trf_Valida (CTransformerStage). MANUAL_INTERVENTION: Reimplementar logica de fncSev390MovComMonex(Identifier_Id, Party_Id, Currency_Cd, Trx_Code_Cd). La funcion DataStage custom no existe en ADF. Analizar codigo de la rutina en el repositorio DataStage y traducir a expresiones ADF. StageVars DS: RuleSeveridad (acumulador max severity), Error_Regla (string concatenation de errores), RuleCountEntries (@INROWNUM), RuleCountCargadas (contador validos), RuleCountRechazadas (contador rechazados)."
+                },
+                {
+                    "name": "SplitSeveridad",
+                    "description": "DS: Trf_Valida salida condicional segun RuleSeveridad. condition_valid: RuleSeveridad <> 3 (para SinkEvent y SinkBciEventElectr y SinkEventLast). condition_grd3: RuleSeveridad == 3 (para SinkSeveridad3). condition_grd2: RuleSeveridad == 2 (para SinkSeveridad2). NOTA: En DS el link Lnk_a_Severidad2 recibe registros con severity=2 Y el link Lnk_a_Severidad3 recibe severity=3. Ambos van al mismo stage Seq_Severidad3 pero a salidas de archivo distintas."
+                }
+            ],
+            "scriptLines": [
+                "parameters{",
+                "     EDW_Event as string,",
+                "     EDW_Finance as string,",
+                "     EDW_Agreement as string,",
+                "     EDW_Party as string,",
+                "     EDW_Wrk as string,",
+                "     Teradata_EDW_DSN as string,",
+                "     AKV_BaseUrl as string",
+                "}",
+                "source(output(",
+                "          cnv_idn as string,",
+                "          mmx_srl as string,",
+                "          mmx_trx as string,",
+                "          mmx_idc as string,",
+                "          mmx_dig_vrf as string,",
+                "          mmx_cta_car as string,",
+                "          mmx_mto as string,",
+                "          mmx_fec_pag as string,",
+                "          mmx_fec_est_cua as string,",
+                "          mmx_mnd_ori as string,",
+                "          mmx_tip_cam as string,",
+                "          mmx_cod_err as string,",
+                "          mmx_fec_pro_rec as string,",
+                "          cmx_idn_prd as string,",
+                "          cmx_cnt as string,",
+                "          cmx_prc as string,",
+                "          cmx_fec_cmp as string,",
+                "          cmx_frm_prd as string,",
+                "          cmx_num_fol as string,",
+                "          cmx_fec_vct as string,",
+                "          cmx_dsc_prd as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> SrcMovComMonex",
+                "source(output(",
+                "          Currency_Cd as string,",
+                "          Currency_Cd_Source as string,",
+                "          Exchange_Rate as decimal(18,4)",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcTraductor",
+                "source(output(",
+                "          Event_Activity_Type_Cd as string,",
+                "          Event_Activity_Type_Dsc as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcEventActivityType",
+                "source(output(",
+                "          Event_Last_Id as long,",
+                "          Identifier_Id as long,",
+                "          Party_Id as long,",
+                "          Last_Event_Dt as timestamp",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcEventLast",
+                "source(output(",
+                "          Event_Payment_Type_Cd as string,",
+                "          Event_Payment_Type_Dsc as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcEventPaymentType",
+                "source(output(",
+                "          Identifier_Id as long,",
+                "          Party_Id as long,",
+                "          cnv_idn as string,",
+                "          cmx_idn_prd as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcExtIdenHist",
+                "source(output(",
+                "          Agreement_Id as long,",
+                "          Bci_Electronic_Payment_Button_Cd as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcBEPB",
+                "source(output(",
+                "          Currency_Cd as string,",
+                "          Currency_Dsc as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcCurrency",
+                "source(output(",
+                "          Trx_Code_Cd as string,",
+                "          Trx_Code_Dsc as string,",
+                "          Event_Activity_Type_Cd as string,",
+                "          Event_Payment_Type_Cd as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'cache',",
+                "     format: 'inline',",
+                "     isReserved: false) ~> SrcBTT",
+                "SrcMovComMonex, SrcTraductor lookup(mmx_mnd_ori == SrcTraductor@Currency_Cd_Source,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupTraductor",
+                "LookupTraductor split(!isNull(SrcTraductor@Currency_Cd),",
+                "     isNull(SrcTraductor@Currency_Cd),",
+                "     disjoint: true) ~> SplitTraduccion@(StreamTraducido, StreamNoProcesados)",
+                "StreamTraducido, SrcExtIdenHist lookup(cnv_idn == SrcExtIdenHist@cnv_idn",
+                "     && cmx_idn_prd == SrcExtIdenHist@cmx_idn_prd,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupExtIdenHist",
+                "LookupExtIdenHist, SrcBTT lookup(mmx_trx == SrcBTT@Trx_Code_Cd,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupBTT",
+                "LookupBTT, SrcEAT lookup(SrcBTT@Event_Activity_Type_Cd == SrcEAT@Event_Activity_Type_Cd,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupEAT",
+                "LookupEAT, SrcEventPaymentType lookup(SrcBTT@Event_Payment_Type_Cd == SrcEventPaymentType@Event_Payment_Type_Cd,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupEPT",
+                "LookupEPT, SrcCurrency lookup(mmx_mnd_ori == SrcCurrency@Currency_Cd,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupCurrency",
+                "LookupCurrency, SrcBEPB lookup(toInteger(cmx_frm_prd) == SrcBEPB@Agreement_Id,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupBEPB",
+                "LookupBEPB, SrcEventLast lookup(SrcExtIdenHist@Identifier_Id == SrcEventLast@Identifier_Id",
+                "     && SrcExtIdenHist@Party_Id == SrcEventLast@Party_Id,",
+                "     multiple: false,",
+                "     pickup: 'any',",
+                "     broadcast: 'auto') ~> LookupEventLast",
+                "LookupEventLast derive(",
+                "          Identifier_Id = SrcExtIdenHist@Identifier_Id,",
+                "          Party_Id = SrcExtIdenHist@Party_Id,",
+                "          Currency_Cd = SrcTraductor@Currency_Cd,",
+                "          Trx_Code_Cd = mmx_trx,",
+                "          Exchange_Rate = SrcTraductor@Exchange_Rate,",
+                "          Amount = toDecimal(mmx_mto, 18, 4),",
+                "          Payment_Dt = toTimestamp(mmx_fec_pag, 'yyyy-MM-dd HH:mm:ss.SSSSSS'),",
+                "          Event_Activity_Type_Cd = SrcBTT@Event_Activity_Type_Cd,",
+                "          Event_Payment_Type_Cd = SrcBTT@Event_Payment_Type_Cd,",
+                "          Bci_Electronic_Payment_Button_Cd = SrcBEPB@Bci_Electronic_Payment_Button_Cd,",
+                "          Event_Last_Id = SrcEventLast@Event_Last_Id,",
+                "          RuleSeveridad = 0,",
+                "          Error_Regla = '') ~> DeriveMapeoColumnas",
+                "/*",
+                " * MANUAL_INTERVENTION: La linea siguiente es un PLACEHOLDER.",
+                " * En DataStage la funcion custom fncSev390MovComMonex(Identifier_Id, Party_Id, Currency_Cd, Trx_Code_Cd)",
+                " * determina la severidad y el Error_Regla de cada registro aplicando reglas de negocio.",
+                " * Pasos requeridos:",
+                " * 1. Obtener el codigo fuente de fncSev390MovComMonex desde el repositorio DataStage.",
+                " * 2. Analizar la logica condicional que produce severity 1, 2 o 3.",
+                " * 3. Reimplementar cada regla como expresion en la transformacion DeriveReglasSeveridad.",
+                " * Ejemplo de estructura esperada (adaptar al codigo real):",
+                " *   RuleSeveridad = iif(isNull(Identifier_Id), 3,",
+                " *                   iif(isNull(Currency_Cd), 2,",
+                " *                   iif(isNull(Trx_Code_Cd) || isNull(Event_Activity_Type_Cd), 3, 0)))",
+                " * La expresion debe actualizar tambien Error_Regla con la descripcion del error.",
+                " */",
+                "DeriveMapeoColumnas derive(",
+                "          RuleSeveridad = iif(isNull(Identifier_Id), 3, iif(isNull(Currency_Cd), 2, 0)),",
+                "          Error_Regla = iif(isNull(Identifier_Id), 'IDENTIFIER_ID_NULO',",
+                "               iif(isNull(Currency_Cd), 'CURRENCY_CD_NULO', ''))) ~> DeriveReglasSeveridad",
+                "DeriveReglasSeveridad split(RuleSeveridad == 0 || RuleSeveridad == 1,",
+                "     RuleSeveridad == 3,",
+                "     RuleSeveridad == 2,",
+                "     disjoint: false) ~> SplitSeveridad@(StreamValidos, StreamSeveridad3, StreamSeveridad2)",
+                "StreamNoProcesados sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          cnv_idn as string,",
+                "          mmx_mnd_ori as string",
+                "     ),",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: false,",
+                "     mapColumn(",
+                "          each(match(true()))",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkNoProcesados",
+                "StreamValidos sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: false,",
+                "     mapColumn(",
+                "          Identifier_Id,",
+                "          Party_Id,",
+                "          Currency_Cd,",
+                "          Trx_Code_Cd,",
+                "          Amount,",
+                "          Payment_Dt,",
+                "          Event_Activity_Type_Cd,",
+                "          Event_Payment_Type_Cd,",
+                "          mmx_srl,",
+                "          mmx_idc,",
+                "          mmx_cta_car,",
+                "          mmx_tip_cam,",
+                "          mmx_fec_est_cua,",
+                "          mmx_fec_pro_rec",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkEvent",
+                "StreamValidos sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: false,",
+                "     mapColumn(",
+                "          Identifier_Id,",
+                "          Party_Id,",
+                "          Bci_Electronic_Payment_Button_Cd,",
+                "          Amount,",
+                "          Payment_Dt,",
+                "          cmx_cnt,",
+                "          cmx_prc,",
+                "          cmx_frm_prd,",
+                "          cmx_num_fol,",
+                "          cmx_fec_vct,",
+                "          cmx_dsc_prd",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkBciEventElectr",
+                "StreamValidos sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: true,",
+                "     mapColumn(",
+                "          Event_Last_Id,",
+                "          Identifier_Id,",
+                "          Party_Id,",
+                "          Payment_Dt",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkEventLast",
+                "StreamSeveridad3 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: false,",
+                "     mapColumn(",
+                "          each(match(true()))",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkSeveridad3",
+                "StreamSeveridad2 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     deletable: false,",
+                "     insertable: true,",
+                "     updateable: false,",
+                "     upsertable: false,",
+                "     truncate: false,",
+                "     mapColumn(",
+                "          each(match(true()))",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkSeveridad2"
+            ],
+            "parameters": {
+                "EDW_Event": {
+                    "type": "string",
+                    "description": "Schema/database Teradata EVENT. DS: $EDW_Event"
+                },
+                "EDW_Finance": {
+                    "type": "string",
+                    "description": "Schema/database Teradata FINANCE (TRADUCTOR, CURRENCY). DS: $EDW_Finance"
+                },
+                "EDW_Agreement": {
+                    "type": "string",
+                    "description": "Schema/database Teradata AGREEMENT (BEPB). DS: $EDW_Agreement"
+                },
+                "EDW_Party": {
+                    "type": "string",
+                    "description": "Schema/database Teradata PARTY. DS: $EDW_Party"
+                },
+                "EDW_Wrk": {
+                    "type": "string",
+                    "description": "Schema/database Teradata WORK (TMP_MOVCOM_MONEX). DS: $EDW_Wrk"
+                },
+                "Teradata_EDW_DSN": {
+                    "type": "string",
+                    "description": "DSN Teradata. DS: $Teradata_EDW_DSN"
+                },
+                "AKV_BaseUrl": {
+                    "type": "string",
+                    "description": "URL Azure Key Vault"
+                }
+            }
+        },
+        "folder": {
+            "name": "J390_Movimiento_Compra_Monex"
+        },
+        "annotations": [
+            "ORIGEN_DS: J390_Movimiento_Compra_Monex (JobType=0 Server Job)",
+            "STAGES_DS: Seq_Mov_Com_Monex -> Trf_Traductor -> Trf_Valida -> [Seq_Event, Seq_Severidad3, Seq_Event_Last, Seq_No_Procesados]",
+            "LOOKUPS_DS: 7 tablas Teradata via Datos_EDW (TeradataConnector) -> Hsh_Datos (CHashedFileStage in-memory). Implementadas como cache sources en ADF.",
+            "MANUAL_INTERVENTION_1: fncSev390MovComMonex — funcion custom DataStage no existe en ADF. Ver DeriveReglasSeveridad. Obtener codigo fuente de la rutina y reimplementar con expresiones ADF derivedColumn.",
+            "MANUAL_INTERVENTION_2: Hsh_EventLast acumula el ultimo evento por Identifier_Id+Party_Id. En ADF SinkEventLast usa truncate=true y recibe stream StreamValidos. Verificar si la semantica es correcta (DS podia hacer lookup Y escritura en el mismo hashed file; ADF los separa).",
+            "MANUAL_INTERVENTION_3: SrcExtIdenHist incluye un JOIN con TMP_MOVCOM_MONEX. Esta tabla temporal debe estar pre-populada antes de ejecutar el data flow. Confirmar que el job padre o un paso previo cargue TMP_MOVCOM_MONEX.",
+            "BTEQ_BEFORESUBR: Bteq_Event_Bloquea.sh #$Teradata_EDW_DSN#/#$Teradata_EDW_User_Grupo1#,#$Teradata_EDW_PWD_Grupo1# #$EDW_Event_Bel# #$PathLog# J390_Mov_Cmp Fase_4 — manejado en PL_J390_Movimiento_Compra_Monex como WebActivity."
+        ]
+    }
+}

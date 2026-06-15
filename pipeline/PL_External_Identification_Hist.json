@@ -1,0 +1,140 @@
+{
+    "name": "PL_External_Identification_Hist",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Routing pipeline para External_Identification_Hist. DS: fncEvaluaCargaTeradata evalua el tamano del archivo y decide API/MLOAD/TPUMP. ADF: GetMetadata (file size) -> SetVariable (ruta) -> IfCondition_Api -> IfCondition_Mload/Tpump. MANUAL_INTERVENTION: los umbrales API_Threshold y MLOAD_Threshold deben obtenerse del codigo fuente de fncEvaluaCargaTeradata.",
+        "activities": [
+            {
+                "name": "Get_FileSize_ExtIdHist",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": { "timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DS_ADLS_S139_FLoad_Input",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                            "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                            "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                        }
+                    },
+                    "fieldList": ["size"]
+                }
+            },
+            {
+                "name": "Set_LoadRoute_ExtIdHist",
+                "description": "MANUAL_INTERVENTION: Los valores de API_Threshold y MLOAD_Threshold deben extraerse de fncEvaluaCargaTeradata. Ajustar defaultValues de los parametros API_Threshold y MLOAD_Threshold.",
+                "type": "SetVariable",
+                "dependsOn": [{ "activity": "Get_FileSize_ExtIdHist", "dependencyConditions": ["Succeeded"] }],
+                "typeProperties": {
+                    "variableName": "LoadRoute",
+                    "value": {
+                        "value": "@if(lessOrEquals(int(string(activity('Get_FileSize_ExtIdHist').output.size)), int(pipeline().parameters.API_Threshold)), 'API', if(lessOrEquals(int(string(activity('Get_FileSize_ExtIdHist').output.size)), int(pipeline().parameters.MLOAD_Threshold)), 'MLOAD', 'TPUMP'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "If_Api_ExtIdHist",
+                "type": "IfCondition",
+                "dependsOn": [{ "activity": "Set_LoadRoute_ExtIdHist", "dependencyConditions": ["Succeeded"] }],
+                "typeProperties": {
+                    "expression": { "value": "@equals(variables('LoadRoute'), 'API')", "type": "Expression" },
+                    "ifTrueActivities": [{
+                        "name": "Exec_ExtIdHist_Api",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "typeProperties": {
+                            "pipeline": { "referenceName": "PL_External_Identification_Hist_Api", "type": "PipelineReference" },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                                "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                                "Tabla": { "value": "@pipeline().parameters.Tabla", "type": "Expression" },
+                                "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                                "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                                "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                                "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                                "AzureFunction_FastLoad_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                                "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                            }
+                        }
+                    }],
+                    "ifFalseActivities": [{
+                        "name": "If_Mload_ExtIdHist",
+                        "type": "IfCondition",
+                        "dependsOn": [],
+                        "typeProperties": {
+                            "expression": { "value": "@equals(variables('LoadRoute'), 'MLOAD')", "type": "Expression" },
+                            "ifTrueActivities": [{
+                                "name": "Exec_ExtIdHist_Mload",
+                                "type": "ExecutePipeline",
+                                "dependsOn": [],
+                                "typeProperties": {
+                                    "pipeline": { "referenceName": "PL_External_Identification_Hist_Mload", "type": "PipelineReference" },
+                                    "waitOnCompletion": true,
+                                    "parameters": {
+                                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                                        "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                                        "PathShell": { "value": "@pipeline().parameters.PathShell", "type": "Expression" },
+                                        "PathLog": { "value": "@pipeline().parameters.PathLog", "type": "Expression" },
+                                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                                        "AzureFunction_Bteq_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                                        "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                                    }
+                                }
+                            }],
+                            "ifFalseActivities": [{
+                                "name": "Exec_ExtIdHist_Tpump",
+                                "type": "ExecutePipeline",
+                                "dependsOn": [],
+                                "typeProperties": {
+                                    "pipeline": { "referenceName": "PL_External_Identification_Hist_Tpump", "type": "PipelineReference" },
+                                    "waitOnCompletion": true,
+                                    "parameters": {
+                                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                                        "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                                        "PathShell": { "value": "@pipeline().parameters.PathShell", "type": "Expression" },
+                                        "PathLog": { "value": "@pipeline().parameters.PathLog", "type": "Expression" },
+                                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                                        "AzureFunction_Bteq_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                                        "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                                    }
+                                }
+                            }]
+                        }
+                    }]
+                }
+            }
+        ],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "" },
+            "FileName": { "type": "String", "defaultValue": "" },
+            "Tabla": { "type": "String", "defaultValue": "J139_MCF" },
+            "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" },
+            "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "EDW_Agreement": { "type": "String", "defaultValue": "" },
+            "PathShell": { "type": "String", "defaultValue": "" },
+            "PathLog": { "type": "String", "defaultValue": "" },
+            "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_FastLoad_Url": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Key": { "type": "String", "defaultValue": "" },
+            "API_Threshold": { "type": "String", "defaultValue": "0", "description": "MANUAL_INTERVENTION: Umbral bytes (<=) para usar API (FastLoad directo). Extraer de fncEvaluaCargaTeradata." },
+            "MLOAD_Threshold": { "type": "String", "defaultValue": "0", "description": "MANUAL_INTERVENTION: Umbral bytes (<=) para usar MLOAD vs TPUMP. Extraer de fncEvaluaCargaTeradata." }
+        },
+        "variables": { "LoadRoute": { "type": "String", "defaultValue": "TPUMP" } },
+        "folder": { "name": "S139_Transbk_Mcf/Load_Routing" },
+        "annotations": [
+            "ORIGEN_DS: External_Identification_Hist con fncEvaluaCargaTeradata (routing API/MLOAD/TPUMP)",
+            "MANUAL_INTERVENTION: Los umbrales API_Threshold y MLOAD_Threshold se calculan en la funcion custom fncEvaluaCargaTeradata de DataStage. Obtener el codigo fuente de la funcion BASIC/UniVerse, extraer los umbrales en bytes y configurarlos como valores de los parametros de este pipeline.",
+            "MANUAL_INTERVENTION: Verificar que los sub-pipelines PL_External_Identification_Hist_Api, PL_External_Identification_Hist_Mload y PL_External_Identification_Hist_Tpump aceptan los mismos parametros que se pasan aqui."
+        ]
+    }
+}

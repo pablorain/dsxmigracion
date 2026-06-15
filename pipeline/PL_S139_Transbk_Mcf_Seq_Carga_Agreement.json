@@ -1,0 +1,131 @@
+{
+    "name": "PL_S139_Transbk_Mcf_Seq_Carga_Agreement",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Secuenciador Carga Agreement. DS: S139 JobSequencer Carga_Agreement. Orden: (1) Agreement_FLoad, (2) Agreement_Update_MCF_FLoad, (3) EDW_Agreement (hash). Patron DS: DSCheckPointExists/SetValue para checkpoint. ADF: SetVariable checkpoint despues de cada etapa exitosa.",
+        "activities": [
+            {
+                "name": "Exec_Agreement_FLoad",
+                "description": "Paso 1: Cargar datos de Agreement via FastLoad. DS: Job Agreement_FLoad en secuenciador.",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": { "secureInput": false },
+                "typeProperties": {
+                    "pipeline": { "referenceName": "PL_Agreement_FLoad", "type": "PipelineReference" },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                        "FileName": { "value": "@pipeline().parameters.FileName_Agreement", "type": "Expression" },
+                        "Tabla": { "value": "@pipeline().parameters.Tabla", "type": "Expression" },
+                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                        "PathLog": { "value": "@pipeline().parameters.PathLog", "type": "Expression" },
+                        "PathShell": { "value": "@pipeline().parameters.PathShell", "type": "Expression" },
+                        "TD_FL_CheckPoint": { "value": "@pipeline().parameters.TD_FL_CheckPoint", "type": "Expression" },
+                        "TD_FL_ErrorLimit": { "value": "@pipeline().parameters.TD_FL_ErrorLimit", "type": "Expression" },
+                        "TD_FL_Session_Max": { "value": "@pipeline().parameters.TD_FL_Session_Max", "type": "Expression" },
+                        "TD_FL_Session_Min": { "value": "@pipeline().parameters.TD_FL_Session_Min", "type": "Expression" },
+                        "TD_FL_Sleep": { "value": "@pipeline().parameters.TD_FL_Sleep", "type": "Expression" },
+                        "TD_FL_Tenacity": { "value": "@pipeline().parameters.TD_FL_Tenacity", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                        "AzureFunction_FastLoad_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                        "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                    }
+                }
+            },
+            {
+                "name": "Checkpoint_After_Agreement_FLoad",
+                "description": "DS: DSSetCheckPointValue('Agreement_FLoad'). ADF: SetVariable con timestamp para registro de checkpoint.",
+                "type": "SetVariable",
+                "dependsOn": [{ "activity": "Exec_Agreement_FLoad", "dependencyConditions": ["Succeeded"] }],
+                "typeProperties": { "variableName": "Checkpoint_Agreement_FLoad", "value": { "value": "@utcNow()", "type": "Expression" } }
+            },
+            {
+                "name": "Exec_Agreement_Update_MCF_FLoad",
+                "description": "Paso 2: Actualizar datos Agreement MCF via FastLoad.",
+                "type": "ExecutePipeline",
+                "dependsOn": [{ "activity": "Checkpoint_After_Agreement_FLoad", "dependencyConditions": ["Succeeded"] }],
+                "policy": { "secureInput": false },
+                "typeProperties": {
+                    "pipeline": { "referenceName": "PL_Agreement_Update_MCF_FLoad", "type": "PipelineReference" },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                        "FileName": { "value": "@pipeline().parameters.FileName_Agreement_Update", "type": "Expression" },
+                        "Tabla": { "value": "@pipeline().parameters.Tabla", "type": "Expression" },
+                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                        "PathLog": { "value": "@pipeline().parameters.PathLog", "type": "Expression" },
+                        "PathShell": { "value": "@pipeline().parameters.PathShell", "type": "Expression" },
+                        "TD_FL_CheckPoint": { "value": "@pipeline().parameters.TD_FL_CheckPoint", "type": "Expression" },
+                        "TD_FL_ErrorLimit": { "value": "@pipeline().parameters.TD_FL_ErrorLimit", "type": "Expression" },
+                        "TD_FL_Session_Max": { "value": "@pipeline().parameters.TD_FL_Session_Max", "type": "Expression" },
+                        "TD_FL_Session_Min": { "value": "@pipeline().parameters.TD_FL_Session_Min", "type": "Expression" },
+                        "TD_FL_Sleep": { "value": "@pipeline().parameters.TD_FL_Sleep", "type": "Expression" },
+                        "TD_FL_Tenacity": { "value": "@pipeline().parameters.TD_FL_Tenacity", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                        "AzureFunction_FastLoad_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                        "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                    }
+                }
+            },
+            {
+                "name": "Checkpoint_After_Agreement_Update",
+                "type": "SetVariable",
+                "dependsOn": [{ "activity": "Exec_Agreement_Update_MCF_FLoad", "dependencyConditions": ["Succeeded"] }],
+                "typeProperties": { "variableName": "Checkpoint_Agreement_Update", "value": { "value": "@utcNow()", "type": "Expression" } }
+            },
+            {
+                "name": "Exec_EDW_Agreement_Hash",
+                "description": "Paso 3: Construir hash file EDW_Agreement post-carga.",
+                "type": "ExecutePipeline",
+                "dependsOn": [{ "activity": "Checkpoint_After_Agreement_Update", "dependencyConditions": ["Succeeded"] }],
+                "policy": { "secureInput": false },
+                "typeProperties": {
+                    "pipeline": { "referenceName": "PL_EDW_Agreement", "type": "PipelineReference" },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                        "FileName": { "value": "@pipeline().parameters.FileName_Agreement", "type": "Expression" },
+                        "PathHash": { "value": "@pipeline().parameters.PathHash_Agreement", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                    }
+                }
+            },
+            {
+                "name": "Checkpoint_Final",
+                "type": "SetVariable",
+                "dependsOn": [{ "activity": "Exec_EDW_Agreement_Hash", "dependencyConditions": ["Succeeded"] }],
+                "typeProperties": { "variableName": "Checkpoint_Final", "value": { "value": "@utcNow()", "type": "Expression" } }
+            }
+        ],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "" },
+            "FileName_Agreement": { "type": "String", "defaultValue": "J139_TRANSBK_MCF_CUENTAS_AGREEMENT.TXT" },
+            "FileName_Agreement_Update": { "type": "String", "defaultValue": "J139_TRANSBK_MCF_CUENTAS_AGREEMENT_UPDATE.TXT" },
+            "Tabla": { "type": "String", "defaultValue": "J139_MCF" },
+            "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" }, "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "EDW_Agreement": { "type": "String", "defaultValue": "" }, "PathLog": { "type": "String", "defaultValue": "" },
+            "PathShell": { "type": "String", "defaultValue": "" }, "PathHash_Agreement": { "type": "String", "defaultValue": "" },
+            "TD_FL_CheckPoint": { "type": "String", "defaultValue": "" }, "TD_FL_ErrorLimit": { "type": "String", "defaultValue": "" },
+            "TD_FL_Session_Max": { "type": "String", "defaultValue": "" }, "TD_FL_Session_Min": { "type": "String", "defaultValue": "" },
+            "TD_FL_Sleep": { "type": "String", "defaultValue": "" }, "TD_FL_Tenacity": { "type": "String", "defaultValue": "" },
+            "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_FastLoad_Url": { "type": "String", "defaultValue": "" }, "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "variables": {
+            "Checkpoint_Agreement_FLoad": { "type": "String", "defaultValue": "" },
+            "Checkpoint_Agreement_Update": { "type": "String", "defaultValue": "" },
+            "Checkpoint_Final": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Sequencers" },
+        "annotations": [
+            "ORIGEN_DS: S139 JobSequencer Seq_Carga_Agreement",
+            "ORDEN_DS: (1) Agreement_FLoad -> (2) Agreement_Update_MCF_FLoad -> (3) EDW_Agreement hash",
+            "CHECKPOINT_DS: DSCheckPointExists/SetValue en DS se mapea como SetVariable timestamp despues de cada etapa exitosa en ADF.",
+            "NOTA: Si un paso falla, ADF detiene la ejecucion (dependencyConditions=Succeeded). Para retomar desde un checkpoint, relanzar el pipeline con parametros de inicio especificos o implementar logica de checkpoint en el pipeline padre S139 principal."
+        ]
+    }
+}

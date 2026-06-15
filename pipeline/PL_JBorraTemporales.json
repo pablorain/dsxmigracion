@@ -1,0 +1,49 @@
+{
+    "name": "PL_JBorraTemporales",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Borrado de archivos temporales. DS: BeforeSubr fncCreaArchivoVacio (crea archivos vacios) + CExecCommandActivity FileDelete. ADF: 2 WebActivity (1: FileDelete via Azure Function, 2: placeholder para fncCreaArchivoVacio). MANUAL_INTERVENTION: fncCreaArchivoVacio es rutina custom DS.",
+        "activities": [
+            {
+                "name": "Exec_CreaArchivoVacio",
+                "description": "MANUAL_INTERVENTION: BeforeSubr fncCreaArchivoVacio en DS crea archivos vacios como placeholders antes de ejecutar el job. Es una rutina BASIC/UniVerse custom. En ADF: implementar como WebActivity a Azure Function que cree archivos vacios en ADLS (por ejemplo usando la API de ADLS para crear blobs vacios).",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": { "timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+                "typeProperties": {
+                    "url": { "value": "@pipeline().parameters.AzureFunction_Url", "type": "Expression" },
+                    "method": "POST",
+                    "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                    "body": { "value": "@json(concat('{\"operation\":\"CreaArchivoVacio\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"ADLS_Container\":\"', pipeline().parameters.ADLS_Container, '\"}'))", "type": "Expression" }
+                }
+            },
+            {
+                "name": "Exec_FileDelete",
+                "description": "MANUAL_INTERVENTION: CExecCommandActivity en DS ejecuta FileDelete (borrado de archivos temporales en filesystem DataStage). En ADF: WebActivity a Azure Function que elimina archivos en ADLS (llamada a ADLS API delete). Alternativa: usar ADF Delete activity nativo si los archivos son del mismo contenedor.",
+                "type": "WebActivity",
+                "dependsOn": [{ "activity": "Exec_CreaArchivoVacio", "dependencyConditions": ["Succeeded"] }],
+                "policy": { "timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+                "typeProperties": {
+                    "url": { "value": "@pipeline().parameters.AzureFunction_Url", "type": "Expression" },
+                    "method": "POST",
+                    "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                    "body": { "value": "@json(concat('{\"operation\":\"FileDelete\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FilePattern\":\"', pipeline().parameters.FilePattern, '\",\"ADLS_Container\":\"', pipeline().parameters.ADLS_Container, '\"}'))", "type": "Expression" }
+                }
+            }
+        ],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta ADLS de archivos temporales a borrar. DS: $PathOutput" },
+            "FilePattern": { "type": "String", "defaultValue": "*_TMP.*", "description": "Patron de archivos a borrar. MANUAL_INTERVENTION: ajustar segun logica de fncCreaArchivoVacio en DSX." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Url": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Utility" },
+        "annotations": [
+            "ORIGEN_DS: JBorraTemporales (BeforeSubr fncCreaArchivoVacio + CExecCommandActivity FileDelete)",
+            "MANUAL_INTERVENTION: fncCreaArchivoVacio es rutina BASIC/UniVerse custom. Obtener codigo fuente, entender que archivos crea y replicar en Azure Function.",
+            "MANUAL_INTERVENTION: El borrado de archivos en DS actua sobre el filesystem del servidor DataStage. En ADF los archivos estan en ADLS. Implementar Delete via ADLS REST API en Azure Function, o usar la actividad Delete nativa de ADF (tipo 'Delete') si los archivos estan en ADLS.",
+            "ALTERNATIVA_ADF: Usar actividad Delete nativa de ADF (type: Delete) con dataset DS_ADLS_S139_FLoad_Input parametrizado con el patron de archivos. No requiere Azure Function para este paso."
+        ]
+    }
+}

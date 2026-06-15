@@ -1,0 +1,32 @@
+{
+    "name": "PL_J139_Transbk_Mcf_Cuentas",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline transformacion Cuentas J139. DS: J139_Transbk_Mcf_Cuentas (Pivot+Collector). ADF: ExecuteDataFlow DF_J139_Transbk_Mcf_Cuentas. MANUAL_INTERVENTION: DataFlow con Pivot stages requiere mapeo desde DSX.",
+        "activities": [{
+            "name": "Exec_DF_Cuentas",
+            "description": "MANUAL_INTERVENTION: Ejecuta el DataFlow de Cuentas (Pivot+Collector). Ver anotaciones en DF_J139_Transbk_Mcf_Cuentas.",
+            "type": "ExecuteDataFlow",
+            "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+            "typeProperties": {
+                "dataflow": { "referenceName": "DF_J139_Transbk_Mcf_Cuentas", "type": "DataFlowReference",
+                    "parameters": {
+                        "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                        "PathInput": { "value": "@pipeline().parameters.PathInput", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                    }
+                },
+                "compute": { "coreCount": 8, "computeType": "General" },
+                "traceLevel": "Fine"
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta ADLS de salida de cuentas transformadas." },
+            "PathInput": { "type": "String", "defaultValue": "", "description": "Ruta ADLS de archivos de entrada (generados por J139_Extraccion)." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": ["ORIGEN_DS: J139_Transbk_Mcf_Cuentas (Pivot+CCollector)", "MANUAL_INTERVENTION: Completar DF_J139_Transbk_Mcf_Cuentas con mapeo de Pivot stages desde DSX original."]
+    }
+}

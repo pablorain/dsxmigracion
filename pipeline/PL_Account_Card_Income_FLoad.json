@@ -1,0 +1,52 @@
+{
+    "name": "PL_Account_Card_Income_FLoad",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "FLoad Account_Card_Income. DS: Seq_Account_Card_Income -> TeradataConnector FastLoad -> AfterSubr Bteq_Account_Card_Income.sh. Tabla: $EDW_Agreement.ACCOUNT_CARD_INCOME. Tmp: ACCOUNT_CARD_INCOME_{Tabla}.",
+        "activities": [{
+            "name": "Exec_FLoad_Account_Card_Income",
+            "type": "ExecutePipeline",
+            "dependsOn": [],
+            "policy": { "secureInput": false },
+            "typeProperties": {
+                "pipeline": { "referenceName": "PL_S139_Generic_FLoad_Bteq", "type": "PipelineReference" },
+                "waitOnCompletion": true,
+                "parameters": {
+                    "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                    "FileName": { "value": "@pipeline().parameters.FileName", "type": "Expression" },
+                    "TablaNombre": "ACCOUNT_CARD_INCOME",
+                    "BteqScript": "Bteq_Account_Card_Income.sh",
+                    "Tabla": { "value": "@pipeline().parameters.Tabla", "type": "Expression" },
+                    "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                    "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                    "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                    "PathLog": { "value": "@pipeline().parameters.PathLog", "type": "Expression" },
+                    "PathShell": { "value": "@pipeline().parameters.PathShell", "type": "Expression" },
+                    "TD_FL_CheckPoint": { "value": "@pipeline().parameters.TD_FL_CheckPoint", "type": "Expression" },
+                    "TD_FL_ErrorLimit": { "value": "@pipeline().parameters.TD_FL_ErrorLimit", "type": "Expression" },
+                    "TD_FL_Session_Max": { "value": "@pipeline().parameters.TD_FL_Session_Max", "type": "Expression" },
+                    "TD_FL_Session_Min": { "value": "@pipeline().parameters.TD_FL_Session_Min", "type": "Expression" },
+                    "TD_FL_Sleep": { "value": "@pipeline().parameters.TD_FL_Sleep", "type": "Expression" },
+                    "TD_FL_Tenacity": { "value": "@pipeline().parameters.TD_FL_Tenacity", "type": "Expression" },
+                    "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                    "AzureFunction_FastLoad_Url": { "value": "@pipeline().parameters.AzureFunction_FastLoad_Url", "type": "Expression" },
+                    "AzureFunction_Key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" }
+                }
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "" },
+            "FileName": { "type": "String", "defaultValue": "J139_TRANSBK_MCF_CUENTAS_ACCOUNT_CARD_INCOME.TXT" },
+            "Tabla": { "type": "String", "defaultValue": "J139_MCF" },
+            "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" }, "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "EDW_Agreement": { "type": "String", "defaultValue": "" }, "PathLog": { "type": "String", "defaultValue": "" },
+            "PathShell": { "type": "String", "defaultValue": "" }, "TD_FL_CheckPoint": { "type": "String", "defaultValue": "" },
+            "TD_FL_ErrorLimit": { "type": "String", "defaultValue": "" }, "TD_FL_Session_Max": { "type": "String", "defaultValue": "" },
+            "TD_FL_Session_Min": { "type": "String", "defaultValue": "" }, "TD_FL_Sleep": { "type": "String", "defaultValue": "" },
+            "TD_FL_Tenacity": { "type": "String", "defaultValue": "" }, "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_FastLoad_Url": { "type": "String", "defaultValue": "" }, "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/FLoad_LDM" },
+        "annotations": ["ORIGEN_DS: Account_Card_Income_FLoad (Category: Jobs/LDM/Account_Card_Income)", "AFTERSUBR_DS: Bteq_Account_Card_Income.sh", "MANUAL_INTERVENTION: Account_Card_Income tiene Pivote en J139_Transbk_Mcf_Cuentas (Pivote_ACI). Verificar que el archivo de entrada ya venga pivoteado o si el pivot se hace en J139_Cuentas antes de llegar aqui."]
+    }
+}

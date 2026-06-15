@@ -1,0 +1,60 @@
+{
+    "name": "DF_J139_Transbk_Mcf_Cuentas",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Transformacion Cuentas J139. DS: CSeqFileStage sources -> Pivot stages (Pivote_ACI, Pivote_ACL, etc.) -> CCollector (Union) -> CSeqFileStage sinks. ADF: sources ADLS -> Pivot transformations -> Union -> sinks ADLS. MANUAL_INTERVENTION: logica Pivot y columnas de pivoteo.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "Source_Cuentas_Input",
+                    "description": "MANUAL_INTERVENTION: Source ADLS con los archivos de cuentas extraidos por J139_Transbk_Mcf_Extraccion. Verificar nombre de archivo y columnas exactas en DSX.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "Sink_Cuentas_Output",
+                    "description": "MANUAL_INTERVENTION: Sink ADLS con el resultado del Pivot+Collector. Verificar nombre de archivo destino en DSX.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "transformations": [
+                { "name": "Pivot_ACI", "description": "MANUAL_INTERVENTION: Pivote_ACI - etapa Pivot en DS. En ADF Data Flow: transformacion 'pivot'. Extraer columnas, keys y valores del DSX original." },
+                { "name": "Pivot_ACL", "description": "MANUAL_INTERVENTION: Pivote_ACL - otro Pivot stage. Misma logica que Pivot_ACI pero sobre columnas distintas." },
+                { "name": "Union_Collector", "description": "MANUAL_INTERVENTION: CCollector en DS = Union en ADF Data Flow. Une los outputs de los diferentes Pivot stages." }
+            ],
+            "scriptLines": [
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "// MANUAL_INTERVENTION CRITICO: Pivot stages y CCollector",
+                "// DataStage Pivot Stage != ADF Data Flow Pivot Transformation",
+                "// El Pivot de DS puede ser de filas a columnas (unpivot) o columnas a filas (pivot).",
+                "// Verificar la direccion del pivot en el DSX original (GroupKey, PivotKeys, PivotValues).",
+                "// CCollector en DS = Union en ADF Data Flow (union de multiples streams).",
+                "// Pasos:",
+                "// 1. En DSX: ver los campos GroupKey, PivotKeys, PivotValues de cada Pivot stage",
+                "// 2. Si DS hace pivot de filas a columnas: usar 'pivot' en ADF con keyColumn y groupBy",
+                "// 3. Si DS hace pivot de columnas a filas: usar 'unpivot' en ADF",
+                "// 4. CCollector se mapea como 'union' en ADF con allowSchemaDrift: true",
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "source(output(col1 as string), allowSchemaDrift: true, validateSchema: false) ~> Source_Cuentas_Input",
+                "Source_Cuentas_Input pivot(groupBy(col1), pivotBy(col1), {} , columnNaming: '$N_$V') ~> Pivot_ACI",
+                "Source_Cuentas_Input pivot(groupBy(col1), pivotBy(col1), {} , columnNaming: '$N_$V') ~> Pivot_ACL",
+                "Pivot_ACI, Pivot_ACL union(byName: true)~> Union_Collector",
+                "Union_Collector sink(allowSchemaDrift: true, validateSchema: false) ~> Sink_Cuentas_Output"
+            ],
+            "parameters": {
+                "PathOutput": { "type": "string" }, "PathInput": { "type": "string" },
+                "ADLS_Container": { "type": "string" }
+            }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Cuentas (Pivot stages + CCollector)",
+            "MANUAL_INTERVENTION_CRITICO: Este DataFlow contiene etapas Pivot de DataStage que NO son directamente equivalentes a la transformacion Pivot de ADF. Requiere analisis detallado del DSX para cada Pivot stage (Pivote_ACI, Pivote_ACL, etc.).",
+            "MANUAL_INTERVENTION: El CCollector en DS agrega multiples streams en uno solo. En ADF se usa la transformacion 'union'. Con allowSchemaDrift: true si los streams tienen columnas distintas.",
+            "MANUAL_INTERVENTION: Verificar si los Pivot stages de DS hacen pivot (filas->columnas) o unpivot (columnas->filas). Mapear segun la direccion correcta en ADF.",
+            "MANUAL_INTERVENTION: Extraer columnas exactas de los archivos de entrada (generados por J139_Transbk_Mcf_Extraccion) y configurar los sources correctamente."
+        ]
+    }
+}

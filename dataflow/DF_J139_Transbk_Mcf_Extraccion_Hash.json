@@ -1,0 +1,63 @@
+{
+    "name": "DF_J139_Transbk_Mcf_Extraccion_Hash",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Extraccion de datos LDM Teradata y escritura en hash files ADLS (EDW_Agreement y EDW_Card). DS: CCustomStage TeradataConnector (source LDM) -> CHashedFileStage x2. ADF: 2 Teradata sources -> 2 ADLS Parquet sinks. MANUAL_INTERVENTION: columnas y queries Teradata de los sources.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "Source_LDM_Agreement",
+                    "description": "MANUAL_INTERVENTION: TeradataConnector en DS que extrae datos de la tabla LDM Agreement (o similar) del EDW Teradata. Extraer la query/tabla exacta del DSX original. En ADF: usar Teradata como source con Self-hosted IR.",
+                    "dataset": { "referenceName": "DS_Teradata_EDW_Agreement", "type": "DatasetReference" }
+                },
+                {
+                    "name": "Source_LDM_Card",
+                    "description": "MANUAL_INTERVENTION: TeradataConnector en DS que extrae datos de la tabla LDM Card del EDW Teradata. Extraer query/tabla del DSX original.",
+                    "dataset": { "referenceName": "DS_Teradata_EDW_Card", "type": "DatasetReference" }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "Sink_Hash_Agreement",
+                    "description": "Escribe el hash file EDW_Agreement como Parquet en ADLS. Reemplaza el CHashedFileStage de DataStage.",
+                    "dataset": { "referenceName": "DS_ADLS_Hash_Agreement", "type": "DatasetReference" }
+                },
+                {
+                    "name": "Sink_Hash_Card",
+                    "description": "Escribe el hash file EDW_Card como Parquet en ADLS. Reemplaza el CHashedFileStage de DataStage.",
+                    "dataset": { "referenceName": "DS_ADLS_Hash_Card", "type": "DatasetReference" }
+                }
+            ],
+            "transformations": [],
+            "scriptLines": [
+                "// MANUAL_INTERVENTION: Este DataFlow requiere los datasets Teradata DS_Teradata_EDW_Agreement y DS_Teradata_EDW_Card.",
+                "// Crear los datasets con linked service LS_Teradata_EDW y las queries/tablas correspondientes.",
+                "// Crear dataset DS_ADLS_Hash_Agreement (Parquet) equivalente a DS_ADLS_Hash_Card.",
+                "// Las columnas y transformaciones exactas deben extraerse del DSX original.",
+                "// Flujo: Source_LDM_Agreement -> Sink_Hash_Agreement (directo, sin transformaciones si no hay Transformer en DS)",
+                "// Flujo: Source_LDM_Card -> Sink_Hash_Card (directo)",
+                "source(output(Agreement_Id as string, Account_Num as string), allowSchemaDrift: true, validateSchema: false, isolationLevel: 'READ_UNCOMMITTED') ~> Source_LDM_Agreement",
+                "source(output(Card_Num as string, Account_Num as string), allowSchemaDrift: true, validateSchema: false, isolationLevel: 'READ_UNCOMMITTED') ~> Source_LDM_Card",
+                "Source_LDM_Agreement sink(allowSchemaDrift: true, validateSchema: false, format: 'parquet', umask: 0022) ~> Sink_Hash_Agreement",
+                "Source_LDM_Card sink(allowSchemaDrift: true, validateSchema: false, format: 'parquet', umask: 0022) ~> Sink_Hash_Card"
+            ],
+            "parameters": {
+                "EDW_Agreement": { "type": "string" },
+                "EDW_Wrk": { "type": "string" },
+                "Teradata_EDW_DSN": { "type": "string" },
+                "AKV_BaseUrl": { "type": "string" },
+                "PathHash_Agreement": { "type": "string" },
+                "PathHash_Card": { "type": "string" },
+                "ADLS_Container": { "type": "string" }
+            }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Extraccion_Hash (Teradata LDM -> 2 CHashedFileStage)",
+            "MANUAL_INTERVENTION: Crear datasets DS_Teradata_EDW_Agreement y DS_Teradata_EDW_Card con las queries/tablas exactas del DSX. Extraer columnas de los CHashedFileStage del DSX original.",
+            "MANUAL_INTERVENTION: Crear dataset DS_ADLS_Hash_Agreement (Parquet) equivalente a DS_ADLS_Hash_Card.",
+            "MANUAL_INTERVENTION: Si hay CTransformerStage entre los sources y los hash files, agregar las transformaciones correspondientes en este DataFlow."
+        ]
+    }
+}

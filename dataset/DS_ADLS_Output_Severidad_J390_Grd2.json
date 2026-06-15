@@ -1,0 +1,45 @@
+{
+    "name": "DS_ADLS_Output_Severidad_J390_Grd2",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset salida registros rechazados Severidad 2 Job 1 J390. Origen DS: Seq_Severidad3 (CSeqFileStage) link Lnk_a_Severidad2. Archivo: #$PathRejected#390_Movimiento_Compra_Monex_grd2.txt",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathRejected": {
+                "type": "String",
+                "description": "DS: $PathRejected"
+            },
+            "ADLS_Container": {
+                "type": "String"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathRejected",
+                    "type": "Expression"
+                },
+                "fileName": "390_Movimiento_Compra_Monex_grd2.txt"
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Seq_Severidad3 (CSeqFileStage) link Lnk_a_Severidad2 — registros con RuleSeveridad=2",
+            "ARCHIVO_DS: #$PathRejected#390_Movimiento_Compra_Monex_grd2.txt"
+        ]
+    }
+}

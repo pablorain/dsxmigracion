@@ -1,0 +1,53 @@
+{
+    "name": "DF_J139_Transbk_Mcf_Tarjetas",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Transformacion Tarjetas J139. DS: CSeqFileStage sources -> Pivot stages -> CCollector -> CSeqFileStage sinks. ADF: sources ADLS -> Pivot -> Union -> sinks ADLS. MANUAL_INTERVENTION: misma logica que DF_J139_Transbk_Mcf_Cuentas pero para entidades de tarjetas.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "Source_Tarjetas_Input",
+                    "description": "MANUAL_INTERVENTION: Source ADLS con los archivos de tarjetas extraidos por J139_Transbk_Mcf_Extraccion. Verificar nombre de archivo y columnas en DSX.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "Sink_Tarjetas_Output",
+                    "description": "MANUAL_INTERVENTION: Sink ADLS con el resultado procesado de tarjetas.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "transformations": [
+                { "name": "Pivot_Card", "description": "MANUAL_INTERVENTION: Pivot stage de tarjetas en DSX. Extraer GroupKey, PivotKeys, PivotValues del DSX original." },
+                { "name": "Union_Collector_Tarjetas", "description": "MANUAL_INTERVENTION: CCollector = Union en ADF. Une los streams de tarjetas pivoteados." }
+            ],
+            "scriptLines": [
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "// MANUAL_INTERVENTION CRITICO: Ver DF_J139_Transbk_Mcf_Cuentas para instrucciones detalladas.",
+                "// Misma logica pero para entidades de tarjetas (CARD, CARD_FEATURE, CARD_LIMIT, etc.).",
+                "// Pasos:",
+                "// 1. En DSX: ver los campos de los Pivot stages de Tarjetas (nombre, GroupKey, PivotKeys, PivotValues)",
+                "// 2. Mapear cada Pivot stage a la transformacion 'pivot' o 'unpivot' de ADF segun la direccion",
+                "// 3. CCollector -> transformacion 'union' en ADF",
+                "// 4. Verificar archivos de entrada (J139_TRANSBK_MCF_TARJETAS_*.TXT) y salida",
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "source(output(col1 as string), allowSchemaDrift: true, validateSchema: false) ~> Source_Tarjetas_Input",
+                "Source_Tarjetas_Input pivot(groupBy(col1), pivotBy(col1), {} , columnNaming: '$N_$V') ~> Pivot_Card",
+                "Pivot_Card union(byName: true)~> Union_Collector_Tarjetas",
+                "Union_Collector_Tarjetas sink(allowSchemaDrift: true, validateSchema: false) ~> Sink_Tarjetas_Output"
+            ],
+            "parameters": {
+                "PathOutput": { "type": "string" }, "PathInput": { "type": "string" },
+                "ADLS_Container": { "type": "string" }
+            }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Tarjetas (Pivot stages + CCollector para entidades de tarjetas)",
+            "MANUAL_INTERVENTION_CRITICO: Ver instrucciones en DF_J139_Transbk_Mcf_Cuentas. Misma logica pero para CARD, CARD_FEATURE, CARD_LIMIT, CARD_STATUS_HIST, BCI_CARD_BALANCE.",
+            "MANUAL_INTERVENTION: Extraer los Pivot stages del DSX original (seccion Tarjetas del S139) y mapear cada uno a la transformacion ADF correspondiente."
+        ]
+    }
+}

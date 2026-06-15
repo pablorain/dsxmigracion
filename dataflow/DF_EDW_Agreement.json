@@ -1,0 +1,103 @@
+{
+    "name": "DF_EDW_Agreement",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "DataFlow EDW_Agreement. DS equivalente: J139 sub-job EDW_Agreement (CSeqFileStage -> CTransformerStage -> CHashedFileStage). Lee archivo secuencial ADLS, aplica transformacion, escribe hash como Parquet en ADLS. MANUAL_INTERVENTION CRITICO: completar script con logica del CTransformerStage del DSX.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "Source_Agreement_SeqFile",
+                    "description": "DS: CSeqFileStage origen archivo Agreement. ADF: Lee archivo delimitado ADLS generado por FLoad/BTEQ previo.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "Sink_Hash_Agreement",
+                    "description": "DS: CHashedFileStage EDW_Agreement. ADF: Escribe Parquet en ADLS como equivalente de hash file.",
+                    "dataset": { "referenceName": "DS_ADLS_Hash_Agreement", "type": "DatasetReference" }
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "Transform_Agreement",
+                    "description": "DS: CTransformerStage entre seq file y hash file. MANUAL_INTERVENTION: Extraer logica de transformacion del DSX (derivaciones de columnas, filtros, lookups) e implementar aqui como derive/filter/lookup activities."
+                }
+            ],
+            "scriptLines": [
+                "// MANUAL_INTERVENTION CRITICO",
+                "// Este DataFlow es un placeholder. Debe completarse manualmente con la logica del CTransformerStage",
+                "// del job EDW_Agreement en el DSX S139_Transbk_Mcf.dsx.",
+                "//",
+                "// Pasos para completar:",
+                "// 1. Abrir S139_Transbk_Mcf.dsx y localizar el job/stage 'EDW_Agreement'",
+                "// 2. Identificar el CTransformerStage entre CSeqFileStage y CHashedFileStage",
+                "// 3. Extraer: (a) derivaciones de columnas (Derivation expressions)",
+                "//             (b) filtros de filas (Filter conditions)",
+                "//             (c) lookups al hash (referencias a CHashedFileStage como lookup)",
+                "//             (d) columnas clave del hash (KeyColumns del DSSUBRECORD)",
+                "// 4. Implementar en ADF Data Flow:",
+                "//    - Columnas derivadas -> 'derive' transformation",
+                "//    - Filtros -> 'filter' transformation",
+                "//    - Lookups -> 'lookup' transformation con DS_ADLS_Hash_Agreement como cached source",
+                "//    - Columnas clave -> usarlas como join keys en el lookup",
+                "//",
+                "// ESQUEMA PARQUET SINK:",
+                "// Confirmar columnas del hash desde DSX antes de ejecutar.",
+                "// El Parquet debe contener al menos las key columns del CHashedFileStage.",
+                "//",
+                "// PARAMETROS disponibles en este DataFlow:",
+                "// - PathOutput: ruta ADLS del archivo secuencial de entrada (Agreement)",
+                "// - FileName: nombre del archivo de entrada",
+                "// - PathHash: ruta ADLS donde escribir el Parquet hash",
+                "// - ADLS_Container: contenedor ADLS",
+                "",
+                "parameters{",
+                "     PathOutput as string,",
+                "     FileName as string,",
+                "     PathHash as string,",
+                "     ADLS_Container as string",
+                "}",
+                "source(output(",
+                "          // MANUAL_INTERVENTION: Definir esquema del archivo secuencial Agreement",
+                "          // Extraer columnas desde CSeqFileStage del DSX",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false,",
+                "     wildcardPaths:[($ADLS_Container, concat($PathOutput, '/', $FileName))]) ~> Source_Agreement_SeqFile",
+                "",
+                "Source_Agreement_SeqFile derive(",
+                "          // MANUAL_INTERVENTION: Reemplazar con derivaciones reales del CTransformerStage",
+                "          // Ejemplo: ColDerived = trim(ColOrigen)",
+                "          PlaceholderCol = 'MANUAL_INTERVENTION'",
+                ") ~> Transform_Agreement",
+                "",
+                "Transform_Agreement sink(",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     format: 'parquet',",
+                "     truncate: true,",
+                "     umask: 0022,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     saveOrder: 1) ~> Sink_Hash_Agreement"
+            ],
+            "parameters": {
+                "PathOutput": { "type": "string", "defaultValue": "" },
+                "FileName": { "type": "string", "defaultValue": "J139_TRANSBK_MCF_CUENTAS_AGREEMENT.TXT" },
+                "PathHash": { "type": "string", "defaultValue": "" },
+                "ADLS_Container": { "type": "string", "defaultValue": "" }
+            },
+            "folder": { "name": "S139_Transbk_Mcf" },
+            "annotations": [
+                "ORIGEN_DS: Job EDW_Agreement en S139 (CSeqFileStage -> CTransformerStage -> CHashedFileStage)",
+                "MANUAL_INTERVENTION_CRITICO: Completar script con logica del CTransformerStage. Ver scriptLines para instrucciones detalladas.",
+                "PATRON: SeqFile ADLS -> Transform -> Parquet ADLS (equivalente hash DataStage)"
+            ]
+        }
+    }
+}

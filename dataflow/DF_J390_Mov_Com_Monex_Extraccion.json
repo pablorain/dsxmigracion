@@ -1,0 +1,93 @@
+{
+    "name": "DF_J390_Mov_Com_Monex_Extraccion",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Data Flow Job 2 J390_Movimiento_Compra_Monex_Carga_Extraccion. Mapea: Seq_St_Movimiento_Monex -> FL_St_Movimiento_Monex (Teradata FastLoad) y Seq_St_Compra_Monex -> FL_St_Compra_Monex (Teradata FastLoad). MANUAL_INTERVENTION: Teradata FastLoad no tiene equivalente nativo ADF. Ver pipeline PL_J390_Mov_Com_Monex_Carga_Extraccion que implementa esto via Azure Function.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "SrcStMovimientoMonex",
+                    "description": "Origen DS: Seq_St_Movimiento_Monex (CSeqFileStage). Archivo: {PathExtract}/J390_Seq_St_Movimiento_Monex.txt. Pipe-delimitado.",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Input_St_Movimiento_Monex",
+                        "type": "DatasetReference"
+                    }
+                },
+                {
+                    "name": "SrcStCompraMonex",
+                    "description": "Origen DS: Seq_St_Compra_Monex (CSeqFileStage). Archivo: {PathExtract}/J390_Seq_St_Compra_Monex.txt. Pipe-delimitado.",
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Input_St_Compra_Monex",
+                        "type": "DatasetReference"
+                    }
+                }
+            ],
+            "sinks": [],
+            "transformations": [],
+            "scriptLines": [
+                "/*",
+                " * MANUAL_INTERVENTION: Teradata FastLoad no tiene equivalente nativo en ADF Mapping Data Flow.",
+                " *",
+                " * Este Data Flow solo se define como placeholder estructural.",
+                " * La carga real a Teradata via FastLoad debe implementarse mediante una de las siguientes opciones:",
+                " *",
+                " * OPCION A (Recomendada): Azure Function o Azure Batch",
+                " *   - Pipeline PL_J390_Mov_Com_Monex_Carga_Extraccion usa WebActivity para llamar",
+                " *     un Azure Function que ejecuta el utilitario Teradata FastLoad/TPT.",
+                " *   - El Azure Function recibe PathExtract, Teradata DSN/User/PWD, ErrorLimit, Sleep.",
+                " *",
+                " * OPCION B: ADF Copy Activity con Teradata Sink",
+                " *   - Si el volumen es aceptable (no masivo), usar CopyActivity con:",
+                " *     Source: DelimitedText (ADLS) -> Sink: TeradataTable",
+                " *   - ADF Copy Activity con Teradata sink usa JDBC bulk insert, NO FastLoad.",
+                " *   - Para FastLoad real, usar TPT (Teradata Parallel Transporter) via Azure Function.",
+                " *",
+                " * OPCION C: Azure Databricks",
+                " *   - Spark job con driver Teradata JDBC que lee desde ADLS y escribe a Teradata.",
+                " *   - Ejecutar desde ADF Databricks Notebook Activity.",
+                " *",
+                " * Parametros FastLoad originales DS:",
+                " *   TD_FL_ErrorLimit: limite de errores admitidos antes de abortar la carga",
+                " *   TD_FL_Sleep: segundos de espera entre reintentos de sesion",
+                " *   Teradata_EDW_DSN, Teradata_EDW_User_Grupo1, Teradata_EDW_PWD_Grupo1",
+                " *",
+                " * Tablas Teradata destino:",
+                " *   FL_St_Movimiento_Monex -> tabla TMP o staging para Movimiento Monex",
+                " *   FL_St_Compra_Monex    -> tabla TMP o staging para Compra Monex",
+                " */",
+                "source(output(",
+                "          each(match(true()))",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> SrcStMovimientoMonex",
+                "source(output(",
+                "          each(match(true()))",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> SrcStCompraMonex"
+            ],
+            "parameters": {
+                "PathExtract": {
+                    "type": "string",
+                    "description": "Ruta archivos extraccion. DS: $PathExtract"
+                },
+                "Teradata_EDW_DSN": {
+                    "type": "string",
+                    "description": "DS: $Teradata_EDW_DSN"
+                }
+            }
+        },
+        "folder": {
+            "name": "J390_Movimiento_Compra_Monex"
+        },
+        "annotations": [
+            "ORIGEN_DS: J390_Movimiento_Compra_Monex_Carga_Extraccion (JobType=0 Server Job)",
+            "STAGES_DS: Seq_St_Movimiento_Monex -> FL_St_Movimiento_Monex (TeradataConnector FastLoad)",
+            "STAGES_DS: Seq_St_Compra_Monex -> FL_St_Compra_Monex (TeradataConnector FastLoad)",
+            "MANUAL_INTERVENTION: Teradata FastLoad (FL_* stages) no tiene equivalente nativo en ADF. Este dataflow es placeholder. La carga real se implementa en PL_J390_Mov_Com_Monex_Carga_Extraccion via Azure Function o Databricks. Ver comentarios en scriptLines."
+        ]
+    }
+}

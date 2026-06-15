@@ -1,0 +1,23 @@
+{
+    "name": "DS_Teradata_EDW_Card",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset Teradata para tabla(s) EDW_Card. DS equivalente: CCustomStage TeradataConnector origen sobre schema EDW_Card (o EDW_Agreement.CARD) en J139_Transbk_Mcf_Extraccion_Hash.",
+        "linkedServiceName": { "referenceName": "LS_Teradata_EDW", "type": "LinkedServiceReference" },
+        "parameters": {
+            "EDW_Agreement": { "type": "String", "defaultValue": "", "description": "Schema Teradata que contiene la tabla CARD. MANUAL_INTERVENTION: verificar si CARD pertenece a EDW_Agreement o schema diferente." },
+            "TableName": { "type": "String", "defaultValue": "CARD", "description": "MANUAL_INTERVENTION: Confirmar nombre de tabla desde DSX CHashedFileStage EDW_Card." }
+        },
+        "annotations": [
+            "ORIGEN_DS: CHashedFileStage EDW_Card origen Teradata en J139_Transbk_Mcf",
+            "MANUAL_INTERVENTION: (1) Confirmar nombre exacto de tabla y schema desde DSX. (2) Confirmar si CARD pertenece a EDW_Agreement o a un schema separado. (3) Confirmar columnas clave del hash. (4) Integration Runtime: Self-Hosted IR requerido.",
+            "INTEGRATION_RUNTIME: Configurar Self-Hosted IR en LS_Teradata_EDW."
+        ],
+        "type": "TeradataTable",
+        "typeProperties": {
+            "database": { "value": "@dataset().EDW_Agreement", "type": "Expression" },
+            "table": { "value": "@dataset().TableName", "type": "Expression" }
+        },
+        "schema": []
+    }
+}

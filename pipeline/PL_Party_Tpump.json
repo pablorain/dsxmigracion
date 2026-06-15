@@ -1,0 +1,21 @@
+{
+    "name": "PL_Party_Tpump",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "TPump para Party. DS: CExecCommandActivity -> tpump script. Tabla: $EDW_Party.PARTY. MANUAL_INTERVENTION.",
+        "activities": [{
+            "name": "Exec_Tpump_Party",
+            "description": "MANUAL_INTERVENTION: Azure Function con tpump/TPT CLI.",
+            "type": "WebActivity", "dependsOn": [],
+            "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": true, "secureInput": true },
+            "typeProperties": {
+                "url": { "value": "@pipeline().parameters.AzureFunction_Bteq_Url", "type": "Expression" }, "method": "POST",
+                "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                "body": { "value": "@json(concat('{\"operation\":\"TPump\",\"Script\":\"Tpump_Party.sh\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FileName\":\"', pipeline().parameters.FileName, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Party\":\"', pipeline().parameters.EDW_Party, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"PathShell\":\"', pipeline().parameters.PathShell, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\"}'))", "type": "Expression" }
+            }
+        }],
+        "parameters": { "PathOutput": { "type": "String", "defaultValue": "" }, "FileName": { "type": "String", "defaultValue": "" }, "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" }, "EDW_Wrk": { "type": "String", "defaultValue": "" }, "EDW_Party": { "type": "String", "defaultValue": "" }, "PathShell": { "type": "String", "defaultValue": "" }, "PathLog": { "type": "String", "defaultValue": "" }, "ADLS_Container": { "type": "String", "defaultValue": "" }, "AzureFunction_Bteq_Url": { "type": "String", "defaultValue": "" }, "AzureFunction_Key": { "type": "String", "defaultValue": "" } },
+        "folder": { "name": "S139_Transbk_Mcf/Bteq_Operations" },
+        "annotations": ["ORIGEN_DS: Party TPump variant", "MANUAL_INTERVENTION: Tabla $EDW_Party.PARTY."]
+    }
+}

@@ -1,0 +1,124 @@
+{
+    "name": "PL_J390_Mov_Com_Monex_Carga_Extraccion",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline Job 2 J390_Movimiento_Compra_Monex_Carga_Extraccion. Carga dos archivos planos a Teradata via FastLoad: Seq_St_Movimiento_Monex -> FL_St_Movimiento_Monex y Seq_St_Compra_Monex -> FL_St_Compra_Monex. MANUAL_INTERVENTION: Teradata FastLoad no es nativo en ADF. Implementado via Azure Function/Databricks.",
+        "activities": [
+            {
+                "name": "Execute_FastLoad_Movimiento_Monex",
+                "description": "MANUAL_INTERVENTION: Equivale a Seq_St_Movimiento_Monex (CSeqFileStage) -> FL_St_Movimiento_Monex (TeradataConnector FastLoad). Archivo origen: {PathExtract}/J390_Seq_St_Movimiento_Monex.txt -> Tabla Teradata staging TMP_ST_MOVIMIENTO_MONEX (o equivalente). Parametros FastLoad: TD_FL_ErrorLimit (limite errores), TD_FL_Sleep (segundos entre reintentos). Implementar via Azure Function o Databricks con driver JDBC Teradata.",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_FastLoad_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_FastLoad_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"mode\":\"FastLoad\",\"sourceFile\":\"J390_Seq_St_Movimiento_Monex.txt\",\"PathExtract\":\"', pipeline().parameters.PathExtract, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"TD_FL_ErrorLimit\":\"', pipeline().parameters.TD_FL_ErrorLimit, '\",\"TD_FL_Sleep\":\"', pipeline().parameters.TD_FL_Sleep, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Execute_FastLoad_Compra_Monex",
+                "description": "MANUAL_INTERVENTION: Equivale a Seq_St_Compra_Monex (CSeqFileStage) -> FL_St_Compra_Monex (TeradataConnector FastLoad). Archivo origen: {PathExtract}/J390_Seq_St_Compra_Monex.txt -> Tabla Teradata staging TMP_ST_COMPRA_MONEX (o equivalente). Parametros FastLoad: TD_FL_ErrorLimit, TD_FL_Sleep.",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_FastLoad_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_FastLoad_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"mode\":\"FastLoad\",\"sourceFile\":\"J390_Seq_St_Compra_Monex.txt\",\"PathExtract\":\"', pipeline().parameters.PathExtract, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"TD_FL_ErrorLimit\":\"', pipeline().parameters.TD_FL_ErrorLimit, '\",\"TD_FL_Sleep\":\"', pipeline().parameters.TD_FL_Sleep, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "PathExtract": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta archivos extraccion. DS: $PathExtract"
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $Teradata_EDW_DSN"
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema Teradata WORK. DS: $EDW_Wrk"
+            },
+            "TD_FL_ErrorLimit": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Limite errores FastLoad. DS: $TD_FL_ErrorLimit"
+            },
+            "TD_FL_Sleep": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Segundos sleep entre reintentos FastLoad. DS: $TD_FL_Sleep"
+            },
+            "AzureFunction_FastLoad_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: URL Azure Function que ejecuta Teradata FastLoad/TPT. Reemplazar con URL real."
+            },
+            "AzureFunction_FastLoad_Key": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: Key Azure Function FastLoad. Usar AKV secret reference en produccion."
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            }
+        },
+        "folder": {
+            "name": "J390_Movimiento_Compra_Monex"
+        },
+        "annotations": [
+            "ORIGEN_DS: J390_Movimiento_Compra_Monex_Carga_Extraccion (JobType=0 Server Job)",
+            "STAGES_DS: [Seq_St_Movimiento_Monex -> FL_St_Movimiento_Monex] paralelo con [Seq_St_Compra_Monex -> FL_St_Compra_Monex]",
+            "FL_PARAMS_DS: TD_FL_ErrorLimit=$TD_FL_ErrorLimit, TD_FL_Sleep=$TD_FL_Sleep, ClientCharacterSet=UTF8, TransactionMode=Teradata, VariantName=12",
+            "MANUAL_INTERVENTION: Teradata FastLoad no tiene equivalente nativo ADF. Las dos actividades WebActivity se ejecutan en paralelo (sin dependsOn entre ellas) igual que en DS. Opciones implementacion: (1) Azure Function + Teradata CLI/TPT, (2) Databricks + JDBC Teradata, (3) ADF CopyActivity con Teradata sink si volumen lo permite.",
+            "NOTE: En DS los dos FastLoad se ejecutan en paralelo. En este pipeline tambien son paralelos (ninguna dependencia entre Execute_FastLoad_Movimiento_Monex y Execute_FastLoad_Compra_Monex)."
+        ]
+    }
+}

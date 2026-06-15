@@ -1,0 +1,66 @@
+{
+    "name": "PL_J139_Transbk_Mcf_Extraccion",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline extraccion principal J139. DS: J139_Transbk_Mcf_Extraccion (~25 etapas). ADF: ExecuteDataFlow DF_J139_Transbk_Mcf_Extraccion. MANUAL_INTERVENTION: DataFlow requiere mapeo completo desde DSX.",
+        "activities": [
+            {
+                "name": "Exec_DF_ExtraccionHash",
+                "description": "Primero cargar los hash files necesarios para los lookups del DataFlow principal.",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "typeProperties": {
+                    "pipeline": { "referenceName": "PL_J139_Transbk_Mcf_Extraccion_Hash", "type": "PipelineReference" },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                        "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                        "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                        "AKV_BaseUrl": { "value": "@pipeline().parameters.AKV_BaseUrl", "type": "Expression" },
+                        "PathHash_Agreement": { "value": "@pipeline().parameters.PathHash_Agreement", "type": "Expression" },
+                        "PathHash_Card": { "value": "@pipeline().parameters.PathHash_Card", "type": "Expression" },
+                        "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                    }
+                }
+            },
+            {
+                "name": "Exec_DF_Extraccion_Main",
+                "description": "MANUAL_INTERVENTION: DataFlow principal con ~25 etapas. Requiere completar DF_J139_Transbk_Mcf_Extraccion desde el DSX original.",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [{ "activity": "Exec_DF_ExtraccionHash", "dependencyConditions": ["Succeeded"] }],
+                "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+                "typeProperties": {
+                    "dataflow": { "referenceName": "DF_J139_Transbk_Mcf_Extraccion", "type": "DataFlowReference",
+                        "parameters": {
+                            "EDW_Agreement": { "value": "@pipeline().parameters.EDW_Agreement", "type": "Expression" },
+                            "EDW_Wrk": { "value": "@pipeline().parameters.EDW_Wrk", "type": "Expression" },
+                            "EDW_Party": { "value": "@pipeline().parameters.EDW_Party", "type": "Expression" },
+                            "Teradata_EDW_DSN": { "value": "@pipeline().parameters.Teradata_EDW_DSN", "type": "Expression" },
+                            "AKV_BaseUrl": { "value": "@pipeline().parameters.AKV_BaseUrl", "type": "Expression" },
+                            "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                            "PathHash_Agreement": { "value": "@pipeline().parameters.PathHash_Agreement", "type": "Expression" },
+                            "PathHash_Card": { "value": "@pipeline().parameters.PathHash_Card", "type": "Expression" },
+                            "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" }
+                        }
+                    },
+                    "compute": { "coreCount": 16, "computeType": "MemoryOptimized" },
+                    "traceLevel": "Fine",
+                    "linkedService": { "referenceName": "LS_Teradata_EDW", "type": "LinkedServiceReference" }
+                }
+            }
+        ],
+        "parameters": {
+            "EDW_Agreement": { "type": "String", "defaultValue": "" }, "EDW_Wrk": { "type": "String", "defaultValue": "" },
+            "EDW_Party": { "type": "String", "defaultValue": "" }, "Teradata_EDW_DSN": { "type": "String", "defaultValue": "" },
+            "AKV_BaseUrl": { "type": "String", "defaultValue": "" }, "PathOutput": { "type": "String", "defaultValue": "" },
+            "PathHash_Agreement": { "type": "String", "defaultValue": "" }, "PathHash_Card": { "type": "String", "defaultValue": "" },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Extraccion (~25 etapas Parallel Job)",
+            "MANUAL_INTERVENTION: Completar DF_J139_Transbk_Mcf_Extraccion con el mapeo completo del DSX antes de usar este pipeline.",
+            "NOTA: Se llama primero PL_J139_Transbk_Mcf_Extraccion_Hash para pre-cargar los hash files que usa el DataFlow principal como cached lookups."
+        ]
+    }
+}

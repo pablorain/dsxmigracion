@@ -1,0 +1,53 @@
+{
+    "name": "DS_ADLS_Output_NoProcesados_J390",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset salida registros sin traduccion de moneda Job 1 J390. Origen DS: Seq_No_Procesados (CSeqFileStage) link Lnk_No_Procesados. Archivo: #$PathUnproc#390_MOVIMIENTO_MONEDA_SIN_TRADUCCION.TXT.#$FechaArchExtraccion#. Estos registros no tienen mmx_mnd_ori en la tabla Teradata TRADUCTOR.",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "PathUnproc": {
+                "type": "String",
+                "description": "Ruta no procesados en ADLS. DS: $PathUnproc"
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "description": "Fecha YYYYMMDD. DS: $FechaArchExtraccion"
+            },
+            "ADLS_Container": {
+                "type": "String"
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureDataLakeStoreLocation",
+                "fileSystem": {
+                    "value": "@dataset().ADLS_Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathUnproc",
+                    "type": "Expression"
+                },
+                "fileName": {
+                    "value": "@concat('390_MOVIMIENTO_MONEDA_SIN_TRADUCCION.TXT.', dataset().FechaArchExtraccion)",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "rowDelimiter": "\n",
+            "escapeChar": "\\",
+            "firstRowAsHeader": false,
+            "nullValue": ""
+        },
+        "schema": [],
+        "annotations": [
+            "ORIGEN_DS: Seq_No_Procesados (CSeqFileStage) link Lnk_No_Procesados — registros sin traduccion moneda (mmx_mnd_ori no encontrado en Hsh_Consultas/TRADUCTOR)",
+            "ARCHIVO_DS: #$PathUnproc#390_MOVIMIENTO_MONEDA_SIN_TRADUCCION.TXT.#$FechaArchExtraccion#",
+            "TRIGGER: Trf_Traductor en DS envia a este sink cuando la clave de moneda no existe en lookup TRADUCTOR (outer join fallback path)"
+        ]
+    }
+}

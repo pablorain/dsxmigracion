@@ -1,0 +1,23 @@
+{
+    "name": "DS_Teradata_EDW_Agreement",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset Teradata para tabla(s) EDW_Agreement. DS equivalente: CCustomStage TeradataConnector origen sobre schema EDW_Agreement en J139_Transbk_Mcf_Extraccion_Hash.",
+        "linkedServiceName": { "referenceName": "LS_Teradata_EDW", "type": "LinkedServiceReference" },
+        "parameters": {
+            "EDW_Agreement": { "type": "String", "defaultValue": "", "description": "Nombre del schema/database Teradata EDW_Agreement. Se inyecta en tiempo de ejecucion." },
+            "TableName": { "type": "String", "defaultValue": "AGREEMENT", "description": "MANUAL_INTERVENTION: Confirmar nombre de tabla desde DSX CHashedFileStage EDW_Agreement." }
+        },
+        "annotations": [
+            "ORIGEN_DS: CHashedFileStage EDW_Agreement origen Teradata en J139_Transbk_Mcf",
+            "MANUAL_INTERVENTION: (1) Confirmar nombre exacto de tabla desde DSX. (2) Confirmar columnas clave del hash (KeyColumns en DSSUBRECORD). (3) Integration Runtime: Self-Hosted IR requerido para conectividad Teradata on-premises.",
+            "INTEGRATION_RUNTIME: Configurar Self-Hosted IR en LS_Teradata_EDW."
+        ],
+        "type": "TeradataTable",
+        "typeProperties": {
+            "database": { "value": "@dataset().EDW_Agreement", "type": "Expression" },
+            "table": { "value": "@dataset().TableName", "type": "Expression" }
+        },
+        "schema": []
+    }
+}

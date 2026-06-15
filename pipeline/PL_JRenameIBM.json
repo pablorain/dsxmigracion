@@ -1,0 +1,37 @@
+{
+    "name": "PL_JRenameIBM",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Renombrado de archivos IBM. DS: CExecCommandActivity FileRename. ADF: WebActivity -> Azure Function (operation=FileRename). Renombra archivos en ADLS. MANUAL_INTERVENTION: verificar logica de renombrado en DSX.",
+        "activities": [{
+            "name": "Exec_FileRename",
+            "description": "MANUAL_INTERVENTION: CExecCommandActivity FileRename en DS renombra archivos en el filesystem DataStage. En ADF los archivos estan en ADLS. Opciones: (1) Azure Function que llama a ADLS API para copiar+eliminar (rename). (2) ADF CopyActivity (fuente -> destino con nuevo nombre) + Delete activity del archivo original.",
+            "type": "WebActivity",
+            "dependsOn": [],
+            "policy": { "timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureOutput": false, "secureInput": false },
+            "typeProperties": {
+                "url": { "value": "@pipeline().parameters.AzureFunction_Url", "type": "Expression" },
+                "method": "POST",
+                "headers": { "Content-Type": "application/json", "x-functions-key": { "value": "@pipeline().parameters.AzureFunction_Key", "type": "Expression" } },
+                "body": {
+                    "value": "@json(concat('{\"operation\":\"FileRename\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FileNameOrig\":\"', pipeline().parameters.FileNameOrig, '\",\"FileNameDest\":\"', pipeline().parameters.FileNameDest, '\",\"ADLS_Container\":\"', pipeline().parameters.ADLS_Container, '\"}'))",
+                    "type": "Expression"
+                }
+            }
+        }],
+        "parameters": {
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta ADLS del archivo. DS: $PathOutput" },
+            "FileNameOrig": { "type": "String", "defaultValue": "", "description": "Nombre original del archivo. MANUAL_INTERVENTION: verificar en DSX." },
+            "FileNameDest": { "type": "String", "defaultValue": "", "description": "Nombre destino del archivo. MANUAL_INTERVENTION: verificar en DSX." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Url": { "type": "String", "defaultValue": "" },
+            "AzureFunction_Key": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Utility" },
+        "annotations": [
+            "ORIGEN_DS: JRenameIBM (CExecCommandActivity FileRename)",
+            "MANUAL_INTERVENTION: Verificar FileNameOrig y FileNameDest en DSX original. En ADLS el rename no existe nativamente: usar ADLS REST API (copy+delete) via Azure Function, o ADF CopyActivity + Delete activity.",
+            "ALTERNATIVA_ADF: CopyActivity (source: DS_ADLS con FileNameOrig -> sink: DS_ADLS con FileNameDest) + Delete activity (DS_ADLS FileNameOrig). No requiere Azure Function."
+        ]
+    }
+}

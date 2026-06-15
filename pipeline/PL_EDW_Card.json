@@ -1,0 +1,34 @@
+{
+    "name": "PL_EDW_Card",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Exporta el hash file EDW_Card a archivo secuencial. DS: CHashedFileStage (leer hash file) -> CSeqFileStage (escribir archivo secuencial). ADF: CopyActivity de Parquet ADLS (hash store) a DelimitedText ADLS (archivo secuencial de salida). No requiere DataFlow si no hay transformacion.",
+        "activities": [{
+            "name": "Copy_HashToSeq_Card",
+            "description": "Copia el contenido del hash file EDW_Card (Parquet en ADLS) a un archivo secuencial (DelimitedText en ADLS). DS: CHashedFileStage -> CSeqFileStage. En ADF: CopyActivity es equivalente directo si no hay CTransformerStage entre ellos. MANUAL_INTERVENTION: verificar si el DS original tiene un Transformer intermedio.",
+            "type": "Copy",
+            "dependsOn": [],
+            "policy": { "timeout": "0.04:00:00", "retry": 0, "retryIntervalInSeconds": 30 },
+            "typeProperties": {
+                "source": { "type": "ParquetSource", "storeSettings": { "type": "AzureDataLakeStoreReadSettings", "recursive": false } },
+                "sink": { "type": "DelimitedTextSink", "storeSettings": { "type": "AzureDataLakeStoreWriteSettings" }, "formatSettings": { "type": "DelimitedTextWriteSettings", "quoteAllText": false, "fileExtension": ".txt" } },
+                "enableStaging": false
+            },
+            "inputs": [{ "referenceName": "DS_ADLS_Hash_Card", "type": "DatasetReference", "parameters": { "PathHash": { "value": "@pipeline().parameters.PathHash", "type": "Expression" }, "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" } } }],
+            "outputs": [{ "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference", "parameters": { "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" }, "FileName": { "value": "@pipeline().parameters.FileNameOut", "type": "Expression" }, "ADLS_Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" } } }]
+        }],
+        "parameters": {
+            "PathHash": { "type": "String", "defaultValue": "", "description": "Ruta ADLS del archivo Parquet que representa el CHashedFileStage EDW_Card." },
+            "PathOutput": { "type": "String", "defaultValue": "", "description": "Ruta ADLS de salida del archivo secuencial." },
+            "FileNameOut": { "type": "String", "defaultValue": "EDW_Card.txt", "description": "Nombre del archivo secuencial de salida. MANUAL_INTERVENTION: verificar en DSX." },
+            "ADLS_Container": { "type": "String", "defaultValue": "" }
+        },
+        "folder": { "name": "S139_Transbk_Mcf/Hash_Management" },
+        "annotations": [
+            "ORIGEN_DS: EDW_Card (CHashedFileStage -> CSeqFileStage)",
+            "MAPEO_ADF: CHashedFileStage -> Archivo Parquet en ADLS (PathHash). CopyActivity copia Parquet -> DelimitedText.",
+            "MANUAL_INTERVENTION: Crear dataset DS_ADLS_Hash_Card (Parquet, parametros PathHash y ADLS_Container). Verificar si DS original tiene CTransformerStage entre hash y seq file; si lo tiene, usar DataFlow en lugar de CopyActivity.",
+            "NOTA: DS_ADLS_Hash_Card no existe aun en el repositorio. Debe crearse como dataset Parquet apuntando al PathHash del EDW_Card."
+        ]
+    }
+}

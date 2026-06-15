@@ -1,0 +1,185 @@
+{
+    "name": "PL_S139_Generic_FLoad_Bteq",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline GENERICO reutilizable para el patron FLoad+BTEQ de S139_Transbk_Mcf. Mapea el patron DS: (1) CSeqFileStage (leer archivo) -> TeradataConnector FastLoad (cargar tabla tmp) + (2) AfterSubr DSU.ExecSH {PathShell}/{BteqScript} (INSERT/UPDATE tabla real, DROP tmp). ControlAfterSubr=1 en DS: el AfterSubr es critico, si falla el job falla. Todos los 18 FLoad jobs del DSX comparten este patron. Llamado desde los pipelines especificos de cada tabla.",
+        "activities": [
+            {
+                "name": "Execute_FastLoad_To_TmpTable",
+                "description": "MANUAL_INTERVENTION: Equivale a TeradataConnector FastLoad (CC_GUI) en DataStage. Carga el archivo ADLS a una tabla temporal Teradata con nombre {TablaNombre}_{Tabla} (ej: ACCOUNT_ABUSE_HISTORY_J139_MCF). FastLoad no existe nativamente en ADF. Implementar con Azure Function (TPT/FastLoad CLI) o ADF CopyActivity con Teradata sink si el volumen lo permite. Parametros FastLoad originales DS: TD_FL_CheckPoint, TD_FL_ErrorLimit, TD_FL_Session_Max, TD_FL_Session_Min, TD_FL_Sleep, TD_FL_Tenacity. La tabla temporal debe existir antes de la carga (creada por el BTEQ en paso anterior o pre-existente).",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_FastLoad_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"operation\":\"FastLoad\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"FileName\":\"', pipeline().parameters.FileName, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Agreement\":\"', pipeline().parameters.EDW_Agreement, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"Tabla\":\"', pipeline().parameters.Tabla, '\",\"TablaNombre\":\"', pipeline().parameters.TablaNombre, '\",\"TD_FL_CheckPoint\":\"', pipeline().parameters.TD_FL_CheckPoint, '\",\"TD_FL_ErrorLimit\":\"', pipeline().parameters.TD_FL_ErrorLimit, '\",\"TD_FL_Session_Max\":\"', pipeline().parameters.TD_FL_Session_Max, '\",\"TD_FL_Session_Min\":\"', pipeline().parameters.TD_FL_Session_Min, '\",\"TD_FL_Sleep\":\"', pipeline().parameters.TD_FL_Sleep, '\",\"TD_FL_Tenacity\":\"', pipeline().parameters.TD_FL_Tenacity, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Execute_AfterSubr_Bteq",
+                "description": "MANUAL_INTERVENTION: Equivale a AfterSubr DSU.ExecSH en DataStage con ControlAfterSubr=1 (critico). Script BTEQ: {PathShell}/{BteqScript} {Teradata_EDW_DSN}/{User},{PWD} {EDW_Wrk} {EDW_Agreement} {PathLog} {Tabla}. El script hace: (1) INSERT/SELECT FROM tmpTable INTO tablaReal (upsert), (2) DROP TABLE tmpTable. CRITICO: En DS ControlAfterSubr=1 significa que si este script falla el job entero falla. En ADF el dependsOn Succeeded garantiza lo mismo.",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "Execute_FastLoad_To_TmpTable",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.04:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_FastLoad_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"operation\":\"BteqAfterSubr\",\"BteqScript\":\"', pipeline().parameters.BteqScript, '\",\"PathShell\":\"', pipeline().parameters.PathShell, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"EDW_Agreement\":\"', pipeline().parameters.EDW_Agreement, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\",\"Tabla\":\"', pipeline().parameters.Tabla, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta ADLS donde esta el archivo. DS: $PathOutput"
+            },
+            "FileName": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Nombre del archivo a cargar. DS: #FileName# (parametro local del job)"
+            },
+            "TablaNombre": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Nombre de la tabla Teradata real (ej: ACCOUNT_ABUSE_HISTORY). La tabla tmp sera {TablaNombre}_{Tabla}"
+            },
+            "BteqScript": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Nombre del script BTEQ AfterSubr (ej: Bteq_Account_Abuse_History.sh)"
+            },
+            "Tabla": {
+                "type": "String",
+                "defaultValue": "J139_MCF",
+                "description": "Acronimo sufijo tabla temporal. DS: #Tabla# local param. En S139 siempre vale 'J139_MCF'."
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $Teradata_EDW_DSN"
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema/database Teradata WORK. DS: $EDW_Wrk"
+            },
+            "EDW_Agreement": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema/database Teradata AGREEMENT. DS: $EDW_Agreement"
+            },
+            "PathLog": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $PathLog"
+            },
+            "PathShell": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $PathShell"
+            },
+            "TD_FL_CheckPoint": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_CheckPoint"
+            },
+            "TD_FL_ErrorLimit": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_ErrorLimit"
+            },
+            "TD_FL_Session_Max": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_Session_Max"
+            },
+            "TD_FL_Session_Min": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_Session_Min"
+            },
+            "TD_FL_Sleep": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_Sleep"
+            },
+            "TD_FL_Tenacity": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DS: $TD_FL_Tenacity"
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "AzureFunction_FastLoad_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: URL Azure Function que gestiona FastLoad y BTEQ"
+            },
+            "AzureFunction_Key": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: Key Azure Function"
+            }
+        },
+        "folder": {
+            "name": "S139_Transbk_Mcf/Generic_Patterns"
+        },
+        "annotations": [
+            "PATRON_DS: CSeqFileStage(input) -> TeradataConnector(FastLoad TmpTable) + AfterSubr(BTEQ script INSERT/DROP)",
+            "CONTROL_AFTERSUBR: DS ControlAfterSubr=1 en todos los FLoad. En ADF: Execute_AfterSubr_Bteq depende de Execute_FastLoad_To_TmpTable con dependencyCondition=Succeeded. Si FastLoad falla, AfterSubr no se ejecuta y el pipeline falla.",
+            "ALLOW_MULTIPLE_INVOCATIONS: Todos los FLoad jobs tienen AllowMultipleInvocations=1 en DS. En ADF esto es transparente: cada pipeline run es independiente. El parametro Tabla ('J139_MCF') actua como sufijo unico de la tabla temporal.",
+            "TABLA_TEMP_DS: La tabla temporal se llama {TablaNombre}_{Tabla} ej ACCOUNT_ABUSE_HISTORY_J139_MCF. El BTEQ la crea antes del FastLoad y la elimina al final.",
+            "MANUAL_INTERVENTION_1: Teradata FastLoad no existe en ADF. Azure Function recomendada: recibe PathOutput/FileName para leer de ADLS, y ejecuta FastLoad con credenciales de AKV.",
+            "MANUAL_INTERVENTION_2: Credenciales Teradata ($Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1) deben inyectarse desde AKV en el Azure Function. NO pasar como parametro de pipeline en produccion."
+        ]
+    }
+}

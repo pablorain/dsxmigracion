@@ -1,0 +1,66 @@
+{
+    "name": "DF_J139_Transbk_Mcf_Extraccion",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Extraccion principal J139_Transbk_Mcf. DS: Job Paralelo con ~25 etapas (CCustomStage Teradata sources, CTransformerStage, CSeqFileStage, CHashedFileStage lookups). ADF: MappingDataFlow con multiples sources Teradata, lookups cached, transformaciones derivadas, sinks ADLS. MANUAL_INTERVENTION: 25 etapas complejas - requiere mapeo manual completo desde DSX original.",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "name": "Source_Teradata_LDM_Main",
+                    "description": "MANUAL_INTERVENTION: Source principal Teradata del DSX. Extraer query/tabla exacta. Probablemente extrae de tablas LDM del schema $EDW_Agreement o $EDW_Party.",
+                    "dataset": { "referenceName": "DS_Teradata_EDW_Agreement", "type": "DatasetReference" }
+                }
+            ],
+            "sinks": [
+                {
+                    "name": "Sink_ADLS_Extraccion_Cuentas",
+                    "description": "MANUAL_INTERVENTION: Sink principal para archivos de cuentas. Verificar nombre exacto en DSX.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                },
+                {
+                    "name": "Sink_ADLS_Extraccion_Tarjetas",
+                    "description": "MANUAL_INTERVENTION: Sink para archivos de tarjetas. Verificar nombre exacto en DSX.",
+                    "dataset": { "referenceName": "DS_ADLS_S139_FLoad_Input", "type": "DatasetReference" }
+                }
+            ],
+            "transformations": [],
+            "scriptLines": [
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "// MANUAL_INTERVENTION CRITICO: Este DataFlow tiene ~25 etapas en el DSX original.",
+                "// Requiere mapeo manual completo. Las etapas del DS incluyen:",
+                "// - Multiples CCustomStage TeradataConnector (sources de diferentes tablas Teradata LDM)",
+                "// - CHashedFileStage como lookups (EDW_Agreement hash, EDW_Card hash)",
+                "// - Multiples CTransformerStage con logica de transformacion/mapeo de columnas",
+                "// - CSeqFileStage de salida para archivos de cuentas y tarjetas",
+                "// - Posiblemente CCollector (union) y Pivot stages",
+                "// Pasos a seguir:",
+                "// 1. Abrir DSX en DataStage Designer y mapear visualmente las 25 etapas",
+                "// 2. Para cada CTransformerStage: extraer las columnas de entrada/salida y las expresiones BASIC/DS",
+                "// 3. Replicar cada transformacion como DerivedColumn, Filter, ConditionalSplit, etc. en este DataFlow",
+                "// 4. Los CHashedFileStage se reemplazan con 'cached source lookup' usando los Parquet de hash",
+                "// 5. Los CSeqFileStage de salida se reemplazan con sinks DelimitedText a ADLS",
+                "// 6. Verificar el orden de ejecucion y dependencias entre etapas",
+                "// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+                "source(output(col1 as string), allowSchemaDrift: true, validateSchema: false, isolationLevel: 'READ_UNCOMMITTED') ~> Source_Teradata_LDM_Main",
+                "Source_Teradata_LDM_Main sink(allowSchemaDrift: true, validateSchema: false, filePattern:'J139_TRANSBK_MCF_CUENTAS_*.TXT', umask: 0022) ~> Sink_ADLS_Extraccion_Cuentas",
+                "Source_Teradata_LDM_Main sink(allowSchemaDrift: true, validateSchema: false, filePattern:'J139_TRANSBK_MCF_TARJETAS_*.TXT', umask: 0022) ~> Sink_ADLS_Extraccion_Tarjetas"
+            ],
+            "parameters": {
+                "EDW_Agreement": { "type": "string" }, "EDW_Wrk": { "type": "string" },
+                "EDW_Party": { "type": "string" }, "Teradata_EDW_DSN": { "type": "string" },
+                "AKV_BaseUrl": { "type": "string" }, "PathOutput": { "type": "string" },
+                "PathHash_Agreement": { "type": "string" }, "PathHash_Card": { "type": "string" },
+                "ADLS_Container": { "type": "string" }
+            }
+        },
+        "folder": { "name": "S139_Transbk_Mcf" },
+        "annotations": [
+            "ORIGEN_DS: J139_Transbk_Mcf_Extraccion (Parallel Job ~25 etapas)",
+            "MANUAL_INTERVENTION_CRITICO: Este es el DataFlow mas complejo del DSX S139. Tiene ~25 etapas incluyendo multiples Teradata sources, transformaciones, lookups en hash files, y multiples sinks. Requiere mapeo manual completo desde el DSX original.",
+            "MANUAL_INTERVENTION: Los CHashedFileStage como lookup se reemplazan por 'cached source' en ADF Data Flow. Los hash files deben estar pre-cargados por DF_J139_Transbk_Mcf_Extraccion_Hash antes de ejecutar este DataFlow.",
+            "MANUAL_INTERVENTION: Las expresiones BASIC/UniVerse de los CTransformerStage deben traducirse a expresiones ADF Data Flow DSL.",
+            "MANUAL_INTERVENTION: Revisar si hay logica de control de flujo en el JobControlCode del job DS y si se debe replicar como IfCondition/Until en el pipeline padre PL_J139_Transbk_Mcf_Extraccion."
+        ]
+    }
+}

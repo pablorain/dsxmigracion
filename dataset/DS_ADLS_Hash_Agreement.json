@@ -1,0 +1,27 @@
+{
+    "name": "DS_ADLS_Hash_Agreement",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Dataset Parquet ADLS para hash file EDW_Agreement. DS equivalente: CHashedFileStage EDW_Agreement. Reemplaza el hash en memoria de DataStage por un archivo Parquet persistido en ADLS.",
+        "linkedServiceName": { "referenceName": "LS_ADLS_Staging", "type": "LinkedServiceReference" },
+        "parameters": {
+            "PathHash": { "type": "String", "defaultValue": "", "description": "Ruta ADLS donde se escribe/lee el Parquet del hash EDW_Agreement. Ej: s139/hash/edw_agreement/" },
+            "ADLS_Container": { "type": "String", "defaultValue": "", "description": "Contenedor ADLS Gen2." }
+        },
+        "annotations": [
+            "ORIGEN_DS: CHashedFileStage EDW_Agreement en J139_Transbk_Mcf",
+            "MANUAL_INTERVENTION: Confirmar esquema Parquet (columnas clave del hash) desde DSX antes de usar este dataset en DataFlows.",
+            "PATRON: Hash DataStage -> Parquet ADLS. Se lee como cached source en DataFlows que usan EDW_Agreement como lookup."
+        ],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileSystem": { "value": "@dataset().ADLS_Container", "type": "Expression" },
+                "folderPath": { "value": "@dataset().PathHash", "type": "Expression" }
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    }
+}
