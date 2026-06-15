@@ -1,0 +1,49 @@
+{
+  "name": "DS_Sybase_Jen",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "type": "OdbcTable",
+    "description": "Tabla journal.dbo.jen (origen). El Copy usa query parametrizada; la tabla solo ancla el linked service.",
+    "annotations": ["migrated-from-datastage", "DSX:journal.dbo.jen"],
+    "linkedServiceName": {
+      "referenceName": "LS_Sybase_Journal_ODBC",
+      "type": "LinkedServiceReference",
+      "parameters": {
+        "DSN": "@dataset().DSN",
+        "UserName": "@dataset().UserName"
+      }
+    },
+    "parameters": {
+      "DSN": { "type": "String" },
+      "UserName": { "type": "String" }
+    },
+    "schema": [
+      { "name": "jen_ope_evt", "type": "char", "precision": 12 },
+      { "name": "jen_fec_evt_neg", "type": "datetime", "precision": 23, "scale": 3 },
+      { "name": "jen_fec_ctb_evt", "type": "datetime", "precision": 23, "scale": 3 },
+      { "name": "jen_rut_cli", "type": "char", "precision": 9 },
+      { "name": "jen_vrf_cli", "type": "char", "precision": 1 },
+      { "name": "jen_rut_emp", "type": "char", "precision": 9 },
+      { "name": "jen_vrf_emp", "type": "char", "precision": 1 },
+      { "name": "jen_id_cnl", "type": "char", "precision": 10 },
+      { "name": "jen_est_cnl", "type": "char", "precision": 1 },
+      { "name": "jen_suc_ori", "type": "char" },
+      { "name": "jen_med", "type": "char" },
+      { "name": "jen_id_med", "type": "char" },
+      { "name": "jen_tip_opr_bci", "type": "char" },
+      { "name": "jen_id_opr", "type": "char", "precision": 10 },
+      { "name": "jen_mod_tar", "type": "char", "precision": 1 },
+      { "name": "jen_fra_lin", "type": "char", "precision": 1 },
+      { "name": "jen_ara_cua", "type": "char", "precision": 5 },
+      { "name": "jen_id_svs", "type": "char", "precision": 10 },
+      { "name": "jen_est_evt_neg", "type": "char", "precision": 1 },
+      { "name": "jen_id_pdt", "type": "char", "precision": 6 },
+      { "name": "jen_id_evt", "type": "char", "precision": 10 },
+      { "name": "jen_id_sub_evt", "type": "char", "precision": 6 },
+      { "name": "jen_clv_ppl", "type": "char", "precision": 16 },
+      { "name": "jen_mto", "type": "numeric", "precision": 18 },
+      { "name": "jen_clv_sgd", "type": "char", "precision": 16 },
+      { "name": "jen_cpo_var", "type": "char", "precision": 16 }
+    ]
+  }
+}

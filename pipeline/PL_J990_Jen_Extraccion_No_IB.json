@@ -1,0 +1,62 @@
+{
+  "name": "PL_J990_Jen_Extraccion_No_IB",
+  "type": "Microsoft.DataFactory/factories/pipelines",
+  "properties": {
+    "description": "Extraccion del journal de negocio (Sybase journal.dbo.jen) - movimientos NO Interbancarios (jen_ope_evt NOT LIKE 'IB%'), fecha = FechaProceso (mismo dia). Escribe archivo plano *_JOURNAL_JEN_NO_IBM.TXT. Migracion del Server Job J990_Jen_Extraccion_No_IB.",
+    "annotations": ["migrated-from-datastage", "categoria:\\Jobs\\Fase_5\\Hito_0\\Param_and_Others\\J990_Jen"],
+    "parameters": {
+      "FechaProceso": { "type": "String", "defaultValue": "" },
+      "FechaArchExtraccion": { "type": "String", "defaultValue": "" },
+      "Sybase_Journal": { "type": "String", "defaultValue": "" },
+      "Sybase_User": { "type": "String", "defaultValue": "" },
+      "DBO_Journal": { "type": "String", "defaultValue": "journal.dbo" },
+      "PathTemp": { "type": "String", "defaultValue": "" },
+      "NombreJob": { "type": "String", "defaultValue": "J990_Jen" },
+      "SelectList": {
+        "type": "String",
+        "defaultValue": "SELECT REPLACE(jen_ope_evt,'|',' ') AS jen_ope_evt, jen_fec_evt_neg, jen_fec_ctb_evt, REPLACE(jen_rut_cli,'|',' ') AS jen_rut_cli, REPLACE(jen_vrf_cli,'|',' ') AS jen_vrf_cli, REPLACE(jen_rut_emp,'|',' ') AS jen_rut_emp, REPLACE(jen_vrf_emp,'|',' ') AS jen_vrf_emp, REPLACE(jen_id_cnl,'|',' ') AS jen_id_cnl, REPLACE(jen_est_cnl,'|',' ') AS jen_est_cnl, REPLACE(jen_suc_ori,'|',' ') AS jen_suc_ori, REPLACE(jen_med,'|',' ') AS jen_med, REPLACE(jen_id_med,'|',' ') AS jen_id_med, REPLACE(jen_tip_opr_bci,'|',' ') AS jen_tip_opr_bci, REPLACE(jen_id_opr,'|',' ') AS jen_id_opr, REPLACE(jen_mod_tar,'|',' ') AS jen_mod_tar, REPLACE(jen_fra_lin,'|',' ') AS jen_fra_lin, REPLACE(jen_ara_cua,'|',' ') AS jen_ara_cua, REPLACE(jen_id_svs,'|',' ') AS jen_id_svs, REPLACE(jen_est_evt_neg,'|',' ') AS jen_est_evt_neg, REPLACE(jen_id_pdt,'|',' ') AS jen_id_pdt, REPLACE(jen_id_evt,'|',' ') AS jen_id_evt, REPLACE(jen_id_sub_evt,'|',' ') AS jen_id_sub_evt, REPLACE(jen_clv_ppl,'|',' ') AS jen_clv_ppl, jen_mto, REPLACE(jen_clv_sgd,'|',' ') AS jen_clv_sgd, REPLACE(jen_cpo_var,'|',' ') AS jen_cpo_var"
+      }
+    },
+    "activities": [
+      {
+        "name": "Copy_Jen_No_IB",
+        "type": "Copy",
+        "description": "Sybase ODBC -> archivo plano NO_IBM. REPLACE('|',' ') reproduce el EREPLACE del Transformer DataStage.",
+        "policy": { "timeout": "0.12:00:00", "retry": 2, "retryIntervalInSeconds": 60, "secureOutput": false, "secureInput": true },
+        "typeProperties": {
+          "source": {
+            "type": "OdbcSource",
+            "query": {
+              "value": "@concat(pipeline().parameters.SelectList, ' FROM ', pipeline().parameters.DBO_Journal, '.jen WHERE CAST(jen_fec_evt_neg AS DATE)=CAST(''', pipeline().parameters.FechaProceso, ''' AS DATE) AND SUBSTRING(jen_ope_evt,1,2)<>''IB''')",
+              "type": "Expression"
+            }
+          },
+          "sink": {
+            "type": "DelimitedTextSink",
+            "storeSettings": { "type": "AzureBlobFSWriteSettings" },
+            "formatSettings": { "type": "DelimitedTextWriteSettings", "fileExtension": ".txt", "quoteAllText": false }
+          },
+          "enableStaging": false
+        },
+        "inputs": [
+          {
+            "referenceName": "DS_Sybase_Jen",
+            "type": "DatasetReference",
+            "parameters": { "DSN": "@pipeline().parameters.Sybase_Journal", "UserName": "@pipeline().parameters.Sybase_User" }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "DS_Jen_File",
+            "type": "DatasetReference",
+            "parameters": {
+              "Container": "landing",
+              "FolderPath": "@pipeline().parameters.PathTemp",
+              "FileName": "@concat(pipeline().parameters.NombreJob, '_JOURNAL_JEN_NO_IBM.TXT.', pipeline().parameters.FechaArchExtraccion)"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

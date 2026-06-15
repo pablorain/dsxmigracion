@@ -1,0 +1,12 @@
+{
+  "name": "LS_ADLS_Landing",
+  "type": "Microsoft.DataFactory/factories/linkedservices",
+  "properties": {
+    "type": "AzureBlobFS",
+    "description": "Zona de aterrizaje (tablas de paso / archivos planos). Equivale a $PathTemp del DSX. Autenticacion por Managed Identity de la Data Factory.",
+    "annotations": ["migrated-from-datastage", "DSX:CSeqFileStage"],
+    "typeProperties": {
+      "url": "https://REEMPLAZAR-storage.dfs.core.windows.net/"
+    }
+  }
+}

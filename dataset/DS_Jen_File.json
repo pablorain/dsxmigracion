@@ -1,0 +1,32 @@
+{
+  "name": "DS_Jen_File",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "type": "DelimitedText",
+    "description": "Archivo plano de salida (tabla de paso). Pipe-delimited, sin cabecera, sin comillas, encoding CP1252 como el origen DataStage. Reutilizable para IB y No_IB via parametros.",
+    "annotations": ["migrated-from-datastage", "DSX:CSeqFileStage"],
+    "linkedServiceName": {
+      "referenceName": "LS_ADLS_Landing",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "Container": { "type": "String", "defaultValue": "landing" },
+      "FolderPath": { "type": "String" },
+      "FileName": { "type": "String" }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileSystem": { "value": "@dataset().Container", "type": "Expression" },
+        "folderPath": { "value": "@dataset().FolderPath", "type": "Expression" },
+        "fileName": { "value": "@dataset().FileName", "type": "Expression" }
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "quoteChar": "",
+      "escapeChar": "",
+      "firstRowAsHeader": false,
+      "encodingName": "Windows-1252"
+    }
+  }
+}

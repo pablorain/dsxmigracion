@@ -1,0 +1,12 @@
+{
+  "name": "LS_KeyVault",
+  "type": "Microsoft.DataFactory/factories/linkedservices",
+  "properties": {
+    "type": "AzureKeyVault",
+    "description": "Almacena la password de Sybase ({iisenc} del DSX no es reutilizable; recapturar el secreto).",
+    "annotations": ["migrated-from-datastage"],
+    "typeProperties": {
+      "baseUrl": "https://REEMPLAZAR-keyvault.vault.azure.net/"
+    }
+  }
+}

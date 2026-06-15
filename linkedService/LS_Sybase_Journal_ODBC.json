@@ -1,0 +1,36 @@
+{
+  "name": "LS_Sybase_Journal_ODBC",
+  "type": "Microsoft.DataFactory/factories/linkedservices",
+  "properties": {
+    "type": "Odbc",
+    "description": "Origen Sybase ASE (journal) via ODBC. Equivale al CODBCStage del DSX. Requiere Self-hosted Integration Runtime con driver ODBC de Sybase instalado.",
+    "annotations": ["migrated-from-datastage", "DSX:CODBCStage"],
+    "parameters": {
+      "DSN": { "type": "String" },
+      "UserName": { "type": "String" }
+    },
+    "typeProperties": {
+      "connectionString": {
+        "value": "@concat('DSN=', linkedService().DSN, ';')",
+        "type": "Expression"
+      },
+      "authenticationType": "Basic",
+      "userName": {
+        "value": "@linkedService().UserName",
+        "type": "Expression"
+      },
+      "password": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "LS_KeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Sybase-Journal-PWD"
+      }
+    },
+    "connectVia": {
+      "referenceName": "SHIR-OnPrem",
+      "type": "IntegrationRuntimeReference"
+    }
+  }
+}
