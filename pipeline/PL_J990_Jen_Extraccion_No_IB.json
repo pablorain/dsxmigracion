@@ -1,0 +1,94 @@
+{
+    "name": "PL_J990_Jen_Extraccion_No_IB",
+    "properties": {
+        "description": "Pipeline ADF para J990_Jen_Extraccion_No_IB. Wrapper de DF_J990_Jen_Extraccion_No_IB. Extrae registros NO-IB del Journal Sybase (fecha = FechaProceso exacto) y escribe en ADLS. Credenciales Sybase via AKV (nunca como parametros).",
+        "activities": [
+            {
+                "name": "DF_J990_Jen_Extraccion_No_IB",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "DF_J990_Jen_Extraccion_No_IB",
+                        "type": "DataFlowReference",
+                        "parameters": {
+                            "FechaProceso": {
+                                "value": "@pipeline().parameters.FechaProceso",
+                                "type": "Expression"
+                            },
+                            "FechaArchExtraccion": {
+                                "value": "@pipeline().parameters.FechaArchExtraccion",
+                                "type": "Expression"
+                            },
+                            "DBO_Journal": {
+                                "value": "@pipeline().parameters.DBO_Journal",
+                                "type": "Expression"
+                            },
+                            "PathTemp": {
+                                "value": "@pipeline().parameters.PathTemp",
+                                "type": "Expression"
+                            },
+                            "NombreJob": {
+                                "value": "@pipeline().parameters.NombreJob",
+                                "type": "Expression"
+                            },
+                            "ADLS_Container": {
+                                "value": "@pipeline().parameters.ADLS_Container",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Fine",
+                    "runConcurrently": false,
+                    "continueOnError": false
+                }
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "journal.dbo"
+            },
+            "PathTemp": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen"
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            }
+        },
+        "annotations": [
+            "DataStage: J990_Jen_Extraccion_No_IB",
+            "Categoria: Jobs/Fase_5/Hito_0/Param_and_Others/J990_Jen",
+            "Credenciales: Sybase via AKV (LS_Sybase_Origen_Journal)"
+        ],
+        "folder": {
+            "name": "J990_Jen"
+        }
+    }
+}

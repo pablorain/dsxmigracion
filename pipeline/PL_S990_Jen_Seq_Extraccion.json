@@ -1,0 +1,220 @@
+{
+    "name": "PL_S990_Jen_Seq_Extraccion",
+    "properties": {
+        "description": "Migrado de S990_Jen_Seq_Extraccion (DataStage Sequencer, JobType=2). Flujo: IfCondition(FlagExtraccion=1) -> ExecutePipeline IB -> ExecutePipeline No_IB. Identico al visual del sequencer DataStage: V22S0(CJSCondition) -> V20S0(J990_Jen_Extraccion_IB) -> V21S0(J990_Jen_Extraccion_No_IB). Credenciales Sybase y Teradata siempre via AKV (nunca como parametros de pipeline).",
+        "activities": [
+            {
+                "name": "Valida_Extraccion",
+                "description": "DataStage: CJSCondition V22S0 'Valida_Ejecucion'. Si FlagExtraccion=1 ejecuta ambas extracciones; si =0 no ejecuta nada.",
+                "type": "IfCondition",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(pipeline().parameters.FlagExtraccion, '1')",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "J990_Jen_Extraccion_IB",
+                            "description": "DataStage: CJSJobActivity V20S0. Extrae registros IB (jen_fec_evt_neg = FechaProceso-7 dias). Ejecuta primero.",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_J990_Jen_Extraccion_IB",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "FechaProceso": {
+                                        "value": "@pipeline().parameters.FechaProceso",
+                                        "type": "Expression"
+                                    },
+                                    "FechaArchExtraccion": {
+                                        "value": "@pipeline().parameters.FechaArchExtraccion",
+                                        "type": "Expression"
+                                    },
+                                    "DBO_Journal": {
+                                        "value": "@pipeline().parameters.DBO_Journal",
+                                        "type": "Expression"
+                                    },
+                                    "PathTemp": {
+                                        "value": "@pipeline().parameters.PathTemp",
+                                        "type": "Expression"
+                                    },
+                                    "NombreJob": {
+                                        "value": "@pipeline().parameters.NombreJob",
+                                        "type": "Expression"
+                                    },
+                                    "ADLS_Container": {
+                                        "value": "@pipeline().parameters.ADLS_Container",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "J990_Jen_Extraccion_No_IB",
+                            "description": "DataStage: CJSJobActivity V21S0. Extrae registros No-IB (jen_fec_evt_neg = FechaProceso exacto). Ejecuta despues de IB (dependencia secuencial del sequencer).",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [
+                                {
+                                    "activity": "J990_Jen_Extraccion_IB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_J990_Jen_Extraccion_No_IB",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "FechaProceso": {
+                                        "value": "@pipeline().parameters.FechaProceso",
+                                        "type": "Expression"
+                                    },
+                                    "FechaArchExtraccion": {
+                                        "value": "@pipeline().parameters.FechaArchExtraccion",
+                                        "type": "Expression"
+                                    },
+                                    "DBO_Journal": {
+                                        "value": "@pipeline().parameters.DBO_Journal",
+                                        "type": "Expression"
+                                    },
+                                    "PathTemp": {
+                                        "value": "@pipeline().parameters.PathTemp",
+                                        "type": "Expression"
+                                    },
+                                    "NombreJob": {
+                                        "value": "@pipeline().parameters.NombreJob",
+                                        "type": "Expression"
+                                    },
+                                    "ADLS_Container": {
+                                        "value": "@pipeline().parameters.ADLS_Container",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "ifFalseActivities": []
+                }
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "FlagExtraccion": {
+                "type": "String",
+                "defaultValue": "1"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen"
+            },
+            "AcronimoTabla": {
+                "type": "String",
+                "defaultValue": "J990JEN"
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "journal.dbo"
+            },
+            "Sybase_Journal": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "Sybase_User": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "Teradata_EDW_User_Grupo1": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "EDW_Param_and_Others": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathLog": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathShell": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathHash": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathTemp": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathLog_Hist": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "PathOutput_Hist": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "MsgFileDiff": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "FlagDelete": {
+                "type": "String",
+                "defaultValue": "0"
+            },
+            "TD_ML_CheckPoint": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            }
+        },
+        "annotations": [
+            "DataStage: S990_Jen_Seq_Extraccion (JobType=2 Sequencer)",
+            "Categoria: Jobs/Fase_5/Hito_0/Param_and_Others/J990_Jen",
+            "SEGURIDAD: Sybase_PWD y Teradata_EDW_PWD_Grupo1 NO son parametros - se inyectan via AKV en los LinkedServices",
+            "Checkpoint DataStage DSCheckPointExists/SetValue -> ADF SetVariable @utcNow() (implementar si se requiere restart)"
+        ],
+        "folder": {
+            "name": "J990_Jen/Sequencers"
+        }
+    }
+}

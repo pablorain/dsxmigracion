@@ -1,0 +1,52 @@
+{
+    "name": "DS_ADLS_Staging_Jen_IBM",
+    "properties": {
+        "description": "Dataset ADLS Gen2 - archivo de salida IBM J990_Jen. Migrado de CSeqFileStage DataStage. Ruta: {PathTemp}{NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}. Delimitador |.",
+        "type": "DelimitedText",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "ADLS_Container": {
+                "type": "String"
+            },
+            "PathTemp": {
+                "type": "String"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen"
+            },
+            "FechaArchExtraccion": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "@{concat(dataset().NombreJob, '_JOURNAL_JEN_IBM.TXT.', dataset().FechaArchExtraccion)}",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@{dataset().PathTemp}",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@{dataset().ADLS_Container}",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "escapeChar": "\\",
+            "quoteChar": "\"",
+            "firstRowAsHeader": false,
+            "encodingName": "UTF-8"
+        },
+        "folder": {
+            "name": "J990_Jen"
+        }
+    }
+}

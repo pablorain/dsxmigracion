@@ -1,0 +1,27 @@
+{
+    "name": "DS_Sybase_Origen_Jen",
+    "properties": {
+        "description": "Dataset Sybase Journal - tabla dbo.jen. Migrado de CODBCStage DataStage J990_Jen. DSN=#$Sybase_Journal#. Credenciales via AKV.",
+        "type": "SybaseTable",
+        "linkedServiceName": {
+            "referenceName": "LS_Sybase_Origen_Journal",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "journal.dbo"
+            }
+        },
+        "annotations": [],
+        "typeProperties": {
+            "tableName": {
+                "value": "@{concat(dataset().DBO_Journal, '.jen')}",
+                "type": "Expression"
+            }
+        },
+        "folder": {
+            "name": "J990_Jen"
+        }
+    }
+}

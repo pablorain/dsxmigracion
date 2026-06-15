@@ -1,0 +1,135 @@
+{
+    "name": "DF_J990_Jen_Extraccion_IB",
+    "properties": {
+        "description": "Migrado de J990_Jen_Extraccion_IB (DataStage 11.7). Flujo: CODBCStage(Sybase) -> CTransformerStage(EREPLACE/ICONV) -> CSeqFileStage(ADLS). Filtra jen_fec_evt_neg = FechaProceso-7 dias y jen_ope_evt LIKE 'IB%'. Los 26 campos pasan por regexReplace equivalente a EREPLACE(ICONV(col,'MCP'),'|',' ').",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "DS_Sybase_Origen_Jen",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "DBO_Journal": {
+                                "value": "$DBO_Journal",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "name": "Sybase_Jen_IBM_7_Dias",
+                    "description": "Origen Sybase Journal - IB, fecha = FechaProceso-7d. DataStage: CODBCStage DSN=#$Sybase_Journal# Table=#$DBO_Journal#.jen"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Staging_Jen_IBM",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Container": {
+                                "value": "$ADLS_Container",
+                                "type": "Expression"
+                            },
+                            "PathTemp": {
+                                "value": "$PathTemp",
+                                "type": "Expression"
+                            },
+                            "NombreJob": {
+                                "value": "$NombreJob",
+                                "type": "Expression"
+                            },
+                            "FechaArchExtraccion": {
+                                "value": "$FechaArchExtraccion",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "name": "Seq_Jen",
+                    "description": "Salida ADLS: {PathTemp}{NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}. DataStage: CSeqFileStage delimitador |"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "Trf_Jen",
+                    "description": "DataStage CTransformerStage: EREPLACE(ICONV(col,'MCP'),'|',' ') para los 26 campos. ADF: regexReplace(toString(col),'[|]',' '). La conversion ICONV MCP es transparente en ADF (UTF-8 nativo)."
+                }
+            ],
+            "scriptLines": [
+                "parameters{",
+                "     FechaProceso as string,",
+                "     FechaArchExtraccion as string,",
+                "     DBO_Journal as string,",
+                "     PathTemp as string,",
+                "     NombreJob as string (\"J990_Jen\"),",
+                "     ADLS_Container as string",
+                "}",
+                "source(output(",
+                "          jen_ope_evt as string,",
+                "          jen_fec_evt_neg as string,",
+                "          jen_fec_ctb_evt as string,",
+                "          jen_rut_cli as string,",
+                "          jen_vrf_cli as string,",
+                "          jen_rut_emp as string,",
+                "          jen_vrf_emp as string,",
+                "          jen_id_cnl as string,",
+                "          jen_est_cnl as string,",
+                "          jen_suc_ori as string,",
+                "          jen_med as string,",
+                "          jen_id_med as string,",
+                "          jen_tip_opr_bci as string,",
+                "          jen_id_opr as string,",
+                "          jen_mod_tar as string,",
+                "          jen_fra_lin as string,",
+                "          jen_ara_cua as string,",
+                "          jen_id_svs as string,",
+                "          jen_est_evt_neg as string,",
+                "          jen_id_pdt as string,",
+                "          jen_id_evt as string,",
+                "          jen_id_sub_evt as string,",
+                "          jen_clv_ppl as string,",
+                "          jen_mto as decimal(18,4),",
+                "          jen_clv_sgd as string,",
+                "          jen_cpo_var as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     store: 'sybase',",
+                "     format: 'query',",
+                "     query: concat('SELECT jen_ope_evt, jen_fec_evt_neg, jen_fec_ctb_evt, jen_rut_cli, jen_vrf_cli, jen_rut_emp, jen_vrf_emp, jen_id_cnl, jen_est_cnl, jen_suc_ori, jen_med, jen_id_med, jen_tip_opr_bci, jen_id_opr, jen_mod_tar, jen_fra_lin, jen_ara_cua, jen_id_svs, jen_est_evt_neg, jen_id_pdt, jen_id_evt, jen_id_sub_evt, jen_clv_ppl, jen_mto, jen_clv_sgd, jen_cpo_var FROM ', $DBO_Journal, '.jen WHERE CAST(jen_fec_evt_neg AS DATE)=dateadd(day,-7,CAST(''', $FechaProceso, ''' AS DATE)) AND SUBSTRING(jen_ope_evt,1,2)=''IB''')) ~> Sybase_Jen_IBM_7_Dias",
+                "Sybase_Jen_IBM_7_Dias derive(jen_ope_evt = regexReplace(toString(jen_ope_evt), '[|]', ' '),",
+                "          jen_fec_evt_neg = regexReplace(toString(jen_fec_evt_neg), '[|]', ' '),",
+                "          jen_fec_ctb_evt = regexReplace(toString(jen_fec_ctb_evt), '[|]', ' '),",
+                "          jen_rut_cli = regexReplace(toString(jen_rut_cli), '[|]', ' '),",
+                "          jen_vrf_cli = regexReplace(toString(jen_vrf_cli), '[|]', ' '),",
+                "          jen_rut_emp = regexReplace(toString(jen_rut_emp), '[|]', ' '),",
+                "          jen_vrf_emp = regexReplace(toString(jen_vrf_emp), '[|]', ' '),",
+                "          jen_id_cnl = regexReplace(toString(jen_id_cnl), '[|]', ' '),",
+                "          jen_est_cnl = regexReplace(toString(jen_est_cnl), '[|]', ' '),",
+                "          jen_suc_ori = regexReplace(toString(jen_suc_ori), '[|]', ' '),",
+                "          jen_med = regexReplace(toString(jen_med), '[|]', ' '),",
+                "          jen_id_med = regexReplace(toString(jen_id_med), '[|]', ' '),",
+                "          jen_tip_opr_bci = regexReplace(toString(jen_tip_opr_bci), '[|]', ' '),",
+                "          jen_id_opr = regexReplace(toString(jen_id_opr), '[|]', ' '),",
+                "          jen_mod_tar = regexReplace(toString(jen_mod_tar), '[|]', ' '),",
+                "          jen_fra_lin = regexReplace(toString(jen_fra_lin), '[|]', ' '),",
+                "          jen_ara_cua = regexReplace(toString(jen_ara_cua), '[|]', ' '),",
+                "          jen_id_svs = regexReplace(toString(jen_id_svs), '[|]', ' '),",
+                "          jen_est_evt_neg = regexReplace(toString(jen_est_evt_neg), '[|]', ' '),",
+                "          jen_id_pdt = regexReplace(toString(jen_id_pdt), '[|]', ' '),",
+                "          jen_id_evt = regexReplace(toString(jen_id_evt), '[|]', ' '),",
+                "          jen_id_sub_evt = regexReplace(toString(jen_id_sub_evt), '[|]', ' '),",
+                "          jen_clv_ppl = regexReplace(toString(jen_clv_ppl), '[|]', ' '),",
+                "          jen_mto = regexReplace(toString(jen_mto), '[|]', ' '),",
+                "          jen_clv_sgd = regexReplace(toString(jen_clv_sgd), '[|]', ' '),",
+                "          jen_cpo_var = regexReplace(toString(jen_cpo_var), '[|]', ' ')) ~> Trf_Jen",
+                "Trf_Jen sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> Seq_Jen"
+            ]
+        },
+        "folder": {
+            "name": "J990_Jen"
+        }
+    }
+}
