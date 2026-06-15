@@ -1,0 +1,314 @@
+{
+    "name": "PL_J990_Jen_Extraccion",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline orquestador de extraccion JEN. Ejecuta en paralelo IB y No_IB, luego une los archivos en staging mediante Copy Activity (equivale al Collector Round-Robin de DataStage). Origen DS: J990_Jen_Extraccion (CCollector + 2x CSeqFileStage + CSeqFileStage output). Archivo final: {NombreJob}_BCI_JEN.TXT",
+        "activities": [
+            {
+                "name": "Exec_PL_J990_Jen_Extraccion_IB",
+                "description": "Extraccion de registros IBM (jen_ope_evt LIKE 'IB%', fecha -7 dias)",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_J990_Jen_Extraccion_IB",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "FechaProceso": {
+                            "value": "@pipeline().parameters.FechaProceso",
+                            "type": "Expression"
+                        },
+                        "FechaArchExtraccion": {
+                            "value": "@pipeline().parameters.FechaArchExtraccion",
+                            "type": "Expression"
+                        },
+                        "Sybase_Journal": {
+                            "value": "@pipeline().parameters.Sybase_Journal",
+                            "type": "Expression"
+                        },
+                        "DBO_Journal": {
+                            "value": "@pipeline().parameters.DBO_Journal",
+                            "type": "Expression"
+                        },
+                        "PathTemp": {
+                            "value": "@pipeline().parameters.PathTemp",
+                            "type": "Expression"
+                        },
+                        "NombreJob": {
+                            "value": "@pipeline().parameters.NombreJob",
+                            "type": "Expression"
+                        },
+                        "ADLS_Url": {
+                            "value": "@pipeline().parameters.ADLS_Url",
+                            "type": "Expression"
+                        },
+                        "ADLS_Container": {
+                            "value": "@pipeline().parameters.ADLS_Container",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Exec_PL_J990_Jen_Extraccion_No_IB",
+                "description": "Extraccion de registros NO_IBM (jen_ope_evt NOT LIKE 'IB%', fecha exacta)",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_J990_Jen_Extraccion_No_IB",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "FechaProceso": {
+                            "value": "@pipeline().parameters.FechaProceso",
+                            "type": "Expression"
+                        },
+                        "FechaArchExtraccion": {
+                            "value": "@pipeline().parameters.FechaArchExtraccion",
+                            "type": "Expression"
+                        },
+                        "Sybase_Journal": {
+                            "value": "@pipeline().parameters.Sybase_Journal",
+                            "type": "Expression"
+                        },
+                        "DBO_Journal": {
+                            "value": "@pipeline().parameters.DBO_Journal",
+                            "type": "Expression"
+                        },
+                        "PathTemp": {
+                            "value": "@pipeline().parameters.PathTemp",
+                            "type": "Expression"
+                        },
+                        "NombreJob": {
+                            "value": "@pipeline().parameters.NombreJob",
+                            "type": "Expression"
+                        },
+                        "ADLS_Url": {
+                            "value": "@pipeline().parameters.ADLS_Url",
+                            "type": "Expression"
+                        },
+                        "ADLS_Container": {
+                            "value": "@pipeline().parameters.ADLS_Container",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Copy_Merge_IBM_into_Final",
+                "description": "Copia archivo IBM staging al archivo final. Primera mitad del Collector Round-Robin DataStage.",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Exec_PL_J990_Jen_Extraccion_IB",
+                        "dependencyConditions": ["Succeeded"]
+                    },
+                    {
+                        "activity": "Exec_PL_J990_Jen_Extraccion_No_IB",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": false,
+                            "enablePartitionDiscovery": false
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                        }
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "quoteAllText": false,
+                            "fileExtension": ""
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_ADLS_Staging_Jen_IBM",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Url": { "value": "@pipeline().parameters.ADLS_Url", "type": "Expression" },
+                            "Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                            "PathTemp": { "value": "@pipeline().parameters.PathTemp", "type": "Expression" },
+                            "NombreJob": { "value": "@pipeline().parameters.NombreJob", "type": "Expression" },
+                            "FechaArchExtraccion": { "value": "@pipeline().parameters.FechaArchExtraccion", "type": "Expression" }
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_ADLS_Output_Jen",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Url": { "value": "@pipeline().parameters.ADLS_Url", "type": "Expression" },
+                            "Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                            "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                            "NombreJob": { "value": "@pipeline().parameters.NombreJob", "type": "Expression" }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Copy_Merge_No_IBM_into_Final",
+                "description": "Copia archivo NO_IBM staging y hace append al archivo final. Segunda mitad del Collector Round-Robin DataStage. NOTA: ADF Copy Activity sobreescribe por defecto - configurar appendMode si el conector lo soporta o usar Append en ADLS.",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_Merge_IBM_into_Final",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": false
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                        }
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings",
+                            "metadata": []
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "quoteAllText": false,
+                            "fileExtension": ""
+                        }
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_ADLS_Staging_Jen_No_IBM",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Url": { "value": "@pipeline().parameters.ADLS_Url", "type": "Expression" },
+                            "Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                            "PathTemp": { "value": "@pipeline().parameters.PathTemp", "type": "Expression" },
+                            "NombreJob": { "value": "@pipeline().parameters.NombreJob", "type": "Expression" },
+                            "FechaArchExtraccion": { "value": "@pipeline().parameters.FechaArchExtraccion", "type": "Expression" }
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_ADLS_Output_Jen",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Url": { "value": "@pipeline().parameters.ADLS_Url", "type": "Expression" },
+                            "Container": { "value": "@pipeline().parameters.ADLS_Container", "type": "Expression" },
+                            "PathOutput": { "value": "@pipeline().parameters.PathOutput", "type": "Expression" },
+                            "NombreJob": { "value": "@pipeline().parameters.NombreJob", "type": "Expression" }
+                        }
+                    }
+                ]
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha proceso YYYY-MM-DD. DS: $FechaProceso"
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha archivo YYYYMMDD. DS: $FechaArchExtraccion"
+            },
+            "Sybase_Journal": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Servidor Sybase Journal. DS: $Sybase_Journal"
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "dbo",
+                "description": "Schema Sybase. DS: $DBO_Journal"
+            },
+            "PathTemp": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta ADLS temporal. DS: $PathTemp"
+            },
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta ADLS salida final. DS: $PathOutput"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen",
+                "description": "Prefijo nombre archivo. DS: $NombreJob"
+            },
+            "ADLS_Url": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            }
+        },
+        "folder": {
+            "name": "J990_Jen"
+        },
+        "annotations": [
+            "ORIGEN_DS: J990_Jen_Extraccion",
+            "COLLECTOR: Round-Robin en DataStage (2 inputs: IBM + No_IBM) -> Copy Activity secuencial con append en ADF",
+            "MANUAL_INTERVENTION: La actividad Copy_Merge_No_IBM_into_Final debe configurarse en modo append. Usar Azure ADLS Append Blob o combinar ambos datasets en un solo Data Flow con union."
+        ]
+    }
+}

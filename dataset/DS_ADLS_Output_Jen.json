@@ -1,0 +1,48 @@
+{
+    "name": "DS_ADLS_Output_Jen",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Archivo de salida final pipe-delimitado en ADLS para JEN (IBM + No_IBM combinados). Equivale al SeqFile destino DataStage: $PathOutput/$NombreJob_BCI_JEN.TXT",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "ADLS_Url": {
+                    "value": "@dataset().ADLS_Url",
+                    "type": "Expression"
+                }
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "@{dataset().NombreJob}_BCI_JEN.TXT",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@dataset().Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathOutput",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "escapeChar": "\\",
+            "quoteChar": "",
+            "firstRowAsHeader": false,
+            "encodingName": "UTF-8"
+        },
+        "parameters": {
+            "ADLS_Url": { "type": "String" },
+            "Container": { "type": "String" },
+            "PathOutput": { "type": "String" },
+            "NombreJob": { "type": "String", "defaultValue": "J990_Jen" }
+        },
+        "schema": [],
+        "annotations": []
+    }
+}

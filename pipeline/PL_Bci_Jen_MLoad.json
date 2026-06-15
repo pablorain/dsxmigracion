@@ -1,0 +1,131 @@
+{
+    "name": "PL_Bci_Jen_MLoad",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline de carga Teradata via MLoad. Origen DataStage: Bci_Jen_MLoad (CJSExecCmdActivity ejecutando sh $PathShell/Mload_Bci_Jen_Dw.sh). MANUAL_INTERVENTION: El shell script Mload_Bci_Jen_Dw.sh llama al utilitario Teradata MultiLoad (tdmload/mload) que no tiene equivalente nativo en ADF. Implementar mediante Azure Function o una VM con agente self-hosted que ejecute el script.",
+        "activities": [
+            {
+                "name": "Execute_MLoad_Bci_Jen",
+                "description": "MANUAL_INTERVENTION: Ejecuta script Mload_Bci_Jen_Dw.sh via Azure Function. El script original DataStage llama al utilitario Teradata MultiLoad que no existe en ADF. Requiere: (1) Azure Function con runtime que ejecute el script shell, o (2) Self-hosted IR en VM con Teradata Client instalado + Web Activity llamando a endpoint HTTP. Parametros Teradata originales: $Teradata_EDW_DSN, $Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1, $EDW_Wrk, $EDW_Param_and_Others. Parametros MLoad: $TD_ML_CheckPoint, $TD_ML_ErrorLimit, $TD_ML_Session_Max, $TD_ML_Session_Min, $TD_ML_Sleep, $TD_ML_Tenacity.",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": true,
+                    "secureInput": true
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": {
+                        "value": "@pipeline().parameters.AzureFunction_Url",
+                        "type": "Expression"
+                    },
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "x-functions-key": {
+                            "value": "@pipeline().parameters.AzureFunction_Key",
+                            "type": "Expression"
+                        }
+                    },
+                    "body": {
+                        "value": "@json(concat('{\"script\":\"Mload_Bci_Jen_Dw.sh\",\"PathShell\":\"', pipeline().parameters.PathShell, '\",\"PathLog\":\"', pipeline().parameters.PathLog, '\",\"PathOutput\":\"', pipeline().parameters.PathOutput, '\",\"NombreJob\":\"', pipeline().parameters.NombreJob, '\",\"AcronimoTabla\":\"', pipeline().parameters.AcronimoTabla, '\",\"Teradata_EDW_DSN\":\"', pipeline().parameters.Teradata_EDW_DSN, '\",\"EDW_Wrk\":\"', pipeline().parameters.EDW_Wrk, '\",\"TD_ML_CheckPoint\":\"', pipeline().parameters.TD_ML_CheckPoint, '\",\"TD_ML_ErrorLimit\":\"', pipeline().parameters.TD_ML_ErrorLimit, '\",\"TD_ML_Session_Max\":\"', pipeline().parameters.TD_ML_Session_Max, '\",\"TD_ML_Session_Min\":\"', pipeline().parameters.TD_ML_Session_Min, '\",\"TD_ML_Sleep\":\"', pipeline().parameters.TD_ML_Sleep, '\",\"TD_ML_Tenacity\":\"', pipeline().parameters.TD_ML_Tenacity, '\"}'))",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "AzureFunction_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: URL del Azure Function que ejecuta Mload_Bci_Jen_Dw.sh. Reemplazar con URL real."
+            },
+            "AzureFunction_Key": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: Function key para autenticacion. Usar AKV secret reference en produccion."
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DSN Teradata EDW. DS param: $Teradata_EDW_DSN"
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Schema/database work en Teradata. DS param: $EDW_Wrk"
+            },
+            "EDW_Param_and_Others": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Parametros adicionales EDW. DS param: $EDW_Param_and_Others"
+            },
+            "PathLog": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta log. DS param: $PathLog"
+            },
+            "PathShell": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta scripts shell. DS param: $PathShell"
+            },
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta archivos output. DS param: $PathOutput"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen",
+                "description": "Nombre job. DS param: $NombreJob"
+            },
+            "AcronimoTabla": {
+                "type": "String",
+                "defaultValue": "J990JEN",
+                "description": "Acronimo tabla Teradata. DS param: $AcronimoTabla"
+            },
+            "TD_ML_CheckPoint": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad checkpoint. DS param: $TD_ML_CheckPoint"
+            },
+            "TD_ML_ErrorLimit": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad error limit. DS param: $TD_ML_ErrorLimit"
+            },
+            "TD_ML_Session_Max": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sesiones maximas. DS param: $TD_ML_Session_Max"
+            },
+            "TD_ML_Session_Min": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sesiones minimas. DS param: $TD_ML_Session_Min"
+            },
+            "TD_ML_Sleep": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sleep entre reintentos. DS param: $TD_ML_Sleep"
+            },
+            "TD_ML_Tenacity": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad tenacity horas. DS param: $TD_ML_Tenacity"
+            }
+        },
+        "folder": {
+            "name": "J990_Jen"
+        },
+        "annotations": [
+            "ORIGEN_DS: Bci_Jen_MLoad (CJSExecCmdActivity)",
+            "COMANDO_DS: sh $PathShell/Mload_Bci_Jen_Dw.sh $Teradata_EDW_DSN $Teradata_EDW_User_Grupo1 $Teradata_EDW_PWD_Grupo1 $EDW_Wrk $PathLog $NombreJob $AcronimoTabla $TD_ML_ErrorLimit $TD_ML_Session_Max $TD_ML_Session_Min $TD_ML_Sleep $TD_ML_Tenacity $TD_ML_CheckPoint $EDW_Param_and_Others",
+            "MANUAL_INTERVENTION: Teradata MultiLoad no tiene equivalente nativo ADF. Opciones: (1) Azure Function con Teradata JDBC/CLI, (2) Databricks con driver Teradata, (3) ADF Copy Activity si Teradata tiene conector ODBC. Credenciales Teradata ($Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1) migrar a AKV secrets."
+        ]
+    }
+}

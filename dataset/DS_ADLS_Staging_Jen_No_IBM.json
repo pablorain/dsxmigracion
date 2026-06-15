@@ -1,0 +1,49 @@
+{
+    "name": "DS_ADLS_Staging_Jen_No_IBM",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Archivo delimitado pipe en ADLS para registros NO_IBM del journal JEN. Equivale al SeqFile DataStage: $PathTemp/$NombreJob_JOURNAL_JEN_NO_IBM.TXT.$FechaArchExtraccion",
+        "linkedServiceName": {
+            "referenceName": "LS_ADLS_Staging",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "ADLS_Url": {
+                    "value": "@dataset().ADLS_Url",
+                    "type": "Expression"
+                }
+            }
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "@{dataset().NombreJob}_JOURNAL_JEN_NO_IBM.TXT.@{dataset().FechaArchExtraccion}",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@dataset().Container",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().PathTemp",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": "|",
+            "escapeChar": "\\",
+            "quoteChar": "",
+            "firstRowAsHeader": false,
+            "encodingName": "UTF-8"
+        },
+        "parameters": {
+            "ADLS_Url": { "type": "String" },
+            "Container": { "type": "String" },
+            "PathTemp": { "type": "String" },
+            "NombreJob": { "type": "String", "defaultValue": "J990_Jen" },
+            "FechaArchExtraccion": { "type": "String" }
+        },
+        "schema": [],
+        "annotations": []
+    }
+}

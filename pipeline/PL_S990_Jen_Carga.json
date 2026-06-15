@@ -1,0 +1,332 @@
+{
+    "name": "PL_S990_Jen_Carga",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline maestro secuenciador S990_Jen_Carga. Orquesta: (1) PL_J990_Jen_Extraccion (extraccion Sybase -> ADLS) y (2) PL_Bci_Jen_MLoad (carga Teradata). Origen DataStage: S990_Jen_Carga (JobType=2 Sequencer). Actividades DS: CJSJobActivity J990_Jen_Extraccion -> CJSJobActivity Bci_Jen_MLoad. Soporta checkpoint via variable DSCheckPointSetValue.",
+        "activities": [
+            {
+                "name": "Exec_PL_J990_Jen_Extraccion",
+                "description": "Ejecuta pipeline de extraccion JEN. Equivale a CJSJobActivity J990_Jen_Extraccion en el Sequencer DS.",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_J990_Jen_Extraccion",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "FechaProceso": {
+                            "value": "@pipeline().parameters.FechaProceso",
+                            "type": "Expression"
+                        },
+                        "FechaArchExtraccion": {
+                            "value": "@pipeline().parameters.FechaArchExtraccion",
+                            "type": "Expression"
+                        },
+                        "Sybase_Journal": {
+                            "value": "@pipeline().parameters.Sybase_Journal",
+                            "type": "Expression"
+                        },
+                        "DBO_Journal": {
+                            "value": "@pipeline().parameters.DBO_Journal",
+                            "type": "Expression"
+                        },
+                        "PathTemp": {
+                            "value": "@pipeline().parameters.PathTemp",
+                            "type": "Expression"
+                        },
+                        "PathOutput": {
+                            "value": "@pipeline().parameters.PathOutput",
+                            "type": "Expression"
+                        },
+                        "NombreJob": {
+                            "value": "@pipeline().parameters.NombreJob",
+                            "type": "Expression"
+                        },
+                        "ADLS_Url": {
+                            "value": "@pipeline().parameters.ADLS_Url",
+                            "type": "Expression"
+                        },
+                        "ADLS_Container": {
+                            "value": "@pipeline().parameters.ADLS_Container",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Set_Checkpoint_Extraccion",
+                "description": "Registra checkpoint tras extraccion exitosa. Equivale a DSCheckPointSetValue en DataStage. Implementado como variable ADF para trazabilidad en caso de reinicio.",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Exec_PL_J990_Jen_Extraccion",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "checkpoint_extraccion",
+                    "value": {
+                        "value": "@concat('EXTRACCION_OK_', utcNow())",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Exec_PL_Bci_Jen_MLoad",
+                "description": "Ejecuta pipeline de carga MLoad Teradata. Equivale a CJSJobActivity Bci_Jen_MLoad en el Sequencer DS.",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "Set_Checkpoint_Extraccion",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_Bci_Jen_MLoad",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "AzureFunction_Url": {
+                            "value": "@pipeline().parameters.AzureFunction_MLoad_Url",
+                            "type": "Expression"
+                        },
+                        "AzureFunction_Key": {
+                            "value": "@pipeline().parameters.AzureFunction_MLoad_Key",
+                            "type": "Expression"
+                        },
+                        "Teradata_EDW_DSN": {
+                            "value": "@pipeline().parameters.Teradata_EDW_DSN",
+                            "type": "Expression"
+                        },
+                        "EDW_Wrk": {
+                            "value": "@pipeline().parameters.EDW_Wrk",
+                            "type": "Expression"
+                        },
+                        "EDW_Param_and_Others": {
+                            "value": "@pipeline().parameters.EDW_Param_and_Others",
+                            "type": "Expression"
+                        },
+                        "PathLog": {
+                            "value": "@pipeline().parameters.PathLog",
+                            "type": "Expression"
+                        },
+                        "PathShell": {
+                            "value": "@pipeline().parameters.PathShell",
+                            "type": "Expression"
+                        },
+                        "PathOutput": {
+                            "value": "@pipeline().parameters.PathOutput",
+                            "type": "Expression"
+                        },
+                        "NombreJob": {
+                            "value": "@pipeline().parameters.NombreJob",
+                            "type": "Expression"
+                        },
+                        "AcronimoTabla": {
+                            "value": "@pipeline().parameters.AcronimoTabla",
+                            "type": "Expression"
+                        },
+                        "TD_ML_CheckPoint": {
+                            "value": "@pipeline().parameters.TD_ML_CheckPoint",
+                            "type": "Expression"
+                        },
+                        "TD_ML_ErrorLimit": {
+                            "value": "@pipeline().parameters.TD_ML_ErrorLimit",
+                            "type": "Expression"
+                        },
+                        "TD_ML_Session_Max": {
+                            "value": "@pipeline().parameters.TD_ML_Session_Max",
+                            "type": "Expression"
+                        },
+                        "TD_ML_Session_Min": {
+                            "value": "@pipeline().parameters.TD_ML_Session_Min",
+                            "type": "Expression"
+                        },
+                        "TD_ML_Sleep": {
+                            "value": "@pipeline().parameters.TD_ML_Sleep",
+                            "type": "Expression"
+                        },
+                        "TD_ML_Tenacity": {
+                            "value": "@pipeline().parameters.TD_ML_Tenacity",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Set_Checkpoint_Carga",
+                "description": "Registra checkpoint tras carga MLoad exitosa.",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Exec_PL_Bci_Jen_MLoad",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "checkpoint_carga",
+                    "value": {
+                        "value": "@concat('CARGA_OK_', utcNow())",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha proceso YYYY-MM-DD. DS: $FechaProceso"
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha archivo YYYYMMDD. DS: $FechaArchExtraccion"
+            },
+            "Sybase_Journal": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Servidor Sybase Journal. DS: $Sybase_Journal"
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "dbo",
+                "description": "Schema Sybase. DS: $DBO_Journal"
+            },
+            "PathTemp": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta temporal ADLS. DS: $PathTemp"
+            },
+            "PathOutput": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta output final. DS: $PathOutput"
+            },
+            "PathLog": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta logs. DS: $PathLog"
+            },
+            "PathShell": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta scripts shell. DS: $PathShell"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen",
+                "description": "Nombre job prefijo archivo. DS: $NombreJob"
+            },
+            "AcronimoTabla": {
+                "type": "String",
+                "defaultValue": "J990JEN",
+                "description": "Acronimo tabla Teradata. DS: $AcronimoTabla"
+            },
+            "Teradata_EDW_DSN": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DSN Teradata EDW. DS: $Teradata_EDW_DSN"
+            },
+            "EDW_Wrk": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Database work Teradata. DS: $EDW_Wrk"
+            },
+            "EDW_Param_and_Others": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Parametros adicionales EDW. DS: $EDW_Param_and_Others"
+            },
+            "TD_ML_CheckPoint": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad checkpoint. DS: $TD_ML_CheckPoint"
+            },
+            "TD_ML_ErrorLimit": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad error limit. DS: $TD_ML_ErrorLimit"
+            },
+            "TD_ML_Session_Max": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sesiones max. DS: $TD_ML_Session_Max"
+            },
+            "TD_ML_Session_Min": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sesiones min. DS: $TD_ML_Session_Min"
+            },
+            "TD_ML_Sleep": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad sleep. DS: $TD_ML_Sleep"
+            },
+            "TD_ML_Tenacity": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MLoad tenacity horas. DS: $TD_ML_Tenacity"
+            },
+            "ADLS_Url": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "AzureFunction_MLoad_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: URL Azure Function MLoad"
+            },
+            "AzureFunction_MLoad_Key": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "MANUAL_INTERVENTION: Key Azure Function MLoad"
+            }
+        },
+        "variables": {
+            "checkpoint_extraccion": {
+                "type": "String",
+                "defaultValue": ""
+            },
+            "checkpoint_carga": {
+                "type": "String",
+                "defaultValue": ""
+            }
+        },
+        "folder": {
+            "name": "J990_Jen"
+        },
+        "annotations": [
+            "ORIGEN_DS: S990_Jen_Carga (Sequencer JobType=2)",
+            "SECUENCIA_DS: J990_Jen_Extraccion -> Bci_Jen_MLoad",
+            "CHECKPOINT_DS: DSCheckPointSetValue implementado con variables ADF SetVariable",
+            "MANUAL_INTERVENTION: Completar AzureFunction_MLoad_Url y AzureFunction_MLoad_Key. Credenciales Teradata ($Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1) deben inyectarse en el Azure Function desde AKV."
+        ]
+    }
+}

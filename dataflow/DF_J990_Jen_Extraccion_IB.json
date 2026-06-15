@@ -1,0 +1,148 @@
+{
+    "name": "DF_J990_Jen_Extraccion_IB",
+    "type": "Microsoft.DataFactory/factories/dataflows",
+    "properties": {
+        "description": "Extraccion de registros IBM del journal JEN desde Sybase hacia ADLS. Origen DataStage: J990_Jen_Extraccion_IB. Filtro: jen_fec_evt_neg = FechaProceso - 7 dias AND jen_ope_evt LIKE 'IB%'. Transformacion: EREPLACE(ICONV(col,'MCP'),'|',' ') -> replace(col,'|',' ').",
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "DS_Sybase_Origen_Jen",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "Sybase_Server": {
+                                "value": "@pipeline().parameters.Sybase_Journal",
+                                "type": "Expression"
+                            },
+                            "Sybase_Database": "journal",
+                            "DBO_Journal": {
+                                "value": "@pipeline().parameters.DBO_Journal",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "name": "SybaseJenIBM",
+                    "description": "Lee tabla journal.dbo.jen filtrando registros IB con fecha proceso -7 dias"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "DS_ADLS_Staging_Jen_IBM",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ADLS_Url": {
+                                "value": "@pipeline().parameters.ADLS_Url",
+                                "type": "Expression"
+                            },
+                            "Container": {
+                                "value": "@pipeline().parameters.ADLS_Container",
+                                "type": "Expression"
+                            },
+                            "PathTemp": {
+                                "value": "@pipeline().parameters.PathTemp",
+                                "type": "Expression"
+                            },
+                            "NombreJob": {
+                                "value": "@pipeline().parameters.NombreJob",
+                                "type": "Expression"
+                            },
+                            "FechaArchExtraccion": {
+                                "value": "@pipeline().parameters.FechaArchExtraccion",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "name": "SinkAdlsIBM",
+                    "description": "Escribe archivo pipe-delimitado en ADLS staging: {NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "FilterIBM",
+                    "description": "Filtra jen_ope_evt que comience con 'IB' y jen_fec_evt_neg = FechaProceso - 7 dias. SQL original: CAST(jen_fec_evt_neg AS DATE)=dateadd(day,-7,CAST(FechaProceso AS DATE)) AND SUBSTRING(jen_ope_evt,1,2)='IB'"
+                },
+                {
+                    "name": "ReplacePipeChar",
+                    "description": "Reemplaza '|' con ' ' en columnas string. Equivale a EREPLACE(ICONV(col,'MCP'),'|',' ') del Transformer DataStage."
+                }
+            ],
+            "scriptLines": [
+                "parameters{",
+                "     FechaProceso as string,",
+                "     DBO_Journal as string",
+                "}",
+                "source(output(",
+                "          jen_ope_evt as string,",
+                "          jen_fec_evt_neg as timestamp,",
+                "          jen_fec_ctb_evt as timestamp,",
+                "          jen_rut_cli as integer,",
+                "          jen_vrf_cli as string,",
+                "          jen_rut_emp as integer,",
+                "          jen_vrf_emp as string,",
+                "          jen_id_cnl as long,",
+                "          jen_est_cnl as string,",
+                "          jen_suc_ori as integer,",
+                "          jen_med as string,",
+                "          jen_id_med as string,",
+                "          jen_tip_opr_bci as string,",
+                "          jen_id_opr as long,",
+                "          jen_mod_tar as string,",
+                "          jen_fra_lin as string,",
+                "          jen_ara_cua as integer,",
+                "          jen_id_svs as long,",
+                "          jen_est_evt_neg as string,",
+                "          jen_id_pdt as integer,",
+                "          jen_id_evt as long,",
+                "          jen_id_sub_evt as integer,",
+                "          jen_clv_ppl as string,",
+                "          jen_mto as decimal(18,4),",
+                "          jen_clv_sgd as string,",
+                "          jen_cpo_var as string",
+                "     ),",
+                "     allowSchemaDrift: false,",
+                "     validateSchema: true,",
+                "     query: ('SELECT jen_ope_evt, jen_fec_evt_neg, jen_fec_ctb_evt, jen_rut_cli, jen_vrf_cli, jen_rut_emp, jen_vrf_emp, jen_id_cnl, jen_est_cnl, jen_suc_ori, jen_med, jen_id_med, jen_tip_opr_bci, jen_id_opr, jen_mod_tar, jen_fra_lin, jen_ara_cua, jen_id_svs, jen_est_evt_neg, jen_id_pdt, jen_id_evt, jen_id_sub_evt, jen_clv_ppl, jen_mto, jen_clv_sgd, jen_cpo_var FROM ' + $DBO_Journal + '.jen WHERE CAST(jen_fec_evt_neg AS DATE) = dateadd(day,-7,CAST(''' + $FechaProceso + ''' AS DATE)) AND SUBSTRING(jen_ope_evt,1,2)=''IB'''),",
+                "     format: 'query') ~> SybaseJenIBM",
+                "SybaseJenIBM derive(jen_ope_evt = replace(toString(jen_ope_evt), '|', ' '),",
+                "          jen_fec_evt_neg = jen_fec_evt_neg,",
+                "          jen_fec_ctb_evt = jen_fec_ctb_evt,",
+                "          jen_rut_cli = jen_rut_cli,",
+                "          jen_vrf_cli = replace(toString(jen_vrf_cli), '|', ' '),",
+                "          jen_rut_emp = jen_rut_emp,",
+                "          jen_vrf_emp = replace(toString(jen_vrf_emp), '|', ' '),",
+                "          jen_id_cnl = jen_id_cnl,",
+                "          jen_est_cnl = replace(toString(jen_est_cnl), '|', ' '),",
+                "          jen_suc_ori = jen_suc_ori,",
+                "          jen_med = replace(toString(jen_med), '|', ' '),",
+                "          jen_id_med = replace(toString(jen_id_med), '|', ' '),",
+                "          jen_tip_opr_bci = replace(toString(jen_tip_opr_bci), '|', ' '),",
+                "          jen_id_opr = jen_id_opr,",
+                "          jen_mod_tar = replace(toString(jen_mod_tar), '|', ' '),",
+                "          jen_fra_lin = replace(toString(jen_fra_lin), '|', ' '),",
+                "          jen_ara_cua = jen_ara_cua,",
+                "          jen_id_svs = jen_id_svs,",
+                "          jen_est_evt_neg = replace(toString(jen_est_evt_neg), '|', ' '),",
+                "          jen_id_pdt = jen_id_pdt,",
+                "          jen_id_evt = jen_id_evt,",
+                "          jen_id_sub_evt = jen_id_sub_evt,",
+                "          jen_clv_ppl = replace(toString(jen_clv_ppl), '|', ' '),",
+                "          jen_mto = jen_mto,",
+                "          jen_clv_sgd = replace(toString(jen_clv_sgd), '|', ' '),",
+                "          jen_cpo_var = replace(toString(jen_cpo_var), '|', ' ')) ~> ReplacePipeChar",
+                "ReplacePipeChar sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> SinkAdlsIBM"
+            ]
+        },
+        "annotations": [
+            "ORIGEN_DS: J990_Jen_Extraccion_IB",
+            "TABLA_ORIGEN: journal.dbo.jen (Sybase ODBC DSN=SybaseProdJournal)",
+            "FILTRO: CAST(jen_fec_evt_neg AS DATE) = dateadd(day,-7,FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
+            "TRANSFORMACION: EREPLACE(ICONV(col,'MCP'),'|',' ') -> replace(col,'|',' ')",
+            "MANUAL_INTERVENTION: Verificar compatibilidad de tipos datetime entre Sybase DATETIME y ADF timestamp"
+        ]
+    }
+}

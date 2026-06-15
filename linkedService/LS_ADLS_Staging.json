@@ -1,0 +1,24 @@
+{
+    "name": "LS_ADLS_Staging",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "type": "AzureDataLakeStorageGen2",
+        "typeProperties": {
+            "url": "@{linkedService().ADLS_Url}",
+            "accountKey": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "LS_AzureKeyVault",
+                    "type": "LinkedServiceReference"
+                },
+                "secretName": "adls-staging-account-key"
+            }
+        },
+        "parameters": {
+            "ADLS_Url": {
+                "type": "String"
+            }
+        },
+        "annotations": []
+    }
+}

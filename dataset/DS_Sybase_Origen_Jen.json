@@ -1,0 +1,70 @@
+{
+    "name": "DS_Sybase_Origen_Jen",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "properties": {
+        "description": "Tabla journal.dbo.jen en Sybase. Origen: ODBC\\SybaseProdJournal\\journal.dbo.jen. El schema/dbo se pasa como parametro ($DBO_Journal).",
+        "linkedServiceName": {
+            "referenceName": "LS_Sybase_Origen_Journal",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "Sybase_Server": {
+                    "value": "@dataset().Sybase_Server",
+                    "type": "Expression"
+                },
+                "Sybase_Database": {
+                    "value": "@dataset().Sybase_Database",
+                    "type": "Expression"
+                }
+            }
+        },
+        "type": "SybaseTable",
+        "typeProperties": {
+            "tableName": {
+                "value": "@{dataset().DBO_Journal}.jen",
+                "type": "Expression"
+            }
+        },
+        "parameters": {
+            "Sybase_Server": {
+                "type": "String"
+            },
+            "Sybase_Database": {
+                "type": "String",
+                "defaultValue": "journal"
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "dbo"
+            }
+        },
+        "schema": [
+            { "name": "jen_ope_evt",      "type": "String",  "length": 12  },
+            { "name": "jen_fec_evt_neg",  "type": "DateTime" },
+            { "name": "jen_fec_ctb_evt",  "type": "DateTime" },
+            { "name": "jen_rut_cli",      "type": "Int32" },
+            { "name": "jen_vrf_cli",      "type": "String",  "length": 1   },
+            { "name": "jen_rut_emp",      "type": "Int32" },
+            { "name": "jen_vrf_emp",      "type": "String",  "length": 1   },
+            { "name": "jen_id_cnl",       "type": "Int64" },
+            { "name": "jen_est_cnl",      "type": "String",  "length": 1   },
+            { "name": "jen_suc_ori",      "type": "Int32" },
+            { "name": "jen_med",          "type": "String",  "length": 8   },
+            { "name": "jen_id_med",       "type": "String",  "length": 15  },
+            { "name": "jen_tip_opr_bci",  "type": "String",  "length": 3   },
+            { "name": "jen_id_opr",       "type": "Int64" },
+            { "name": "jen_mod_tar",      "type": "String",  "length": 1   },
+            { "name": "jen_fra_lin",      "type": "String",  "length": 1   },
+            { "name": "jen_ara_cua",      "type": "Int32" },
+            { "name": "jen_id_svs",       "type": "Int64" },
+            { "name": "jen_est_evt_neg",  "type": "String",  "length": 1   },
+            { "name": "jen_id_pdt",       "type": "Int32" },
+            { "name": "jen_id_evt",       "type": "Int64" },
+            { "name": "jen_id_sub_evt",   "type": "Int32" },
+            { "name": "jen_clv_ppl",      "type": "String",  "length": 16  },
+            { "name": "jen_mto",          "type": "Decimal", "precision": 18, "scale": 4 },
+            { "name": "jen_clv_sgd",      "type": "String",  "length": 16  },
+            { "name": "jen_cpo_var",      "type": "String",  "length": 16  }
+        ],
+        "annotations": []
+    }
+}

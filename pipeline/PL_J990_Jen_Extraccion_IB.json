@@ -1,0 +1,124 @@
+{
+    "name": "PL_J990_Jen_Extraccion_IB",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "properties": {
+        "description": "Pipeline de extraccion de registros IBM del journal JEN. Ejecuta el data flow DF_J990_Jen_Extraccion_IB. Origen DataStage: J990_Jen_Extraccion_IB. Categoria DS: \\Jobs\\Fase_5\\Hito_0\\Param_and_Others\\J990_Jen",
+        "activities": [
+            {
+                "name": "DF_J990_Jen_Extraccion_IB",
+                "description": "Extrae registros IBM desde Sybase journal.dbo.jen hacia ADLS staging",
+                "type": "ExecuteDataFlow",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataflow": {
+                        "referenceName": "DF_J990_Jen_Extraccion_IB",
+                        "type": "DataFlowReference",
+                        "parameters": {
+                            "FechaProceso": {
+                                "value": "@pipeline().parameters.FechaProceso",
+                                "type": "Expression"
+                            },
+                            "DBO_Journal": {
+                                "value": "@pipeline().parameters.DBO_Journal",
+                                "type": "Expression"
+                            }
+                        },
+                        "datasetParameters": {
+                            "SybaseJenIBM": {
+                                "Sybase_Server": {
+                                    "value": "@pipeline().parameters.Sybase_Journal",
+                                    "type": "Expression"
+                                },
+                                "DBO_Journal": {
+                                    "value": "@pipeline().parameters.DBO_Journal",
+                                    "type": "Expression"
+                                }
+                            },
+                            "SinkAdlsIBM": {
+                                "ADLS_Url": {
+                                    "value": "@pipeline().parameters.ADLS_Url",
+                                    "type": "Expression"
+                                },
+                                "Container": {
+                                    "value": "@pipeline().parameters.ADLS_Container",
+                                    "type": "Expression"
+                                },
+                                "PathTemp": {
+                                    "value": "@pipeline().parameters.PathTemp",
+                                    "type": "Expression"
+                                },
+                                "NombreJob": {
+                                    "value": "@pipeline().parameters.NombreJob",
+                                    "type": "Expression"
+                                },
+                                "FechaArchExtraccion": {
+                                    "value": "@pipeline().parameters.FechaArchExtraccion",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    "compute": {
+                        "coreCount": 8,
+                        "computeType": "General"
+                    },
+                    "traceLevel": "Fine"
+                }
+            }
+        ],
+        "parameters": {
+            "FechaProceso": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha de proceso en formato YYYY-MM-DD. DS param: $FechaProceso"
+            },
+            "FechaArchExtraccion": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Fecha para sufijo del archivo en formato YYYYMMDD. DS param: $FechaArchExtraccion"
+            },
+            "Sybase_Journal": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "DSN o servidor Sybase Journal. DS param: $Sybase_Journal"
+            },
+            "DBO_Journal": {
+                "type": "String",
+                "defaultValue": "dbo",
+                "description": "Schema/owner en base Sybase. DS param: $DBO_Journal"
+            },
+            "PathTemp": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Ruta temporal en ADLS. DS param: $PathTemp"
+            },
+            "NombreJob": {
+                "type": "String",
+                "defaultValue": "J990_Jen",
+                "description": "Nombre del job para prefijo de archivo. DS param: $NombreJob"
+            },
+            "ADLS_Url": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "URL cuenta ADLS Gen2"
+            },
+            "ADLS_Container": {
+                "type": "String",
+                "defaultValue": "",
+                "description": "Contenedor ADLS"
+            }
+        },
+        "folder": {
+            "name": "J990_Jen"
+        },
+        "annotations": []
+    }
+}

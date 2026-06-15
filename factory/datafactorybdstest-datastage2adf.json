@@ -1,0 +1,24 @@
+{
+    "name": "datafactorybdstest-datastage2adf",
+    "type": "Microsoft.DataFactory/factories",
+    "location": "eastus",
+    "identity": {
+        "type": "SystemAssigned"
+    },
+    "properties": {
+        "repoConfiguration": {
+            "type": "FactoryGitHubConfiguration",
+            "accountName": "",
+            "repositoryName": "",
+            "collaborationBranch": "main",
+            "rootFolder": "/",
+            "lastCommitId": ""
+        }
+    },
+    "tags": {
+        "origen": "DataStage_Migration",
+        "dsx_file": "S990_BCI_JEN.dsx",
+        "ds_server": "LNX-DTSTGENGDES",
+        "ds_version": "11.7"
+    }
+}

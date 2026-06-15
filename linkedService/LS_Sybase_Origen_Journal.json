@@ -1,0 +1,46 @@
+{
+    "name": "LS_Sybase_Origen_Journal",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "description": "Conexion ODBC a Sybase Journal (origen: ODBC DSN SybaseProdJournal / journal.dbo). Migrado desde DataStage DSN $Sybase_Journal.",
+        "type": "Sybase",
+        "typeProperties": {
+            "server": "@{linkedService().Sybase_Server}",
+            "database": "@{linkedService().Sybase_Database}",
+            "authenticationType": "Basic",
+            "username": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "LS_AzureKeyVault",
+                    "type": "LinkedServiceReference"
+                },
+                "secretName": "sybase-journal-user"
+            },
+            "password": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "LS_AzureKeyVault",
+                    "type": "LinkedServiceReference"
+                },
+                "secretName": "sybase-journal-pwd"
+            }
+        },
+        "parameters": {
+            "Sybase_Server": {
+                "type": "String"
+            },
+            "Sybase_Database": {
+                "type": "String",
+                "defaultValue": "journal"
+            }
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        },
+        "annotations": [
+            "MANUAL_INTERVENTION: Requiere Self-hosted IR si Sybase no es accesible desde Azure. Reemplazar AutoResolveIntegrationRuntime por IR on-prem.",
+            "ORIGEN_DS: ODBC DSN=$Sybase_Journal, User=$Sybase_User, PWD=$Sybase_PWD, DBO=$DBO_Journal"
+        ]
+    }
+}
