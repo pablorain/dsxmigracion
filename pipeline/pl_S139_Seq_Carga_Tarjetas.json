@@ -1,479 +1,503 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
-  "contentVersion": "1.0.0.0",
-  "name": "pl_S139_Transbk_Mcf_Seq_Carga_Tarjetas",
-  "properties": {
-    "description": "Tarjetas FLoad sub-sequencer. Migrated from DataStage S139_Transbk_Mcf_Seq_Carga_Tarjetas (JobType=3). Chains 8 FLoad jobs for Card-domain tables: Card, Account_Card, Card_Update_MCF, Party_Card, Card_Status_Hist, Card_Limit, Card_Feature, Bci_Card_Balance.",
-    "activities": [
-      {
-        "name": "Card",
-        "description": "Card main load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Card",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Account_Card",
-        "description": "Account-Card relationship load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Card",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Account_Card",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Card_Update_MCF",
-        "description": "Card MCF update variant. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Account_Card",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Card_Update_MCF",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Party_Card",
-        "description": "Party-Card relationship load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Card_Update_MCF",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Party_Card",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Card_Status_Hist",
-        "description": "Card Status History load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Party_Card",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Card_Status_Hist",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Card_Limit",
-        "description": "Card Limit load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Card_Status_Hist",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Card_Limit",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Card_Feature",
-        "description": "Card Feature load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Card_Limit",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Card_Feature",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      },
-      {
-        "name": "Bci_Card_Balance",
-        "description": "BCI Card Balance load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
-        "type": "ExecutePipeline",
-        "dependsOn": [
-          {
-            "activity": "Card_Feature",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "typeProperties": {
-          "pipeline": {
-            "referenceName": "pl_FLoad_Bci_Card_Balance",
-            "type": "PipelineReference"
-          },
-          "waitOnCompletion": true,
-          "parameters": {
-            "FechaProceso": {
-              "value": "@pipeline().parameters.FechaProceso",
-              "type": "Expression"
-            },
-            "Teradata_EDW_DSN": {
-              "value": "@pipeline().parameters.Teradata_EDW_DSN",
-              "type": "Expression"
-            },
-            "Teradata_EDW_User": {
-              "value": "@pipeline().parameters.Teradata_EDW_User",
-              "type": "Expression"
-            },
-            "Teradata_EDW_PWD": {
-              "value": "@pipeline().parameters.Teradata_EDW_PWD",
-              "type": "Expression"
-            },
-            "EDW_Wrk": {
-              "value": "@pipeline().parameters.EDW_Wrk",
-              "type": "Expression"
-            },
-            "EDW_Agreement": {
-              "value": "@pipeline().parameters.EDW_Agreement",
-              "type": "Expression"
-            },
-            "PathOutput": {
-              "value": "@pipeline().parameters.PathOutput",
-              "type": "Expression"
-            },
-            "Tabla": {
-              "value": "@pipeline().parameters.Tabla",
-              "type": "Expression"
-            }
-          }
-        }
-      }
-    ],
-    "parameters": {
-      "FechaProceso": {
-        "type": "String",
-        "description": "Process date. Maps to $FechaProceso."
-      },
-      "Teradata_EDW_DSN": {
-        "type": "String",
-        "description": "Teradata DSN. Maps to $Teradata_EDW_DSN."
-      },
-      "Teradata_EDW_User": {
-        "type": "String",
-        "description": "Teradata user. Maps to $Teradata_EDW_User_Grupo1."
-      },
-      "Teradata_EDW_PWD": {
-        "type": "String",
-        "description": "Teradata password. KEY VAULT REFERENCE."
-      },
-      "EDW_Wrk": {
-        "type": "String",
-        "description": "Work database. Maps to $EDW_Wrk."
-      },
-      "EDW_Agreement": {
-        "type": "String",
-        "description": "Agreement database. Maps to $EDW_Agreement."
-      },
-      "PathOutput": {
-        "type": "String",
-        "description": "Output files path. Maps to $PathOutput."
-      },
-      "Tabla": {
-        "type": "String",
-        "defaultValue": "A",
-        "description": "Table suffix for A/B loading. Maps to #Tabla#."
-      }
-    },
-    "annotations": [
-      "datastage_job: S139_Transbk_Mcf_Seq_Carga_Tarjetas",
-      "datastage_job_type: Sequencer (JobType=3, CJSJobActivity chain)",
-      "adf_pattern: Execute Pipeline activities chained in dependency order",
-      "note: DataStage sequencer runs jobs in linear dependency; ADF replicates with dependsOn chain"
-    ],
-    "folder": {
-      "name": "S139_Transbk_Mcf/Sequencers"
-    }
-  }
+	"name": "pl_S139_Seq_Carga_Tarjetas",
+	"properties": {
+		"description": "Tarjetas FLoad sub-sequencer. Migrated from DataStage S139_Transbk_Mcf_Seq_Carga_Tarjetas (JobType=3). Chains 8 FLoad jobs for Card-domain tables: Card, Account_Card, Card_Update_MCF, Party_Card, Card_Status_Hist, Card_Limit, Card_Feature, Bci_Card_Balance.",
+		"activities": [
+			{
+				"name": "Card",
+				"description": "Card main load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Card",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Account_Card",
+				"description": "Account-Card relationship load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Card",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Account_Card",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Card_Update_MCF",
+				"description": "Card MCF update variant. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Account_Card",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Card_Update_MCF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Party_Card",
+				"description": "Party-Card relationship load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Card_Update_MCF",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Party_Card",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Card_Status_Hist",
+				"description": "Card Status History load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Party_Card",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Card_Status_Hist",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Card_Limit",
+				"description": "Card Limit load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Card_Status_Hist",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Card_Limit",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Card_Feature",
+				"description": "Card Feature load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Card_Limit",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Card_Feature",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Bci_Card_Balance",
+				"description": "BCI Card Balance load. Maps to DataStage CJSJobActivity in sub-sequencer S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Card_Feature",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_FLoad_Bci_Card_Balance",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"FechaProceso": {
+							"value": "@pipeline().parameters.FechaProceso",
+							"type": "Expression"
+						},
+						"Teradata_EDW_DSN": {
+							"value": "@pipeline().parameters.Teradata_EDW_DSN",
+							"type": "Expression"
+						},
+						"Teradata_EDW_User": {
+							"value": "@pipeline().parameters.Teradata_EDW_User",
+							"type": "Expression"
+						},
+						"Teradata_EDW_PWD": {
+							"value": "@pipeline().parameters.Teradata_EDW_PWD",
+							"type": "Expression"
+						},
+						"EDW_Wrk": {
+							"value": "@pipeline().parameters.EDW_Wrk",
+							"type": "Expression"
+						},
+						"EDW_Agreement": {
+							"value": "@pipeline().parameters.EDW_Agreement",
+							"type": "Expression"
+						},
+						"PathOutput": {
+							"value": "@pipeline().parameters.PathOutput",
+							"type": "Expression"
+						},
+						"Tabla": {
+							"value": "@pipeline().parameters.Tabla",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"FechaProceso": {
+				"type": "String"
+			},
+			"Teradata_EDW_DSN": {
+				"type": "String"
+			},
+			"Teradata_EDW_User": {
+				"type": "String"
+			},
+			"Teradata_EDW_PWD": {
+				"type": "String"
+			},
+			"EDW_Wrk": {
+				"type": "String"
+			},
+			"EDW_Agreement": {
+				"type": "String"
+			},
+			"PathOutput": {
+				"type": "String"
+			},
+			"Tabla": {
+				"type": "String",
+				"defaultValue": "A"
+			}
+		},
+		"folder": {
+			"name": "S139_Transbk_Mcf/Sequencers"
+		},
+		"annotations": [
+			"datastage_job: S139_Transbk_Mcf_Seq_Carga_Tarjetas",
+			"datastage_job_type: Sequencer (JobType=3, CJSJobActivity chain)",
+			"adf_pattern: Execute Pipeline activities chained in dependency order",
+			"note: DataStage sequencer runs jobs in linear dependency; ADF replicates with dependsOn chain"
+		]
+	},
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+	"contentVersion": "1.0.0.0"
 }
