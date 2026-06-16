@@ -1,18 +1,14 @@
 {
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
   "contentVersion": "1.0.0.0",
-  "name": "ls_AzureDataLakeStorage",
+  "name": "ls_AzureDataLakeStorage_S139",
   "properties": {
+    "description": "ADLS Gen2 linked service for S139_Transbk_Mcf intermediate and output files. Replaces DataStage local filesystem paths: $PathInput, $PathTemp, $PathExtract, $PathOutput, $PathHash, $PathLog, $PathShell, $PathUnproc, $PathDiccionario.",
     "type": "AzureBlobFS",
-    "description": "Azure Data Lake Storage Gen2 for output files. Replaces DataStage CSeqFileStage 'Seq_Jen' which wrote to local filesystem path #$PathTemp#.",
     "typeProperties": {
       "url": {
-        "type": "AzureKeyVaultSecret",
-        "store": {
-          "referenceName": "ls_AzureKeyVault",
-          "type": "LinkedServiceReference"
-        },
-        "secretName": "adls-account-url"
+        "value": "@{linkedService().StorageAccountUrl}",
+        "type": "Expression"
       },
       "accountKey": {
         "type": "AzureKeyVaultSecret",
@@ -20,16 +16,30 @@
           "referenceName": "ls_AzureKeyVault",
           "type": "LinkedServiceReference"
         },
-        "secretName": "adls-account-key"
+        "secretName": "ADLS-S139-AccountKey"
       }
     },
+    "parameters": {
+      "StorageAccountUrl": {
+        "type": "String",
+        "defaultValue": "https://<your_storage_account>.dfs.core.windows.net"
+      }
+    },
+    "connectVia": {
+      "referenceName": "AutoResolveIntegrationRuntime",
+      "type": "IntegrationRuntimeReference"
+    },
     "annotations": [
-      "source: DataStage CSeqFileStage",
-      "original_path_param: $PathTemp",
-      "original_filename_pattern: {NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}",
-      "original_delimiter: pipe (|)",
-      "original_encoding: UnicodeBOM=1, UnixFormat=1",
-      "manual_action: Update the ADLS URL and secret name to match your environment. Map $PathTemp to an ADLS container/folder path."
+      "datastage_path_input: $PathInput -> container: mcf-input/",
+      "datastage_path_temp: $PathTemp -> container: mcf-temp/",
+      "datastage_path_extract: $PathExtract -> container: mcf-extract/",
+      "datastage_path_output: $PathOutput -> container: mcf-output/",
+      "datastage_path_hash: $PathHash -> container: mcf-hash/ (ELIMINATED: hash files replaced by ADF Mapping Data Flow cache sink or Lookup)",
+      "datastage_path_log: $PathLog -> container: mcf-log/",
+      "datastage_path_unproc: $PathUnproc -> container: mcf-unprocessed/",
+      "datastage_path_diccionario: $PathDiccionario -> container: mcf-diccionario/",
+      "manual_action: Create ADLS Gen2 account and containers: mcf-input, mcf-temp, mcf-extract, mcf-output, mcf-log, mcf-unprocessed, mcf-diccionario",
+      "manual_action: Upload IBM mainframe flat files to mcf-input container before each run"
     ]
   }
 }

@@ -1,0 +1,51 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ls_Teradata_EDW",
+  "properties": {
+    "description": "Linked service for Teradata EDW. Migrated from DataStage parameters: $Teradata_EDW_DSN, $Teradata_EDW_User_Grupo1, $Teradata_EDW_PWD_Grupo1. Requires Self-Hosted Integration Runtime (SHIR) with Teradata ODBC driver installed, OR Azure IR with Teradata Connector. All credentials must be stored in Azure Key Vault.",
+    "type": "Teradata",
+    "typeProperties": {
+      "connectionString": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Teradata-EDW-ConnectionString"
+      },
+      "authenticationType": "Basic",
+      "username": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Teradata-EDW-User-Grupo1"
+      },
+      "password": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Teradata-EDW-PWD-Grupo1"
+      }
+    },
+    "connectVia": {
+      "referenceName": "SelfHostedIntegrationRuntime",
+      "type": "IntegrationRuntimeReference"
+    },
+    "annotations": [
+      "datastage_param_dsn: $Teradata_EDW_DSN",
+      "datastage_param_user: $Teradata_EDW_User_Grupo1",
+      "datastage_param_pwd: $Teradata_EDW_PWD_Grupo1",
+      "teradata_charset: UTF8",
+      "teradata_transaction_mode: ANSI (TransactionMode=2)",
+      "manual_action: Set Teradata-EDW-ConnectionString secret in Key Vault as: SERVER=<tdp_id>;",
+      "manual_action: Set Teradata-EDW-User-Grupo1 secret in Key Vault",
+      "manual_action: Set Teradata-EDW-PWD-Grupo1 secret in Key Vault",
+      "manual_action: Install Teradata ODBC/JDBC driver on SHIR node"
+    ]
+  }
+}

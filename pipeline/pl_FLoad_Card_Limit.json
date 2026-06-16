@@ -1,0 +1,165 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_FLoad_Card_Limit",
+  "properties": {
+    "description": "Card Limit FLoad. Target: Card_Limit_#Tabla#. BTEQ: Bteq_Card_Limit.sh",
+    "activities": [
+      {
+        "name": "FLoad_Card_Limit",
+        "description": "Bulk load ADLS output file into Teradata temp table. Replicates DataStage TeradataConnector FastLoad (WriteMode=0). Source: ds_MCF_Tarjetas_CardStatusHist. Temp table: Card_Limit_#Tabla# in $EDW_Wrk.",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "2.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "TeradataSink",
+            "writeMethod": "AutoCreate",
+            "preCopyScript": "DELETE FROM @{pipeline().parameters.EDW_Wrk}.Card_Limit_@{pipeline().parameters.Tabla}"
+          },
+          "enableStaging": true,
+          "stagingSettings": {
+            "linkedService": {
+              "referenceName": "ls_AzureDataLakeStorage_S139",
+              "type": "LinkedServiceReference"
+            },
+            "path": "mcf-staging/fload"
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "ds_MCF_Tarjetas_CardStatusHist",
+            "type": "DatasetReference",
+            "parameters": {
+              "PathOutput": {
+                "value": "@pipeline().parameters.PathOutput",
+                "type": "Expression"
+              },
+              "FechaProceso": {
+                "value": "@pipeline().parameters.FechaProceso",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "ds_Td_Card_Limit_Tmp",
+            "type": "DatasetReference",
+            "parameters": {
+              "Tabla": {
+                "value": "@pipeline().parameters.Tabla",
+                "type": "Expression"
+              },
+              "Database": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Bteq_Card_Limit",
+        "description": "Execute BTEQ INSERT/SELECT from temp table to final EDW table. Maps to DataStage AfterSubr DSU.ExecSH Bteq_Card_Limit.sh. ADF: Databricks notebook with Teradata JDBC.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "FLoad_Card_Limit",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/Bteq/Bteq_Card_Limit",
+          "baseParameters": {
+            "Teradata_EDW_DSN": {
+              "value": "@pipeline().parameters.Teradata_EDW_DSN",
+              "type": "Expression"
+            },
+            "Teradata_EDW_User": {
+              "value": "@pipeline().parameters.Teradata_EDW_User",
+              "type": "Expression"
+            },
+            "Teradata_EDW_PWD": {
+              "value": "@pipeline().parameters.Teradata_EDW_PWD",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Agreement": {
+              "value": "@pipeline().parameters.EDW_Agreement",
+              "type": "Expression"
+            },
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "Tabla": {
+              "value": "@pipeline().parameters.Tabla",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String"
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String"
+      },
+      "Teradata_EDW_User": {
+        "type": "String"
+      },
+      "Teradata_EDW_PWD": {
+        "type": "String"
+      },
+      "EDW_Wrk": {
+        "type": "String"
+      },
+      "EDW_Agreement": {
+        "type": "String"
+      },
+      "PathOutput": {
+        "type": "String"
+      },
+      "Tabla": {
+        "type": "String",
+        "defaultValue": "A"
+      }
+    },
+    "annotations": [
+      "datastage_pattern: TeradataConnector FastLoad -> AfterSubr DSU.ExecSH BTEQ",
+      "datastage_bteq_script: Bteq_Card_Limit.sh",
+      "datastage_temp_table: Card_Limit_#Tabla#",
+      "manual_action: Create Databricks notebook at /notebooks/S139_Transbk_Mcf/Bteq/Bteq_Card_Limit",
+      "manual_action: Notebook must connect to Teradata via JDBC and run BTEQ-equivalent INSERT/UPDATE logic from original .sh script"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/FLoad_LDM"
+    }
+  }
+}

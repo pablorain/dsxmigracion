@@ -1,0 +1,923 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_MCF_Cuentas_Transform",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow for MCF Cuentas multi-entity transformation. Maps DataStage J139_Transbk_Mcf_Cuentas: Seq_MCF_C input (CSeqFileStage) -> multiple CTransformerStage and CSeqFileStage outputs for 22 LDM entities. Pivot stages: Pivote_ACI (Account_Card_Income), Pivote_AAH (Account_Abuse_History), Pivote_CF (Card_Feature). These are CCustomStage.CC_GUI pivot operations transposing rows to columns.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "SourceCuentas",
+          "description": "Pre-processed IBM MCF Cuentas records from Extraccion pipeline.",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Cuentas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupProductType",
+          "description": "Product type reference. Maps Hsh_Bci_Ptc lookup.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupFeatureDic",
+          "description": "Feature dictionary lookup. Maps Hsh_Card_Dic.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "Sink_Account_Abuse_History",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Abuse_History. Columns: Account_Abuse_History,Account_Num,Abuse_Type_Cd,Abuse_Detect_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Abuse_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Abuse_History",
+              "sink": "Account_Abuse_History"
+            },
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Abuse_Type_Cd",
+              "sink": "Abuse_Type_Cd"
+            },
+            {
+              "source": "Abuse_Detect_Dt",
+              "sink": "Abuse_Detect_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Agreement",
+          "description": "Output pipe-delimited ADLS file for LDM entity Agreement. Columns: Agreement_Num,Agreement_Type_Cd,Status_Cd,Effective_Dt,Expiry_Dt,Crncy_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Agreement",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Agreement_Num",
+              "sink": "Agreement_Num"
+            },
+            {
+              "source": "Agreement_Type_Cd",
+              "sink": "Agreement_Type_Cd"
+            },
+            {
+              "source": "Status_Cd",
+              "sink": "Status_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "Crncy_Cd",
+              "sink": "Crncy_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Agreement_Update_MCF",
+          "description": "Output pipe-delimited ADLS file for LDM entity Agreement_Update_MCF. Columns: Agreement_Num,MCF_Field1,MCF_Field2,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Agreement_Upd",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Agreement_Num",
+              "sink": "Agreement_Num"
+            },
+            {
+              "source": "MCF_Field1",
+              "sink": "MCF_Field1"
+            },
+            {
+              "source": "MCF_Field2",
+              "sink": "MCF_Field2"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Financial_Agreement",
+          "description": "Output pipe-delimited ADLS file for LDM entity Financial_Agreement. Columns: Agreement_Num,Credit_Limit_Amt,Credit_Limit_Crncy_Cd,Stmt_Cycle_Type_Cd,Asset_Liability_Type_Cd,Balance_Category_Type_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Fin_Agreement",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Agreement_Num",
+              "sink": "Agreement_Num"
+            },
+            {
+              "source": "Credit_Limit_Amt",
+              "sink": "Credit_Limit_Amt"
+            },
+            {
+              "source": "Credit_Limit_Crncy_Cd",
+              "sink": "Credit_Limit_Crncy_Cd"
+            },
+            {
+              "source": "Stmt_Cycle_Type_Cd",
+              "sink": "Stmt_Cycle_Type_Cd"
+            },
+            {
+              "source": "Asset_Liability_Type_Cd",
+              "sink": "Asset_Liability_Type_Cd"
+            },
+            {
+              "source": "Balance_Category_Type_Cd",
+              "sink": "Balance_Category_Type_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Party",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Party. Columns: Account_Num,Party_Num,Role_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Party",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Role_Type_Cd",
+              "sink": "Role_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Loan_Account",
+          "description": "Output pipe-delimited ADLS file for LDM entity Loan_Account. Columns: Account_Num,Outstanding_Balance_Amt,Balance_Crncy_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Loan_Account",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Outstanding_Balance_Amt",
+              "sink": "Outstanding_Balance_Amt"
+            },
+            {
+              "source": "Balance_Crncy_Cd",
+              "sink": "Balance_Crncy_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Status_History",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Status_History. Columns: Account_Num,Status_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Sts_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Status_Type_Cd",
+              "sink": "Status_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Acct_Product_History",
+          "description": "Output pipe-delimited ADLS file for LDM entity Acct_Product_History. Columns: Account_Num,Product_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Prod_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Product_Cd",
+              "sink": "Product_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Acct_Acct_Relationship",
+          "description": "Output pipe-delimited ADLS file for LDM entity Acct_Acct_Relationship. Columns: Primary_Account_Num,Secondary_Account_Num,Relationship_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Acct_Rel",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Primary_Account_Num",
+              "sink": "Primary_Account_Num"
+            },
+            {
+              "source": "Secondary_Account_Num",
+              "sink": "Secondary_Account_Num"
+            },
+            {
+              "source": "Relationship_Type_Cd",
+              "sink": "Relationship_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Credit_Limit",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Credit_Limit. Columns: Account_Num,Credit_Limit_Amt,Credit_Limit_Crncy_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Credit_Lmt",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Credit_Limit_Amt",
+              "sink": "Credit_Limit_Amt"
+            },
+            {
+              "source": "Credit_Limit_Crncy_Cd",
+              "sink": "Credit_Limit_Crncy_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Card_Income",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Card_Income. Columns: Account_Num,Card_Income_Type_Cd,Card_Income_Amt,Card_Income_Crncy_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Card_Income",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Card_Income_Type_Cd",
+              "sink": "Card_Income_Type_Cd"
+            },
+            {
+              "source": "Card_Income_Amt",
+              "sink": "Card_Income_Amt"
+            },
+            {
+              "source": "Card_Income_Crncy_Cd",
+              "sink": "Card_Income_Crncy_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Feature",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Feature. Columns: Account_Num,Feature_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Feature",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Feature_Cd",
+              "sink": "Feature_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Currency",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Currency. Columns: Account_Num,Crncy_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Currency",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Crncy_Cd",
+              "sink": "Crncy_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card. Columns: Card_Id,Account_Num,Card_Type_Cd,Status_Cd,Expiry_Dt,Issue_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Card_Type_Cd",
+              "sink": "Card_Type_Cd"
+            },
+            {
+              "source": "Status_Cd",
+              "sink": "Status_Cd"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "Issue_Dt",
+              "sink": "Issue_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Account_Card",
+          "description": "Output pipe-delimited ADLS file for LDM entity Account_Card. Columns: Account_Num,Card_Id,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Acct_Card",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Account_Num",
+              "sink": "Account_Num"
+            },
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card_Update_MCF",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card_Update_MCF. Columns: Card_Id,MCF_Field1,MCF_Field2,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card_Upd",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "MCF_Field1",
+              "sink": "MCF_Field1"
+            },
+            {
+              "source": "MCF_Field2",
+              "sink": "MCF_Field2"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Party_Card",
+          "description": "Output pipe-delimited ADLS file for LDM entity Party_Card. Columns: Party_Num,Card_Id,Role_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Party_Card",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Role_Type_Cd",
+              "sink": "Role_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card_Status_Hist",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card_Status_Hist. Columns: Card_Id,Status_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card_Sts_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Status_Type_Cd",
+              "sink": "Status_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card_Limit",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card_Limit. Columns: Card_Id,Limit_Type_Cd,Limit_Amt,Limit_Crncy_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card_Limit",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Limit_Type_Cd",
+              "sink": "Limit_Type_Cd"
+            },
+            {
+              "source": "Limit_Amt",
+              "sink": "Limit_Amt"
+            },
+            {
+              "source": "Limit_Crncy_Cd",
+              "sink": "Limit_Crncy_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card_Feature",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card_Feature. Columns: Card_Id,Feature_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card_Feature",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Feature_Cd",
+              "sink": "Feature_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Bci_Card_Balance",
+          "description": "Output pipe-delimited ADLS file for LDM entity Bci_Card_Balance. Columns: Card_Id,Balance_Type_Cd,Balance_Amt,Balance_Crncy_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Bci_Card_Balance",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "Balance_Type_Cd",
+              "sink": "Balance_Type_Cd"
+            },
+            {
+              "source": "Balance_Amt",
+              "sink": "Balance_Amt"
+            },
+            {
+              "source": "Balance_Crncy_Cd",
+              "sink": "Balance_Crncy_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Party",
+          "description": "Output pipe-delimited ADLS file for LDM entity Party. Columns: Party_Num,Party_Type_Cd,Status_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Party",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Party_Type_Cd",
+              "sink": "Party_Type_Cd"
+            },
+            {
+              "source": "Status_Cd",
+              "sink": "Status_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        }
+      ],
+      "transformations": [
+        {
+          "name": "Filter_Account_Abuse_History",
+          "description": "Filter and project rows for Account_Abuse_History entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Agreement",
+          "description": "Filter and project rows for Agreement entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Agreement_Update_MCF",
+          "description": "Filter and project rows for Agreement_Update_MCF entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Financial_Agreement",
+          "description": "Filter and project rows for Financial_Agreement entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Party",
+          "description": "Filter and project rows for Account_Party entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Loan_Account",
+          "description": "Filter and project rows for Loan_Account entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Status_History",
+          "description": "Filter and project rows for Account_Status_History entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Acct_Product_History",
+          "description": "Filter and project rows for Acct_Product_History entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Acct_Acct_Relationship",
+          "description": "Filter and project rows for Acct_Acct_Relationship entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Credit_Limit",
+          "description": "Filter and project rows for Account_Credit_Limit entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Card_Income",
+          "description": "Filter and project rows for Account_Card_Income entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Feature",
+          "description": "Filter and project rows for Account_Feature entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Currency",
+          "description": "Filter and project rows for Account_Currency entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card",
+          "description": "Filter and project rows for Card entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Account_Card",
+          "description": "Filter and project rows for Account_Card entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card_Update_MCF",
+          "description": "Filter and project rows for Card_Update_MCF entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Party_Card",
+          "description": "Filter and project rows for Party_Card entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card_Status_Hist",
+          "description": "Filter and project rows for Card_Status_Hist entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card_Limit",
+          "description": "Filter and project rows for Card_Limit entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card_Feature",
+          "description": "Filter and project rows for Card_Feature entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Bci_Card_Balance",
+          "description": "Filter and project rows for Bci_Card_Balance entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Party",
+          "description": "Filter and project rows for Party entity. Implement routing logic from DataStage CTransformerStage derivations."
+        }
+      ],
+      "script": "// MANUAL ACTION REQUIRED: Implement full routing and derivation logic\n// See DataStage job J139_Transbk_Mcf_Cuentas CTransformerStage definitions in DSX",
+      "scriptLines": [
+        "// Auto-generated skeleton. Implement Filter_* and DerivedColumn_* transforms.",
+        "// Each sink receives a filtered/projected subset of the source rows.",
+        "// Reference DataStage derivation expressions in DSX CTransformerStage stages."
+      ]
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Cuentas",
+      "datastage_source_stage: Seq_MCF_C (CSeqFileStage, pipe-delimited, from Extraccion output)",
+      "datastage_output_count: 22 ADLS pipe-delimited files",
+      "CRITICAL_manual_action_1: Implement full derivation expressions for each LDM entity from DSX CTransformerStage",
+      "CRITICAL_manual_action_2: Pivote_ACI (Account_Card_Income) and Pivote_AAH (Account_Abuse_History) are CCustomStage.CC_GUI pivot operations - implement as ADF Pivot transformation or Databricks notebook",
+      "CRITICAL_manual_action_3: Pivote_CF (Card_Feature) is also a pivot stage - same as above",
+      "CRITICAL_manual_action_4: Coll_ACL (Account_Credit_Limit) is a collector pattern - implement as ADF aggregate or Databricks",
+      "CRITICAL_manual_action_5: EIH_Retro (External_Identification_Hist) has retroactive lookup logic - verify derivations",
+      "CRITICAL_manual_action_6: System_Of_Record_Dt = FechaProceso parameter conversion to Teradata DATE format",
+      "CRITICAL_manual_action_7: File_Source_Cd = 'MCF' (constant string) for all entities",
+      "adf_pattern: multi-output fan-out using conditional split (ConditionalSplit transformation) per entity"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_IBM_MCF_Tarjetas",
+  "properties": {
+    "description": "Source dataset for IBM mainframe fixed-width flat file EDWOS.TRANSBK.MCF.TARJETA.TXT. DataStage: EDWOS_TRANSBK_MCF output link Lnk_MCF_Tarjetas (CSeqFileStage). FixedWidth=1, UnicodeBOM=1, UnicodeSwapped=1.",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "ls_AzureDataLakeStorage_S139",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "PathInput": {
+        "type": "String",
+        "description": "ADLS container path. Maps to DataStage $PathInput."
+      },
+      "FechaIBM": {
+        "type": "String",
+        "description": "IBM file date YYYYMMDD. Maps to $FechaIBM."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileSystem": {
+          "value": "@dataset().PathInput",
+          "type": "Expression"
+        },
+        "fileName": "EDWOS.TRANSBK.MCF.TARJETA.TXT"
+      },
+      "columnDelimiter": "",
+      "encodingName": "UTF-16",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "schema": [
+      {
+        "name": "TMC_TIPO_REG2",
+        "type": "String",
+        "precision": 2,
+        "description": "Tipo de Registro. 02=Tarjeta. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_ACCT",
+        "type": "String",
+        "precision": 19,
+        "description": "Numero de Cuenta. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_CARD_ID",
+        "type": "String",
+        "precision": 19,
+        "description": "Numero de Tarjeta (Card ID). NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_LOGO",
+        "type": "String",
+        "precision": 3,
+        "description": "Logo. NativeType=DISPLAY_NUMERIC (zoned)"
+      },
+      {
+        "name": "TMC_PCT",
+        "type": "String",
+        "precision": 3,
+        "description": "PCT. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_NRUT",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero de Rut. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_DV",
+        "type": "String",
+        "precision": 1,
+        "description": "Digito Verificador. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_NOMBRE",
+        "type": "String",
+        "precision": 40,
+        "description": "Nombre Titular Tarjeta. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_TIP_TAR",
+        "type": "String",
+        "precision": 1,
+        "description": "Tipo Tarjeta. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_EST_TAR",
+        "type": "String",
+        "precision": 1,
+        "description": "Estado Tarjeta. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_FEC_ACT",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Activacion SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_FEC_VEN",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Vencimiento SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_FEC_ULT_USO",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Ultimo Uso SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_COD_BLO",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo Bloqueo Tarjeta. NativeType=CHARACTER"
+      },
+      {
+        "name": "TMC_FEC_BLO",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Bloqueo Tarjeta SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_COD_VIP",
+        "type": "String",
+        "precision": 2,
+        "description": "Codigo VIP. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_NUM_INT",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero Interno Tarjeta. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_ADICIONAL",
+        "type": "String",
+        "precision": 1,
+        "description": "Indicador adicional. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "TMC_COD_REB",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo de rebaja. NativeType=CHARACTER"
+      }
+    ],
+    "annotations": [
+      "datastage_stage: EDWOS_TRANSBK_MCF output link Lnk_MCF_Tarjetas",
+      "datastage_file: #$PathInput#EDWOS.TRANSBK.MCF.TARJETA.TXT",
+      "datastage_format: FixedWidth=1 (COBOL fixed-width, no delimiter)",
+      "CRITICAL: File is FIXED WIDTH. Schema above is representative; validate against COBOL copybook EDWOS_TRANSBK_MCF_T.",
+      "manual_action: Validate exact byte positions per field against mainframe COBOL layout",
+      "manual_action: AfterSubr FileDiff checks against EDWOS.TRANSBK.MCF.TARJETA.TXT -> implement as Azure Function"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Source"
+    }
+  }
+}

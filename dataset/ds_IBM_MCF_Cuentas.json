@@ -1,0 +1,515 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_IBM_MCF_Cuentas",
+  "properties": {
+    "description": "Source dataset for IBM mainframe fixed-width flat file EDWOS.TRANSBK.MCF.CUENTA.TXT. DataStage stage: EDWOS_TRANSBK_MCF (CSeqFileStage). FixedWidth=1, no column delimiter, no header. NativeType=CHARACTER/DISPLAY_NUMERIC (EBCDIC-origin COBOL fields). UnicodeBOM=1, UnicodeSwapped=1 in DataStage -> source file may be UTF-16 LE with BOM.",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "ls_AzureDataLakeStorage_S139",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "PathInput": {
+        "type": "String",
+        "description": "ADLS container path. Maps to DataStage $PathInput. Example: mcf-input/"
+      },
+      "FechaIBM": {
+        "type": "String",
+        "description": "IBM file date suffix YYYYMMDD. Maps to DataStage $FechaIBM."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileSystem": {
+          "value": "@dataset().PathInput",
+          "type": "Expression"
+        },
+        "fileName": "EDWOS.TRANSBK.MCF.CUENTA.TXT"
+      },
+      "columnDelimiter": "",
+      "rowDelimiter": "\n",
+      "encodingName": "UTF-16",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "schema": [
+      {
+        "name": "AMC_TIPO_REG1",
+        "type": "String",
+        "precision": 2,
+        "description": "Tipo de Registro. 01=Cuenta. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_ACCT",
+        "type": "String",
+        "precision": 19,
+        "description": "NUMERO DE CUENTA. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_LOGO",
+        "type": "String",
+        "precision": 3,
+        "description": "Logo. NativeType=DISPLAY_NUMERIC (zoned decimal, default=0)"
+      },
+      {
+        "name": "AMC_PCT",
+        "type": "String",
+        "precision": 3,
+        "description": "PCT. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_NRUT",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero de Rut. NativeType=DISPLAY_NUMERIC (zoned decimal)"
+      },
+      {
+        "name": "AMC_DV",
+        "type": "String",
+        "precision": 1,
+        "description": "Digito Verificador. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_NOMBRE",
+        "type": "String",
+        "precision": 40,
+        "description": "Nombre Titular. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_COD_PMIN",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo pago Minimo. 0=5%; 1=100%. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_ACT",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Activacion SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_VENC",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Vencimiento SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_BLO1",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Bloqueo 1 SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_BLO2",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Bloqueo 2 SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_ULT_FAC",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Ultima Facturacion Nacional SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_BLO1",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo Bloqueo 1. O=perdida; P=Cartera Vencida; N=Cliente; Q=Exceso; Z=VIP; espacio=nada. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_COD_BLO2",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo Bloqueo 2. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_HORA_BLO",
+        "type": "String",
+        "precision": 6,
+        "description": "Hora Ultimo Bloqueo HHMMSS. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_MOR",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo de Morosidad. 0=Sin Mora; 1=Con Mora. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CICLO_FACT",
+        "type": "String",
+        "precision": 2,
+        "description": "Ciclo Facturacion (Dia de Facturacion). NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_NUM_INT",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero Interno. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CUPO_NAC",
+        "type": "String",
+        "precision": 10,
+        "description": "Cupo nacional/Virtual $. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CUPO_INT",
+        "type": "String",
+        "precision": 10,
+        "description": "Cupo internacional/Virtual US$. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CUPO_LCRED",
+        "type": "String",
+        "precision": 10,
+        "description": "Cupo Linea de Credito. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_COLOC",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Deuda en colocacion/Deuda Linea Credito. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_INT_CORR",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses corrientes por cobrar. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_INT_MOR",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses de mora por cobrar. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_INT_DEV",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses corrientes devengados. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR_DEV",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses de mora devengados. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CORR_PERC",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses corrientes percibidos. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR_PERC",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Intereses de mora percibidos. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEUDA_TOTAL",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Deuda total $ + US$. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_TOTNAC",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Deuda total nacional. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_TOTINT",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Deuda total internacional. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DISP_AVANCE",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Disponible para avances. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DISP_NAC",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Disponible total en $. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DISP_INT",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Disponible total en US$. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_NMORAS",
+        "type": "String",
+        "precision": 6,
+        "description": "Numero de Moras. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DIAS_MORA",
+        "type": "String",
+        "precision": 2,
+        "description": "Dias de Mora. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR1",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Mora 0-30. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR2",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Mora 31-60. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR3",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Mora 61-90. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_MOR4",
+        "type": "Decimal",
+        "precision": 11,
+        "scale": 2,
+        "description": "Mora mas de 90. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_ULT_COM",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Ultima Compra SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_ULT_CADM",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Ultimo Cobro Administracion SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_TRAS_DEU",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Traspaso deuda internacional a M/N. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CTACTE",
+        "type": "String",
+        "precision": 10,
+        "description": "Cuenta corriente. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_COD_CTACTE",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo cuenta corriente. 1=Caja Con Cuenta. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_COLCUO",
+        "type": "String",
+        "precision": 10,
+        "description": "Deuda colocacion en cuotas fijas. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_3CPC",
+        "type": "String",
+        "precision": 10,
+        "description": "Deuda 3 cuotas precio contado. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_EST_CTA",
+        "type": "String",
+        "precision": 1,
+        "description": "Estado de la cuenta. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_UTI_COB_NAC",
+        "type": "String",
+        "precision": 10,
+        "description": "Utilizaciones por cobrar $. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_UTI_COB_INT",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Utilizaciones por cobrar US$. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DEU_ACTCUO",
+        "type": "String",
+        "precision": 10,
+        "description": "Deuda actual en cuotas. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_IMP_SALFIN",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Impuesto saldo financiado (1x1000). NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COM_AVA",
+        "type": "String",
+        "precision": 10,
+        "description": "Comision avances facturado. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_APER",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha de apertura SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_PAG_APLI_NAC",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Pagos por aplicar $. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_PAG_APLI_INT",
+        "type": "Decimal",
+        "precision": 12,
+        "scale": 2,
+        "description": "Pagos por aplicar US$. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_COB",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo de cobranza. 0=Automatico; 1=Manual. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_TRAS_SAL",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo traspaso de saldo. 0=sin traspaso. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_CTA_TRAS_SAL",
+        "type": "String",
+        "precision": 19,
+        "description": "Cuenta de traspaso de saldos. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_TRAS_SAL",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha traspaso de saldo SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_AFIN",
+        "type": "String",
+        "precision": 3,
+        "description": "Codigo de afinidad. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_REB",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo de rebaja. 0=Normal; 1=Sin Cobro. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_COD_PIN",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo PIN. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_PINOFF",
+        "type": "String",
+        "precision": 5,
+        "description": "Pin Offset. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FEC_ULT_PAGO",
+        "type": "String",
+        "precision": 8,
+        "description": "Fecha Ultimo Pago SSAAMMDD. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_VIP",
+        "type": "String",
+        "precision": 2,
+        "description": "Codigo VIP. 0=Normal; 1=Vip. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_COD_CCUO",
+        "type": "String",
+        "precision": 1,
+        "description": "Codigo habilita compras en cuotas. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_NUMINT2",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero Interno 2. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_FOLIO",
+        "type": "String",
+        "precision": 10,
+        "description": "Numero de solicitud (Folio). NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_INDICADOR",
+        "type": "String",
+        "precision": 1,
+        "description": "Indicador de relationship. NativeType=CHARACTER"
+      },
+      {
+        "name": "AMC_ADICIONALES",
+        "type": "String",
+        "precision": 2,
+        "description": "Numero de Adicionales. NativeType=DISPLAY_NUMERIC"
+      },
+      {
+        "name": "AMC_DIAS_MORA_REAL",
+        "type": "String",
+        "precision": 3,
+        "description": "Dias de mora real. NativeType=DISPLAY_NUMERIC"
+      }
+    ],
+    "annotations": [
+      "datastage_stage: EDWOS_TRANSBK_MCF (CSeqFileStage)",
+      "datastage_file: #$PathInput#EDWOS.TRANSBK.MCF.CUENTA.TXT",
+      "datastage_format: FixedWidth=1 (COBOL fixed-width, no delimiter)",
+      "datastage_encoding: UnicodeBOM=1 UnicodeSwapped=1 (UTF-16 LE with BOM)",
+      "datastage_output_link: Lnk_MCF_Cuentas -> Trf_MCF_C -> Trf_MCF_Cuentas",
+      "CRITICAL: File is FIXED WIDTH. The schema above maps each field. Total record length must be validated against mainframe layout specification.",
+      "NOTE: DataStage FixedWidth=1 with ColDelim=',' in output link metadata means delimiter is virtual/positional. ADF DelimitedText with empty delimiter needs manual mapping or use Binary dataset with fixed-width parsing.",
+      "manual_action: Validate exact byte positions per field against COBOL copybook EDWOS_TRANSBK_MCF_C",
+      "manual_action: Consider using a Databricks notebook to parse fixed-width file instead of ADF DelimitedText",
+      "manual_action: File AfterSubr: FileDiff checks file against EDWOS.TRANSBK.MCF.CUENTA.TXT for change detection - implement via Azure Function or Databricks"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Source"
+    }
+  }
+}

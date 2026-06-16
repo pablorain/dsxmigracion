@@ -1,0 +1,104 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J139_Transbk_Mcf_Cuentas",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'J139_Transbk_Mcf_Cuentas' (JobType=0, DateModified=2021-10-28). Category: \\Jobs\\Hito_2\\Agreement\\J139_Transbk_Mcf. Reads pre-filtered Cuentas segment (EDWOS.TRANSBK.MCF.CUENTA.TXT.FINAL), applies multi-stage transformation (Trf_Mcf_Cuentas, Trf_AP, Trf_ACL, Trf_ACI, Trf_AAH, Trf_AF, Trf_ACR), performs hash-based lookups (Hsh_Consultas=Teradata query lookup, Hsh_DicAgreement, Hsh_Vigentes, Hsh_ACI_AAH, Hsh_AF), runs pivoting operations (Pivote_ACI, Pivote_AAH, Pivote_AF, Coll_ACL, EIH_Retro), and writes 22 output TXT files to $PathOutput for downstream FLoad jobs. Stages: CSeqFileStage(x13), CTransformerStage(x7), CHashedFileStage(x5), CCustomStage(x5-pivots).",
+    "activities": [
+      {
+        "name": "Transform_MCF_Cuentas",
+        "description": "Core transformation of Cuentas flat file to 22 EDW output files. Maps to DataStage stages: Seq_MCF_Cuentas(source) -> Trf_Mcf_Cuentas -> [Hsh_Consultas lookup] -> [Hsh_DicAgreement lookup] -> [Trf_AP, Trf_ACL, Trf_ACI, Trf_AAH, Trf_AF splits] -> [Pivot operations] -> [22 CSeqFileStage sinks]. ADF: Mapping Data Flow (complex, multi-sink). NOTE: Pivot transformations (Pivote_ACI, Pivote_AAH, Pivote_AF) and hash lookups require custom Data Flow logic.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "6.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_MCF_Cuentas_Transform",
+            "type": "DataFlowReference",
+            "parameters": {
+              "FechaProceso": {
+                "value": "@pipeline().parameters.FechaProceso",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            },
+            "datasetParameters": {
+              "SourceCuentasFinal": {
+                "PathInput": {
+                  "value": "@pipeline().parameters.PathHash",
+                  "type": "Expression"
+                }
+              }
+            }
+          },
+          "compute": {
+            "coreCount": 32,
+            "computeType": "MemoryOptimized"
+          },
+          "staging": {
+            "linkedService": {
+              "referenceName": "ls_AzureDataLakeStorage_S139",
+              "type": "LinkedServiceReference"
+            },
+            "folderPath": "mcf-staging/cuentas"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date. Maps to $FechaProceso."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "Teradata DSN. Maps to $Teradata_EDW_DSN."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Work database. Maps to $EDW_Wrk."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "Hash/temp files path. Maps to $PathHash."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Temp path. Maps to $PathTemp."
+      },
+      "PathOutput": {
+        "type": "String",
+        "description": "Output files path. Maps to $PathOutput."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Extract path. Maps to $PathExtract."
+      }
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Cuentas",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_date_modified: 2021-10-28",
+      "datastage_stage_count: 35+ stages",
+      "datastage_stage_types: CSeqFileStage(x13), CTransformerStage(x7), CHashedFileStage(x5), CCustomStage.CC_GUI(x5 pivots)",
+      "datastage_key_stages: Seq_MCF_Cuentas, Trf_Mcf_Cuentas, Hsh_Consultas, Hsh_DicAgreement, Seq_Pivotes, Pivote_ACI, Pivote_AAH, Coll_ACL, EIH_Retro, Pivote_AF",
+      "datastage_output_files: 22 TXT files to $PathOutput (PARTY, EXTERNAL_ID_HIST, INDIVIDUAL, INDIV_NAME_HIST, ORGANIZATION, ORG_NAME_HIST, PARTY_PARTY_REL_HIST, PARTY_DEMOGRAPHIC, ACCOUNT_ABUSE_HIST, AGREEMENT, FINANCIAL_AGREEMENT, ACCOUNT_CURRENCY, LOAN_ACCOUNT, AGREEMENT_UPDATE, ACCOUNT_STATUS_HIST, ACCT_PRODUCT_HIST, BCI_CARD_BALANCE, ACCT_ACCT_REL, ACCOUNT_PARTY, ACCOUNT_CARD_INCOME, ACCOUNT_CREDIT_LIMIT, ACCOUNT_FEATURE)",
+      "datastage_pivot_pattern: CCustomStage.CC_GUI (Pivote_ACI, Pivote_AAH, Pivote_AF, Coll_ACL, EIH_Retro) are pivoting stages that transpose rows to columns - complex to replicate in ADF",
+      "CRITICAL_manual_action: Build df_MCF_Cuentas_Transform as a COMPLEX Mapping Data Flow with multiple sinks (one per output TXT file)",
+      "CRITICAL_manual_action: Implement hash lookup stages (Hsh_Consultas, Hsh_DicAgreement, Hsh_Vigentes) as ADF Lookup or cache sink transformations",
+      "CRITICAL_manual_action: Implement pivot stages (Pivote_ACI, Pivote_AAH, Pivote_AF) as ADF Pivot or UnpivotTransformation, OR as Databricks notebook if logic is too complex",
+      "CRITICAL_manual_action: EIH_Retro stage reads from Teradata (Context=1, Query: SELECT 'A' Ext_Identification_Num, 0 Party_Id WHERE date=0) -> implement as ADF Lookup activity before Data Flow",
+      "CRITICAL_manual_action: AMC_EST_CTA state machine logic (IND/TipoCuenta/Bloqueo1/Bloqueo2/Estado variables) must be replicated in DerivedColumn transformation with conditional expressions"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

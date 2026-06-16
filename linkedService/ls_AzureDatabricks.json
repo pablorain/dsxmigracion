@@ -1,0 +1,29 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ls_AzureDatabricks_S139",
+  "properties": {
+    "description": "Azure Databricks linked service for running shell-equivalent utility notebooks. Replaces DataStage DSU.ExecSH calls: FileDelete, FileRename, FileRespaldo, FileDiff, BTEQ scripts (via Teradata JDBC).",
+    "type": "AzureDatabricks",
+    "typeProperties": {
+      "domain": "https://<databricks_workspace_url>",
+      "accessToken": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "Databricks-AccessToken"
+      },
+      "existingClusterId": "<existing_cluster_id>",
+      "newClusterNodeType": null,
+      "newClusterNumOfWorker": null
+    },
+    "annotations": [
+      "datastage_equivalent: DSU.ExecSH shell subroutine calls",
+      "manual_action: Replace <databricks_workspace_url> and <existing_cluster_id>",
+      "manual_action: Set Databricks-AccessToken secret in Key Vault",
+      "manual_action: Install Teradata JDBC driver in Databricks cluster for BTEQ-equivalent notebooks"
+    ]
+  }
+}

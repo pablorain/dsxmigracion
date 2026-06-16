@@ -1,0 +1,47 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_MCF_Cuentas_AgreementUpdate",
+  "properties": {
+    "description": "ADLS output file dataset. DataStage CSeqFileStage output to $PathOutput. File: J139_TRANSBK_MCF_CUENTAS_AGREEMENT_UPDATE.TXT. Category: cuentas. Consumed by FLoad jobs via Seq_Carga sub-sequencers.",
+    "type": "DelimitedText",
+    "linkedServiceName": {
+      "referenceName": "ls_AzureDataLakeStorage_S139",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "PathOutput": {
+        "type": "String",
+        "description": "ADLS output container path. Maps to DataStage $PathOutput."
+      },
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date YYYY-MM-DD. Maps to $FechaProceso."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileSystem": {
+          "value": "@dataset().PathOutput",
+          "type": "Expression"
+        },
+        "fileName": "J139_TRANSBK_MCF_CUENTAS_AGREEMENT_UPDATE.TXT"
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "encodingName": "UTF-8",
+      "firstRowAsHeader": false,
+      "nullValue": ""
+    },
+    "annotations": [
+      "datastage_filename: #$PathOutput#J139_TRANSBK_MCF_CUENTAS_AGREEMENT_UPDATE.TXT",
+      "datastage_category: cuentas",
+      "datastage_stage_type: CSeqFileStage (sink)",
+      "adf_note: File is consumed by corresponding FLoad pipeline in Seq_Carga sub-sequencer"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Sink/ADLS"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_Td_Agreement_Tmp",
+  "properties": {
+    "description": "Teradata sink dataset. Migrated from DataStage TeradataConnector (CC_GUI FastLoad WriteMode=0). AGREEMENT_FLoad. Final target via Bteq_Agreement.sh.",
+    "type": "TeradataTable",
+    "linkedServiceName": {
+      "referenceName": "ls_Teradata_EDW",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "Tabla": {
+        "type": "String",
+        "description": "Table suffix / partition. Maps to DataStage #Tabla# parameter. Used to build final table name."
+      },
+      "Database": {
+        "type": "String",
+        "defaultValue": "$EDW_Wrk",
+        "description": "Teradata database name. Maps to DataStage $EDW_Wrk parameter."
+      }
+    },
+    "typeProperties": {
+      "database": {
+        "value": "@dataset().Database",
+        "type": "Expression"
+      },
+      "table": {
+        "value": "@replace('Agreement_#Tabla#', '#Tabla#', dataset().Tabla)",
+        "type": "Expression"
+      }
+    },
+    "annotations": [
+      "datastage_target_table: Agreement_#Tabla#",
+      "datastage_database_param: $EDW_Wrk",
+      "datastage_load_mode: FastLoad (WriteMode=0, TeradataConnector variant=12)",
+      "adf_equivalent: Copy Activity with Teradata sink (staged via ADLS staging) OR Databricks JDBC bulk insert",
+      "post_load: BTEQ script runs via AfterSubr DSU.ExecSH -> ADF: Databricks notebook or Stored Procedure activity",
+      "manual_action: Create temp table in Teradata before pipeline run (FastLoad requires empty table)"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Sink/Teradata"
+    }
+  }
+}

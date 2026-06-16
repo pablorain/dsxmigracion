@@ -1,0 +1,300 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J139_Transbk_Mcf_Extraccion",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'J139_Transbk_Mcf_Extraccion' (JobType=0, DateModified=2021-10-28). Category: \\Jobs\\Hito_2\\Agreement\\J139_Transbk_Mcf. Reads IBM fixed-width flat files (EDWOS.TRANSBK.MCF.CUENTA.TXT + EDWOS.TRANSBK.MCF.TARJETA.TXT), applies multi-path transformer logic (Trf_MCF_C, Trf_MCF_T, Trf_MCF_C_Final, Trf_MCF_T_Final), performs hash lookups (Hsh_Bci_Ptc, Hsh_Card_Dic, Hsh_Card_ANum, Hsh_Card_ANum2, Hsh_EIH_Rut), FastLoads 3 Teradata temp tables (MCF_Account_Num_Tmp, MCF_Card_Id_Tmp, MCF_Card_Acct_Num_Tmp), reads LDM via Teradata Connector (Context=1=read), and writes filtered output files to $PathInput (*.FINAL). AfterSubr runs FileDiff check on both files.",
+    "activities": [
+      {
+        "name": "Parse_MCF_Cuentas",
+        "description": "Parse IBM mainframe fixed-width Cuentas file and apply initial Trf_MCF_C transformations. Source: EDWOS.TRANSBK.MCF.CUENTA.TXT (FixedWidth, UTF-16 LE BOM). Maps to DataStage stages: EDWOS_TRANSBK_MCF (CSeqFileStage source) -> Trf_MCF_C (CTransformerStage) -> Trf_MCF_Cuentas (CTransformerStage). ADF: Mapping Data Flow with fixed-width parsing via Databricks or ADF custom activity.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "4.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_MCF_Extraccion_Cuentas",
+            "type": "DataFlowReference",
+            "parameters": {
+              "FechaProceso": {
+                "value": "@pipeline().parameters.FechaProceso",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            },
+            "datasetParameters": {
+              "SourceCuentas": {
+                "PathInput": {
+                  "value": "@pipeline().parameters.PathInput",
+                  "type": "Expression"
+                },
+                "FechaIBM": {
+                  "value": "@pipeline().parameters.FechaIBM",
+                  "type": "Expression"
+                }
+              },
+              "SinkCuentasFinal": {
+                "PathInput": {
+                  "value": "@pipeline().parameters.PathInput",
+                  "type": "Expression"
+                }
+              },
+              "SinkMCFAccountNumTmp": {
+                "Database": {
+                  "value": "@pipeline().parameters.EDW_Wrk",
+                  "type": "Expression"
+                },
+                "Tabla": {
+                  "value": "A",
+                  "type": "Expression"
+                }
+              }
+            }
+          },
+          "compute": {
+            "coreCount": 16,
+            "computeType": "General"
+          },
+          "staging": {
+            "linkedService": {
+              "referenceName": "ls_AzureDataLakeStorage_S139",
+              "type": "LinkedServiceReference"
+            },
+            "folderPath": "mcf-staging/extraccion"
+          }
+        }
+      },
+      {
+        "name": "Parse_MCF_Tarjetas",
+        "description": "Parse IBM mainframe fixed-width Tarjetas file and apply initial Trf_MCF_T transformations. Source: EDWOS.TRANSBK.MCF.TARJETA.TXT. Maps to DataStage: EDWOS_TRANSBK_MCF output Lnk_MCF_Tarjetas -> Trf_MCF_T -> Trf_MCF_Tarjetas. FastLoads MCF_Card_Id_Tmp and MCF_Card_Acct_Num_Tmp.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "4.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_MCF_Extraccion_Tarjetas",
+            "type": "DataFlowReference",
+            "parameters": {
+              "FechaProceso": {
+                "value": "@pipeline().parameters.FechaProceso",
+                "type": "Expression"
+              },
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              }
+            },
+            "datasetParameters": {
+              "SourceTarjetas": {
+                "PathInput": {
+                  "value": "@pipeline().parameters.PathInput",
+                  "type": "Expression"
+                },
+                "FechaIBM": {
+                  "value": "@pipeline().parameters.FechaIBM",
+                  "type": "Expression"
+                }
+              },
+              "SinkTarjetasFinal": {
+                "PathInput": {
+                  "value": "@pipeline().parameters.PathInput",
+                  "type": "Expression"
+                }
+              },
+              "SinkMCFCardIdTmp": {
+                "Database": {
+                  "value": "@pipeline().parameters.EDW_Wrk",
+                  "type": "Expression"
+                },
+                "Tabla": {
+                  "value": "A",
+                  "type": "Expression"
+                }
+              },
+              "SinkMCFCardAcctNumTmp": {
+                "Database": {
+                  "value": "@pipeline().parameters.EDW_Wrk",
+                  "type": "Expression"
+                },
+                "Tabla": {
+                  "value": "A",
+                  "type": "Expression"
+                }
+              }
+            }
+          },
+          "compute": {
+            "coreCount": 16,
+            "computeType": "General"
+          },
+          "staging": {
+            "linkedService": {
+              "referenceName": "ls_AzureDataLakeStorage_S139",
+              "type": "LinkedServiceReference"
+            },
+            "folderPath": "mcf-staging/extraccion"
+          }
+        }
+      },
+      {
+        "name": "FileDiff_Cuentas",
+        "description": "Validates Cuentas file was not corrupted/changed during processing. Maps to DataStage AfterSubr on Trf_MCF_Cuentas: DSU.ExecSH #$PathShell#FileDiff #$PathInput# EDWOS.TRANSBK.MCF.CUENTA.TXT. ADF: Databricks notebook nb_FileDiff checks MD5/size of source file.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "Parse_MCF_Cuentas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileDiff",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "EDWOS.TRANSBK.MCF.CUENTA.TXT",
+              "type": "Expression"
+            },
+            "MsgFileDiff": {
+              "value": "@pipeline().parameters.MsgFileDiff",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "FileDiff_Tarjetas",
+        "description": "Validates Tarjetas file integrity. Maps to DataStage AfterSubr on Trf_MCF_Tarjetas: DSU.ExecSH FileDiff $PathInput EDWOS.TRANSBK.MCF.TARJETA.TXT.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "Parse_MCF_Tarjetas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileDiff",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "EDWOS.TRANSBK.MCF.TARJETA.TXT",
+              "type": "Expression"
+            },
+            "MsgFileDiff": {
+              "value": "@pipeline().parameters.MsgFileDiff",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date YYYY-MM-DD. Maps to $FechaProceso."
+      },
+      "FechaIBM": {
+        "type": "String",
+        "description": "IBM file date YYYYMMDD. Maps to $FechaIBM."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "Teradata server DSN. Maps to $Teradata_EDW_DSN."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Teradata work database. Maps to $EDW_Wrk."
+      },
+      "EDW_Party": {
+        "type": "String",
+        "description": "Teradata party database. Maps to $EDW_Party."
+      },
+      "EDW_Param_and_Others": {
+        "type": "String",
+        "description": "Teradata param database. Maps to $EDW_Param_and_Others."
+      },
+      "PathInput": {
+        "type": "String",
+        "description": "ADLS IBM source file path. Maps to $PathInput."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "ADLS temp path. Maps to $PathTemp."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Shell path (ELIMINATED in ADF). Maps to $PathShell."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "Hash file path (replaced by Data Flow cache). Maps to $PathHash."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Extract path. Maps to $PathExtract."
+      },
+      "PathLog": {
+        "type": "String",
+        "description": "Log path. Maps to $PathLog."
+      },
+      "PathUnproc": {
+        "type": "String",
+        "description": "Unprocessed records path. Maps to $PathUnproc."
+      },
+      "PathDiccionario": {
+        "type": "String",
+        "description": "Dictionary path. Maps to $PathDiccionario."
+      },
+      "MsgFileDiff": {
+        "type": "String",
+        "description": "FileDiff validation message. Maps to $MsgFileDiff."
+      }
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Extraccion",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_date_modified: 2021-10-28",
+      "datastage_stage_count: 25 stages",
+      "datastage_stage_types: CSeqFileStage(x8), CTransformerStage(x6), CHashedFileStage(x5), TeradataConnector(x4, CC_GUI)",
+      "datastage_key_stages: EDWOS_TRANSBK_MCF(source), Trf_MCF_C, Trf_MCF_T, Trf_MCF_Cuentas, Trf_MCF_Tarjetas, Trf_MCF_C_Final, Trf_MCF_T_Final, Hsh_Bci_Ptc, Hsh_Card_Dic, Hsh_Card_ANum, Hsh_Card_ANum2, Hsh_EIH_Rut, FL_Cuentas, FL_Tarjetas, FL_Card_ANum, LDM",
+      "datastage_fload_targets: MCF_Account_Num_Tmp ($EDW_Wrk), MCF_Card_Id_Tmp ($EDW_Wrk), MCF_Card_Acct_Num_Tmp ($EDW_Wrk)",
+      "datastage_aftersubr: FileDiff on CUENTA.TXT + TARJETA.TXT",
+      "adf_note: Fixed-width IBM file parsing is NOT natively supported in ADF DelimitedText. Use Databricks to parse COBOL layout OR ADF Binary source + custom script activity.",
+      "manual_action: Build df_MCF_Extraccion_Cuentas and df_MCF_Extraccion_Tarjetas Data Flows with fixed-width parsing logic",
+      "manual_action: Map all 70+ Cuentas and 19+ Tarjetas fields with correct byte offsets from COBOL copybook",
+      "manual_action: Implement CHashedFileStage lookups (Hsh_Bci_Ptc etc.) as ADF Mapping Data Flow Lookup transformations or cache sinks",
+      "manual_action: Create MCF_Account_Num_Tmp, MCF_Card_Id_Tmp, MCF_Card_Acct_Num_Tmp tables in Teradata before first run"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

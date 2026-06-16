@@ -1,0 +1,16 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ls_AzureKeyVault",
+  "properties": {
+    "description": "Azure Key Vault for all S139_Transbk_Mcf credentials: Teradata EDW user/password, ADLS account keys.",
+    "type": "AzureKeyVault",
+    "typeProperties": {
+      "baseUrl": "https://<your_keyvault_name>.vault.azure.net/"
+    },
+    "annotations": [
+      "manual_action: Replace <your_keyvault_name> with the actual Key Vault name",
+      "required_secrets: Teradata-EDW-ConnectionString, Teradata-EDW-User-Grupo1, Teradata-EDW-PWD-Grupo1, ADLS-S139-AccountKey"
+    ]
+  }
+}

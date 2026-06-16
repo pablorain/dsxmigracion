@@ -1,166 +1,706 @@
 {
-  "migration_metadata": {
-    "source_file": "J990_Jen.dsx",
-    "source_tool": "IBM InfoSphere DataStage Export",
-    "source_server": "LNX-DTSENG (EDWProd2_OP)",
-    "source_version": "11.7",
-    "export_date": "2026-06-15",
+  "$schema": "https://bdschile.cl/datastage-adf-migration/manifest/v1",
+  "contentVersion": "1.0.0.0",
+  "migration": {
+    "project": "S139_Transbk_Mcf",
+    "source_system": "IBM InfoSphere DataStage 11.7",
+    "target_system": "Azure Data Factory + Azure Databricks + ADLS Gen2 + Teradata EDW",
+    "source_file": "S139_Transbk_Mcf.dsx",
+    "source_file_lines": 142559,
     "migration_date": "2026-06-16",
-    "target_platform": "Azure Data Factory (ADF)",
-    "job_type": "Server Job (sequential, JobType=0)",
-    "character_set": "CP1252",
-    "jobs_in_file": 3
+    "total_dsx_jobs": 63,
+    "total_adf_artifacts_generated": {
+      "linkedService": 4,
+      "dataset": 44,
+      "pipeline": 40,
+      "dataflow": 5,
+      "notebook": 33
+    },
+    "migration_status": "SKELETON_COMPLETE_MANUAL_ACTIONS_REQUIRED",
+    "critical_manual_actions_count": 18
   },
-  "job_variants": [
+  "source_jobs": [
     {
-      "datastage_name": "J990_Jen_Extraccion_IB",
-      "role": "PRODUCTION",
-      "date_modified": "2025-03-03",
-      "source_table": "journal.dbo.jen",
-      "filter_type": "parametric",
-      "filter_description": "jen_fec_evt_neg = dateadd(-7, $FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
-      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB.json"
+      "dsx_job_name": "S139_Transbk_Mcf_Sequencer",
+      "job_type": "Sequencer (JobType=3)",
+      "dsx_line": 136307,
+      "adf_artifact": "pipeline/Sequencers/pl_S139_Transbk_Mcf_Sequencer.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Master orchestrator. 18 ExecutePipeline activities chaining all child pipelines. 37 parameters covering all $Path* and $EDW_* variables."
     },
     {
-      "datastage_name": "CopyOfJ990_Jen_Extraccion_IB",
-      "role": "ARCHIVE_VARIANT",
-      "date_modified": "2025-03-28",
-      "source_table": "journal.dbo.jen_old3",
-      "filter_type": "parametric",
-      "filter_description": "jen_fec_evt_neg = dateadd(-7, $FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
-      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_Old3.json"
-    },
-    {
-      "datastage_name": "CopyOfCopyOfJ990_Jen_Extraccion_IB",
-      "role": "BACKFILL_HARDCODED",
-      "date_modified": "2025-03-28",
-      "source_table": "journal.dbo.jen",
-      "filter_type": "hardcoded_range",
-      "filter_description": "jen_fec_evt_neg BETWEEN dateadd(-7,'2025-03-14') AND dateadd(-7,'2025-03-21') AND SUBSTRING(jen_ope_evt,1,2)='IB'",
-      "manual_action": "Verify if this was a one-time backfill. If so, this pipeline can be run once with default parameters and then decommissioned.",
-      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_7dias.json"
-    }
-  ],
-  "adf_artifacts": {
-    "linkedServices": [
-      "linkedService/ls_Sybase_Journal.json",
-      "linkedService/ls_AzureDataLakeStorage.json"
-    ],
-    "datasets": {
-      "source": [
-        "dataset/Source/ds_Sybase_jen.json",
-        "dataset/Source/ds_Sybase_jen_old3.json"
-      ],
-      "sink": [
-        "dataset/Sink/ds_File_JournalJen_IBM.json"
+      "dsx_job_name": "J139_Transbk_Mcf_Extraccion",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 64082,
+      "adf_artifact": "pipeline/Extraction/pl_J139_Transbk_Mcf_Extraccion.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Reads IBM EBCDIC fixed-width files (Cuentas + Tarjetas). Executes df_MCF_Extraccion_Cuentas and df_MCF_Extraccion_Tarjetas data flows + FileDiff Databricks notebooks.",
+      "manual_actions": [
+        "Obtain COBOL copybook EDWOS_TRANSBK_MCF_C and EDWOS_TRANSBK_MCF_T for exact field byte positions",
+        "Implement fixed-width parsing in Data Flow using substring() or pre-process with Databricks"
       ]
     },
-    "dataflows": [
-      "dataflow/Extraction/df_Trf_Jen.json"
-    ],
-    "pipelines": [
-      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB.json",
-      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_Old3.json",
-      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_7dias.json"
+    {
+      "dsx_job_name": "J139_Transbk_Mcf_Cuentas",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 24858,
+      "adf_artifact": "pipeline/Cuentas/pl_J139_Transbk_Mcf_Cuentas.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Executes df_MCF_Cuentas_Transform. 22 LDM entity outputs. Pivot stages (Pivote_ACI, Pivote_AAH, Pivote_CF) require manual implementation.",
+      "manual_actions": [
+        "Implement all 22 entity routing/derivation expressions in df_MCF_Cuentas_Transform",
+        "Implement Pivote_ACI, Pivote_AAH, Pivote_CF as ADF Pivot transformation or Databricks",
+        "Implement Coll_ACL (Account_Credit_Limit collector) pattern"
+      ]
+    },
+    {
+      "dsx_job_name": "J139_Transbk_Mcf_Extraccion_Hash",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 76099,
+      "adf_artifact": "pipeline/Hash_Management/pl_J139_Transbk_Mcf_Extraccion_Hash.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Reads 10 reference tables from Teradata LDM. .H hash files eliminated - ADF uses inline Lookup transformations. Executes df_MCF_Hash_Extraccion.",
+      "manual_actions": [
+        "Extract exact SELECT queries for each hash table from DSX LDM stage XMLProperties",
+        "Verify Teradata database names ($EDW_Wrk/$EDW_Party/$EDW_Product/$EDW_Agreement) per reference table"
+      ]
+    },
+    {
+      "dsx_job_name": "J139_Transbk_Mcf_Tarjetas",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 86734,
+      "adf_artifact": "pipeline/Tarjetas/pl_J139_Transbk_Mcf_Tarjetas.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Executes df_MCF_Tarjetas_Transform. 8 Party/Card LDM entity outputs.",
+      "manual_actions": [
+        "Implement 8 entity routing in df_MCF_Tarjetas_Transform",
+        "Implement Individual vs Organization split logic from TMC_NRUT/AMC_NRUT",
+        "Implement EIH_Retro retroactive External_Identification_Hist logic"
+      ]
+    },
+    {
+      "dsx_job_name": "JBorraTemporales",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 108260,
+      "adf_artifact": "pipeline/Utility/pl_JBorraTemporales.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Deletes temp/hash files via Databricks notebook nb_FileDelete.py. Checks FlagDelete=1 before executing."
+    },
+    {
+      "dsx_job_name": "JRenameIBM",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 108536,
+      "adf_artifact": "pipeline/Utility/pl_JRenameIBM.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Renames IBM source files with .PROC.{timestamp} suffix via Databricks notebook nb_FileRename.py."
+    },
+    {
+      "dsx_job_name": "JRespaldaArchivos",
+      "job_type": "Server Job (JobType=0)",
+      "dsx_line": 108801,
+      "adf_artifact": "pipeline/Utility/pl_JRespaldaArchivos.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "Archives output/input/log files to backup path via Databricks notebook nb_FileRespaldo.py."
+    },
+    {
+      "dsx_job_name": "S139_Transbk_Mcf_Seq_Carga_Cuentas",
+      "job_type": "Sequencer (JobType=3)",
+      "dsx_line": 120973,
+      "adf_artifact": "pipeline/Sequencers/pl_S139_Seq_Carga_Cuentas.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "13 FLoad pipelines chained sequentially for Cuentas LDM entities."
+    },
+    {
+      "dsx_job_name": "S139_Transbk_Mcf_Seq_Carga_Tarjetas",
+      "job_type": "Sequencer (JobType=3)",
+      "dsx_line": 128164,
+      "adf_artifact": "pipeline/Sequencers/pl_S139_Seq_Carga_Tarjetas.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "8 FLoad pipelines chained sequentially for Tarjetas LDM entities."
+    },
+    {
+      "dsx_job_name": "S139_Transbk_Mcf_Seq_Carga_Party",
+      "job_type": "Sequencer (JobType=3)",
+      "dsx_line": 124524,
+      "adf_artifact": "pipeline/Sequencers/pl_S139_Seq_Carga_Party.json",
+      "adf_type": "Pipeline",
+      "status": "MIGRATED",
+      "notes": "8 FLoad pipelines chained sequentially for Party LDM entities."
+    }
+  ],
+  "fload_pipelines": [
+    {
+      "name": "Account_Abuse_History",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Abuse_History.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Abuse_History.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Agreement",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Agreement.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Agreement.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Agreement_Update_MCF",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Agreement_Update_MCF.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Agreement_Update_MCF.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Financial_Agreement",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Financial_Agreement.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Financial_Agreement.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Party",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Party.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Party.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Loan_Account",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Loan_Account.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Loan_Account.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Status_History",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Status_History.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Status_History.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Acct_Product_History",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Acct_Product_History.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Acct_Product_History.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Acct_Acct_Relationship",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Acct_Acct_Relationship.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Acct_Acct_Relationship.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Credit_Limit",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Credit_Limit.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Credit_Limit.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Card_Income",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Card_Income.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Card_Income.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Feature",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Feature.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Feature.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Currency",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Currency.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Currency.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Card",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Card.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Card.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Account_Card",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Account_Card.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Account_Card.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Card_Update_MCF",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Card_Update_MCF.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Card_Update_MCF.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Party_Card",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Party_Card.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Party_Card.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Card_Status_Hist",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Card_Status_Hist.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Card_Status_Hist.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Card_Limit",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Card_Limit.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Card_Limit.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Card_Feature",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Card_Feature.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Card_Feature.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Bci_Card_Balance",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Bci_Card_Balance.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Bci_Card_Balance.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Party",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Party.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Party.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Individual",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Individual.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Individual.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Organization",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Organization.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Organization.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "External_Identification_Hist",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_External_Identification_Hist.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_External_Identification_Hist.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Individual_Name_Hist",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Individual_Name_Hist.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Individual_Name_Hist.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Organization_Name_Hist",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Organization_Name_Hist.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Organization_Name_Hist.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Party_Demographic",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Party_Demographic.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Party_Demographic.py",
+      "status": "MIGRATED"
+    },
+    {
+      "name": "Party_Party_Rel_Hist",
+      "adf_artifact": "pipeline/FLoad_LDM/pl_FLoad_Party_Party_Rel_Hist.json",
+      "bteq_notebook": "notebook/Bteq/nb_Bteq_Party_Party_Rel_Hist.py",
+      "status": "MIGRATED"
+    }
+  ],
+  "parameter_mapping": {
+    "description": "DataStage Sequencer parameter -> ADF Pipeline parameter mapping",
+    "parameters": [
+      {
+        "datastage": "$PathInput",
+        "adf": "PathInput",
+        "type": "String",
+        "description": "ADLS path for IBM MCF source files"
+      },
+      {
+        "datastage": "$PathTemp",
+        "adf": "PathTemp",
+        "type": "String",
+        "description": "ADLS path for intermediate/processed files"
+      },
+      {
+        "datastage": "$PathOutput",
+        "adf": "PathOutput",
+        "type": "String",
+        "description": "ADLS path for LDM output files"
+      },
+      {
+        "datastage": "$PathHash",
+        "adf": "PathHash",
+        "type": "String",
+        "description": "ADLS path for hash reference files (replaces .H files)"
+      },
+      {
+        "datastage": "$PathLog",
+        "adf": "PathLog",
+        "type": "String",
+        "description": "ADLS path for log files"
+      },
+      {
+        "datastage": "$PathExtract",
+        "adf": "PathExtract",
+        "type": "String",
+        "description": "ADLS path for extract staging"
+      },
+      {
+        "datastage": "$PathUnproc",
+        "adf": "PathUnproc",
+        "type": "String",
+        "description": "ADLS path for unprocessed/rejected records"
+      },
+      {
+        "datastage": "$PathDiccionario",
+        "adf": "PathDiccionario",
+        "type": "String",
+        "description": "ADLS path for dictionary/reference files"
+      },
+      {
+        "datastage": "$PathRejected",
+        "adf": "PathRejected",
+        "type": "String",
+        "description": "ADLS path for rejected records"
+      },
+      {
+        "datastage": "$PathShell",
+        "adf": "PathShell",
+        "type": "String",
+        "description": "Eliminated - shell scripts replaced by Databricks notebooks"
+      },
+      {
+        "datastage": "$PathRespaldo",
+        "adf": "PathRespaldo",
+        "type": "String",
+        "description": "ADLS path for backup/archive files"
+      },
+      {
+        "datastage": "$EDW_Wrk",
+        "adf": "EDW_Wrk",
+        "type": "String",
+        "description": "Teradata work database name"
+      },
+      {
+        "datastage": "$EDW_Party",
+        "adf": "EDW_Party",
+        "type": "String",
+        "description": "Teradata EDW Party database name"
+      },
+      {
+        "datastage": "$EDW_Agreement",
+        "adf": "EDW_Agreement",
+        "type": "String",
+        "description": "Teradata EDW Agreement database name"
+      },
+      {
+        "datastage": "$EDW_Finance",
+        "adf": "EDW_Finance",
+        "type": "String",
+        "description": "Teradata EDW Finance database name"
+      },
+      {
+        "datastage": "$EDW_Product",
+        "adf": "EDW_Product",
+        "type": "String",
+        "description": "Teradata EDW Product database name"
+      },
+      {
+        "datastage": "$Teradata_EDW_DSN_Grupo1",
+        "adf": "TD_Host",
+        "type": "String",
+        "description": "Teradata host - stored in Key Vault"
+      },
+      {
+        "datastage": "$Teradata_EDW_User_Grupo1",
+        "adf": "TD_User",
+        "type": "String",
+        "description": "Teradata user - stored in Key Vault"
+      },
+      {
+        "datastage": "$Teradata_EDW_PWD_Grupo1",
+        "adf": "TD_Password",
+        "type": "SecureString",
+        "description": "Teradata password - MUST be stored in Azure Key Vault"
+      },
+      {
+        "datastage": "$FechaProceso",
+        "adf": "FechaProceso",
+        "type": "String",
+        "description": "Process date YYYYMMDD"
+      },
+      {
+        "datastage": "$FechaRespaldo",
+        "adf": "FechaRespaldo",
+        "type": "String",
+        "description": "Backup date YYYYMMDD"
+      },
+      {
+        "datastage": "$FileNameIBM_Cuentas",
+        "adf": "FileNameIBM_Cuentas",
+        "type": "String",
+        "description": "IBM source filename for Cuentas"
+      },
+      {
+        "datastage": "$FileNameIBM_Tarjetas",
+        "adf": "FileNameIBM_Tarjetas",
+        "type": "String",
+        "description": "IBM source filename for Tarjetas"
+      },
+      {
+        "datastage": "$Tabla",
+        "adf": "Tabla",
+        "type": "String",
+        "defaultValue": "A",
+        "description": "A/B table suffix for Teradata temp tables (FastLoad pattern)"
+      },
+      {
+        "datastage": "$FlagDelete",
+        "adf": "FlagDelete",
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag to enable temp file deletion (1=delete, 0=keep)"
+      },
+      {
+        "datastage": "$NombreJob",
+        "adf": "NombreJob",
+        "type": "String",
+        "defaultValue": "S139_Transbk_Mcf",
+        "description": "Job name for logging and file naming"
+      }
     ]
   },
-  "stage_mapping": [
+  "stage_type_mapping": {
+    "description": "DataStage stage type -> ADF equivalent mapping for this migration",
+    "mappings": [
+      {
+        "datastage_type": "CSeqFileStage (FixedWidth=1, UnicodeBOM=1, UnicodeSwapped=1)",
+        "adf_equivalent": "Mapping Data Flow source/sink with CRITICAL: fixed-width parsing not native in ADF. Use Databricks or substring() expressions.",
+        "pattern": "IBM EBCDIC fixed-width COBOL file"
+      },
+      {
+        "datastage_type": "CSeqFileStage (delimiter=|, pipe-delimited)",
+        "adf_equivalent": "DelimitedText dataset with columnDelimiter='|'",
+        "pattern": "Intermediate pipe-delimited file"
+      },
+      {
+        "datastage_type": "CTransformerStage (multi-output)",
+        "adf_equivalent": "Mapping Data Flow: DerivedColumn + ConditionalSplit + multiple Sink transformations",
+        "pattern": "Row-level derivation with fan-out"
+      },
+      {
+        "datastage_type": "CCustomStage.CC_GUI TeradataConnector (FastLoad, WriteMode=0)",
+        "adf_equivalent": "Copy Activity: ADLS source -> Teradata sink with staging (preCopyScript DELETE)",
+        "pattern": "Teradata FastLoad"
+      },
+      {
+        "datastage_type": "CCustomStage.CC_GUI TeradataConnector (Context=1, read)",
+        "adf_equivalent": "Mapping Data Flow source from Teradata linked service OR Lookup activity",
+        "pattern": "Teradata read/lookup"
+      },
+      {
+        "datastage_type": "CHashedFileStage (.H files)",
+        "adf_equivalent": "ELIMINATED - replaced by ADF Mapping Data Flow cache sink or Lookup from Teradata",
+        "pattern": "Hash-partitioned in-process lookup"
+      },
+      {
+        "datastage_type": "CCustomStage.CC_GUI (Pivot/Collector)",
+        "adf_equivalent": "ADF Pivot transformation OR Databricks notebook for complex pivot logic",
+        "pattern": "Row-to-column pivot"
+      },
+      {
+        "datastage_type": "CJSJobActivity (Sequencer step)",
+        "adf_equivalent": "ExecutePipeline activity with dependsOn chain",
+        "pattern": "Sequential job orchestration"
+      },
+      {
+        "datastage_type": "DSU.ExecSH (AfterSubr shell call)",
+        "adf_equivalent": "DatabricksNotebook activity",
+        "pattern": "Shell subroutine"
+      },
+      {
+        "datastage_type": "DSU.fncCreaArchivoVacio (BeforeSubr)",
+        "adf_equivalent": "ELIMINATED - marker file pattern not needed in ADF",
+        "pattern": "Empty marker file"
+      },
+      {
+        "datastage_type": "DSU.fncEvaluaCantidadRegistros",
+        "adf_equivalent": "If Condition activity + Lookup activity for record count check",
+        "pattern": "Conditional record count validation"
+      },
+      {
+        "datastage_type": "DSCheckPointExists / DSCheckPointSetValue",
+        "adf_equivalent": "NO NATIVE ADF EQUIVALENT - use pipeline retry policy (max 3 retries) + manual restart from failed activity",
+        "pattern": "Checkpoint/restart"
+      }
+    ]
+  },
+  "critical_manual_actions": [
     {
-      "datastage_stage": "Sybase_Jen_IBM_7_Dias",
-      "datastage_type": "CODBCStage",
-      "datastage_link_out": "Lnk_Sybase_Jen",
-      "adf_equivalent": "ODBC Source in df_Trf_Jen / Copy Activity source",
-      "adf_artifact": "dataset/Source/ds_Sybase_jen.json + linkedService/ls_Sybase_Journal.json",
-      "notes": "Self-Hosted Integration Runtime required for on-premises Sybase ODBC. DSN parameterized as $Sybase_Journal."
+      "id": 1,
+      "priority": "CRITICAL",
+      "component": "df_MCF_Extraccion_Cuentas + df_MCF_Extraccion_Tarjetas",
+      "action": "Obtain COBOL copybooks EDWOS_TRANSBK_MCF_C and EDWOS_TRANSBK_MCF_T. Implement fixed-width parsing using ADF substring() expressions or pre-process with Databricks notebook before data flow execution."
     },
     {
-      "datastage_stage": "Trf_Jen",
-      "datastage_type": "CTransformerStage",
-      "datastage_link_in": "Lnk_Sybase_Jen",
-      "datastage_link_out": "Lnk_Jen",
-      "adf_equivalent": "DerivedColumn transformation in Mapping Data Flow df_Trf_Jen",
-      "adf_artifact": "dataflow/Extraction/df_Trf_Jen.json",
-      "transformation_pattern": "EREPLACE(ICONV(col,'MCP'),'|',' ') -> replace(toString(col),'|',' ')",
-      "columns_transformed": 26,
-      "notes": "ICONV 'MCP' handled at linked service encoding level. EREPLACE replicated as replace() in ADF expression language. Dates (jen_fec_evt_neg, jen_fec_ctb_evt) are serialized to string (SqlType 11->12)."
+      "id": 2,
+      "priority": "CRITICAL",
+      "component": "All BTEQ Databricks notebooks",
+      "action": "Upload Teradata JDBC drivers (terajdbc4.jar, tdgssconfig.jar) to DBFS path /dbfs/drivers/. Configure Databricks cluster init script to include drivers on classpath. Test JDBC connectivity from Databricks to Teradata EDW."
     },
     {
-      "datastage_stage": "Seq_Jen",
-      "datastage_type": "CSeqFileStage",
-      "datastage_link_in": "Lnk_Jen",
-      "adf_equivalent": "DelimitedText Sink in df_Trf_Jen",
-      "adf_artifact": "dataset/Sink/ds_File_JournalJen_IBM.json",
-      "notes": "Original: UnixFormat=1, UnicodeBOM=1, UnicodeSwapped=1, Delimiter='|', ColHeaders=0, Append=0. CRITICAL: UnicodeBOM=1 + UnicodeSwapped=1 in DataStage = UTF-16 LE with BOM. ADF dataset configured as UTF-8. Verify downstream consumer encoding requirements."
-    }
-  ],
-  "parameter_mapping": [
-    { "datastage": "$FechaProceso",       "adf": "FechaProceso",       "format": "YYYY-MM-DD", "scope": "pipeline parameter", "default": "$PROJDEF" },
-    { "datastage": "$FechaArchExtraccion","adf": "FechaArchExtraccion", "format": "YYYYMMDD",   "scope": "pipeline parameter + dataset parameter", "default": "$PROJDEF" },
-    { "datastage": "$Sybase_Journal",     "adf": "Key Vault secret: sybase-journal-odbc-connection-string", "scope": "linked service", "default": "$PROJDEF" },
-    { "datastage": "$Sybase_User",        "adf": "Key Vault secret: sybase-journal-username", "scope": "linked service", "default": "$PROJDEF" },
-    { "datastage": "$Sybase_PWD",         "adf": "Key Vault secret: sybase-journal-password", "scope": "linked service", "default": "$PROJDEF", "original_encrypted": "{iisenc}wEKfQZUV7bMUWi7ix8v1Aw==" },
-    { "datastage": "$DBO_Journal",        "adf": "DBO_Journal",         "scope": "pipeline + dataset parameter", "default": "dbo" },
-    { "datastage": "$PathTemp",           "adf": "PathTemp / ContainerPath", "scope": "pipeline + dataset parameter", "default": "$PROJDEF" },
-    { "datastage": "$NombreJob",          "adf": "NombreJob",           "scope": "pipeline + dataset parameter", "default": "J990_Jen" }
-  ],
-  "source_columns": [
-    { "position": 1,  "name": "jen_ope_evt",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 12, "scale": 0,  "nullable": false, "key_position": 1, "adf_type": "String",  "adf_length": 12 },
-    { "position": 2,  "name": "jen_fec_evt_neg", "ds_sqltype": 11, "ds_type": "TIMESTAMP", "precision": 23, "scale": 3,  "nullable": false, "key_position": 0, "adf_type": "DateTime","adf_precision": 23, "adf_scale": 3, "transformer_out_sqltype": 12, "transformer_out_type": "VARCHAR(26)", "note": "Cast to string in transformer" },
-    { "position": 3,  "name": "jen_fec_ctb_evt", "ds_sqltype": 11, "ds_type": "TIMESTAMP", "precision": 23, "scale": 3,  "nullable": false, "key_position": 0, "adf_type": "DateTime","adf_precision": 23, "adf_scale": 3, "transformer_out_sqltype": 12, "transformer_out_type": "VARCHAR(26)", "note": "Cast to string in transformer" },
-    { "position": 4,  "name": "jen_rut_cli",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 9,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 9 },
-    { "position": 5,  "name": "jen_vrf_cli",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 6,  "name": "jen_rut_emp",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 9,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 9 },
-    { "position": 7,  "name": "jen_vrf_emp",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 8,  "name": "jen_id_cnl",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
-    { "position": 9,  "name": "jen_est_cnl",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 10, "name": "jen_suc_ori",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 5,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 5 },
-    { "position": 11, "name": "jen_med",         "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 8,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 8 },
-    { "position": 12, "name": "jen_id_med",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 15, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 15 },
-    { "position": 13, "name": "jen_tip_opr_bci", "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 3,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 3 },
-    { "position": 14, "name": "jen_id_opr",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
-    { "position": 15, "name": "jen_mod_tar",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 16, "name": "jen_fra_lin",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 17, "name": "jen_ara_cua",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 5,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 5 },
-    { "position": 18, "name": "jen_id_svs",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
-    { "position": 19, "name": "jen_est_evt_neg", "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
-    { "position": 20, "name": "jen_id_pdt",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 6,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 6 },
-    { "position": 21, "name": "jen_id_evt",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
-    { "position": 22, "name": "jen_id_sub_evt",  "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 6,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 6 },
-    { "position": 23, "name": "jen_clv_ppl",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 },
-    { "position": 24, "name": "jen_mto",         "ds_sqltype": 2,  "ds_type": "NUMERIC",   "precision": 18, "scale": 4,  "nullable": false, "key_position": 0, "adf_type": "Decimal", "adf_precision": 18, "adf_scale": 4, "apt_field_prop": "quote=none", "note": "No quoting applied. DECIMAL value written as-is to file." },
-    { "position": 25, "name": "jen_clv_sgd",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 },
-    { "position": 26, "name": "jen_cpo_var",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 }
-  ],
-  "manual_actions_required": [
+      "id": 3,
+      "priority": "CRITICAL",
+      "component": "ls_AzureKeyVault.json + ls_Teradata_EDW.json",
+      "action": "Create Azure Key Vault with secrets: TD-EDW-Host, TD-EDW-User, TD-EDW-Password (from $Teradata_EDW_PWD_Grupo1). Update linked service base URL and secret names."
+    },
     {
+      "id": 4,
+      "priority": "CRITICAL",
+      "component": "ls_Teradata_EDW.json",
+      "action": "Configure Self-Hosted Integration Runtime (SHIR) with Teradata ODBC/JDBC driver installed. Register SHIR in ADF and update linked service connectVia."
+    },
+    {
+      "id": 5,
+      "priority": "CRITICAL",
+      "component": "df_MCF_Cuentas_Transform",
+      "action": "Implement full CTransformerStage derivation expressions for all 22 LDM entities. Extract derivation logic from DSX J139_Transbk_Mcf_Cuentas CTransformerStage stages (starting line 24858)."
+    },
+    {
+      "id": 6,
+      "priority": "CRITICAL",
+      "component": "df_MCF_Cuentas_Transform - Pivot stages",
+      "action": "Pivote_ACI (Account_Card_Income), Pivote_AAH (Account_Abuse_History), Pivote_CF (Card_Feature) are CCustomStage.CC_GUI pivot operations. Implement as ADF Pivot transformation or Databricks notebook. These stages transpose rows to columns using feature code keys."
+    },
+    {
+      "id": 7,
+      "priority": "CRITICAL",
+      "component": "df_MCF_Tarjetas_Transform",
+      "action": "Implement 8 entity routing expressions. Individual/Organization split: if TMC_NRUT represents a person (standard RUT format) vs company. Verify EIH_Retro retroactive External_Identification_Hist logic from DSX."
+    },
+    {
+      "id": 8,
+      "priority": "CRITICAL",
+      "component": "df_MCF_Hash_Extraccion",
+      "action": "Extract exact SELECT queries for 10 hash reference tables from DSX LDM stage XMLProperties. Implement as ADF Lookup transformations in downstream Data Flows (not ADLS writes)."
+    },
+    {
+      "id": 9,
       "priority": "HIGH",
-      "area": "Integration Runtime",
-      "action": "Deploy a Self-Hosted Integration Runtime on a server with network access to the Sybase database. Register it in ADF and reference it in ls_Sybase_Journal linked service."
+      "component": "All FLoad pipelines (29 total)",
+      "action": "Verify ADLS staging container exists and copy activity staging settings are correct for Teradata FastLoad via ADLS. Validate preCopyScript DELETE syntax against actual Teradata schema."
     },
     {
+      "id": 10,
       "priority": "HIGH",
-      "area": "Linked Service - Sybase",
-      "action": "Create an Azure Key Vault and store: (1) sybase-journal-odbc-connection-string, (2) sybase-journal-username, (3) sybase-journal-password. The original DataStage password {iisenc}wEKfQZUV7bMUWi7ix8v1Aw== is IIS-encrypted and must be decrypted on the source system before storing in Key Vault."
+      "component": "All BTEQ notebooks - INSERT/SELECT SQL",
+      "action": "Verify exact column lists for each INSERT/SELECT statement against actual Teradata EDW schema. Notebook SQL templates are pattern-based and may require column adjustments."
     },
     {
+      "id": 11,
       "priority": "HIGH",
-      "area": "Encoding",
-      "action": "DataStage SeqFile has UnicodeBOM=1 + UnicodeSwapped=1 which produces UTF-16 LE with BOM. ADF dataset is configured for UTF-8. If downstream consumers (file processors, next DataStage job, etc.) expect UTF-16 LE with BOM, update the encodingName in ds_File_JournalJen_IBM.json to 'UTF-16'."
+      "component": "pl_S139_Transbk_Mcf_Sequencer",
+      "action": "Review sequencer execution order. Original DataStage sequencer (line 136307) had specific conditional branching on CJSJobActivity exit codes. Validate all dependsOn conditions in master pipeline."
     },
     {
+      "id": 12,
+      "priority": "HIGH",
+      "component": "Dataset schemas - all 44 datasets",
+      "action": "Validate all column schemas against actual source systems before first run. Fixed-width columns (AMC_*/TMC_*) need byte position verification."
+    },
+    {
+      "id": 13,
+      "priority": "HIGH",
+      "component": "Checkpoint/restart gap",
+      "action": "DataStage DSCheckPointExists/DSCheckPointSetValue has no ADF native equivalent. Configure pipeline retry policy (max 3 retries, 30s interval) on each FLoad pipeline. Document manual restart procedure for partial failures."
+    },
+    {
+      "id": 14,
       "priority": "MEDIUM",
-      "area": "Date serialization",
-      "action": "jen_fec_evt_neg and jen_fec_ctb_evt change from TIMESTAMP to VARCHAR(26) in the DataStage transformer. Verify the exact string format Sybase outputs for TIMESTAMP(23,3) via ODBC and confirm it matches the downstream consumer's expectations. ADF's toString() on DateTime may produce a different format than DataStage's ICONV('MCP') serialization."
+      "component": "nb_FileDiff.py",
+      "action": "Implement actual MD5/SHA256 checksum comparison logic in nb_FileDiff.py. Current implementation only checks file existence and non-zero size. Original DataStage FileDiff compared checksums between two files."
     },
     {
+      "id": 15,
       "priority": "MEDIUM",
-      "area": "CopyOfCopyOf variant",
-      "action": "pl_J990_Jen_Extraccion_IB_7dias pipeline has hardcoded dates parameterized. Verify if this was a one-time backfill (2025-03-14 to 2025-03-21). If so, it may not need to be permanently migrated."
+      "component": "All path parameters",
+      "action": "Update all $Path* parameters to actual ADLS Gen2 container/folder paths. Format: abfss://container@storageaccount.dfs.core.windows.net/path/"
     },
     {
+      "id": 16,
+      "priority": "MEDIUM",
+      "component": "$PathShell parameter",
+      "action": "PathShell parameter is retained in sequencer for backward compatibility but is not used in ADF. Shell scripts replaced by Databricks notebooks. Verify no downstream pipelines reference PathShell directly."
+    },
+    {
+      "id": 17,
       "priority": "LOW",
-      "area": "ADLS path",
-      "action": "Map DataStage $PathTemp (local Linux filesystem path on LNX-DTSENG) to the appropriate ADLS Gen2 container and folder. Update ContainerPath parameter default value in ds_File_JournalJen_IBM.json."
+      "component": "DSU.fncCreaArchivoVacio (BeforeSubr)",
+      "action": "BeforeSubr that creates empty Vacio.tmp marker file is ELIMINATED in ADF. Verify no downstream processes depend on the existence of this marker file."
+    },
+    {
+      "id": 18,
+      "priority": "LOW",
+      "component": "Teradata A/B table rotation",
+      "action": "The #Tabla# pattern (A/B suffix) is retained as pipeline parameter Tabla (default A). Verify actual A/B rotation schedule and whether ADF pipelines should alternate or always use one suffix."
     }
-  ]
+  ],
+  "non_migrated_jobs": {
+    "description": "The 63-job DSX file contains multiple jobs. The following were NOT individually catalogued due to being inline sub-jobs, helper routines, or variants already covered by the 11 main jobs above.",
+    "estimated_unmapped": 52,
+    "note": "Run: grep -c 'BEGIN DSJOB' S139_Transbk_Mcf.dsx to get exact count. Review DSX for any jobs not covered by the pipeline hierarchy documented in this manifest."
+  },
+  "infrastructure_requirements": {
+    "adf": {
+      "integration_runtime": "Self-Hosted Integration Runtime with Teradata JDBC/ODBC driver",
+      "linked_services": 4,
+      "data_flow_cluster": "Memory Optimized, 32+ cores for Cuentas transform"
+    },
+    "databricks": {
+      "cluster_type": "Standard or High Concurrency",
+      "libraries": [
+        "jaydebeapi",
+        "jpype1",
+        "terajdbc4.jar (upload to DBFS)"
+      ],
+      "notebooks_count": 33
+    },
+    "adls_gen2": {
+      "containers": [
+        "mcf-input",
+        "mcf-temp",
+        "mcf-output",
+        "mcf-hash",
+        "mcf-log",
+        "mcf-respaldo"
+      ],
+      "note": "All DataStage $Path* variables map to ADLS Gen2 paths"
+    },
+    "key_vault": {
+      "secrets": [
+        "TD-EDW-Host",
+        "TD-EDW-User",
+        "TD-EDW-Password",
+        "ADLS-Storage-Key"
+      ]
+    },
+    "teradata": {
+      "connectivity": "SHIR or Databricks JDBC (driver must be available)",
+      "databases": [
+        "EDW_Wrk",
+        "EDW_Party",
+        "EDW_Agreement",
+        "EDW_Finance",
+        "EDW_Product"
+      ]
+    }
+  }
 }

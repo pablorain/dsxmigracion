@@ -1,0 +1,364 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_MCF_Tarjetas_Transform",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow for MCF Tarjetas multi-entity transformation. Maps DataStage J139_Transbk_Mcf_Tarjetas: Seq_MCF_T input (CSeqFileStage) -> multiple CTransformerStage and CSeqFileStage outputs for 8 LDM Party/Card entities.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "SourceTarjetas",
+          "description": "Pre-processed IBM MCF Tarjetas records from Extraccion pipeline.",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Tarjetas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupCardId",
+          "description": "Card ID lookup from MCF_Card_Id_Tmp. Maps Hsh_Card_ANum.",
+          "dataset": {
+            "referenceName": "ds_Td_MCF_Card_Id_Tmp",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupAcctNum",
+          "description": "Account number lookup from MCF_Account_Num_Tmp.",
+          "dataset": {
+            "referenceName": "ds_Td_MCF_Account_Num_Tmp",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "Sink_Individual",
+          "description": "Output pipe-delimited ADLS file for LDM entity Individual. Columns: Party_Num,Birth_Dt,Gender_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Individual",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Birth_Dt",
+              "sink": "Birth_Dt"
+            },
+            {
+              "source": "Gender_Cd",
+              "sink": "Gender_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Organization",
+          "description": "Output pipe-delimited ADLS file for LDM entity Organization. Columns: Party_Num,Legal_Entity_Type_Cd,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Organization",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Legal_Entity_Type_Cd",
+              "sink": "Legal_Entity_Type_Cd"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_External_Identification_Hist",
+          "description": "Output pipe-delimited ADLS file for LDM entity External_Identification_Hist. Columns: Party_Num,Id_Type_Cd,Id_Value,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Ext_Id_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Id_Type_Cd",
+              "sink": "Id_Type_Cd"
+            },
+            {
+              "source": "Id_Value",
+              "sink": "Id_Value"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Individual_Name_Hist",
+          "description": "Output pipe-delimited ADLS file for LDM entity Individual_Name_Hist. Columns: Party_Num,Name_Type_Cd,Full_Name,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Ind_Name_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Name_Type_Cd",
+              "sink": "Name_Type_Cd"
+            },
+            {
+              "source": "Full_Name",
+              "sink": "Full_Name"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Organization_Name_Hist",
+          "description": "Output pipe-delimited ADLS file for LDM entity Organization_Name_Hist. Columns: Party_Num,Name_Type_Cd,Full_Name,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Org_Name_Hist",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Name_Type_Cd",
+              "sink": "Name_Type_Cd"
+            },
+            {
+              "source": "Full_Name",
+              "sink": "Full_Name"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Party_Demographic",
+          "description": "Output pipe-delimited ADLS file for LDM entity Party_Demographic. Columns: Party_Num,Demo_Type_Cd,Demo_Value,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Party_Demog",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Party_Num",
+              "sink": "Party_Num"
+            },
+            {
+              "source": "Demo_Type_Cd",
+              "sink": "Demo_Type_Cd"
+            },
+            {
+              "source": "Demo_Value",
+              "sink": "Demo_Value"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Party_Party_Rel_Hist",
+          "description": "Output pipe-delimited ADLS file for LDM entity Party_Party_Rel_Hist. Columns: Primary_Party_Num,Secondary_Party_Num,Relationship_Type_Cd,Effective_Dt,Expiry_Dt,File_Source_Cd,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Party_Party_Rel",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Primary_Party_Num",
+              "sink": "Primary_Party_Num"
+            },
+            {
+              "source": "Secondary_Party_Num",
+              "sink": "Secondary_Party_Num"
+            },
+            {
+              "source": "Relationship_Type_Cd",
+              "sink": "Relationship_Type_Cd"
+            },
+            {
+              "source": "Effective_Dt",
+              "sink": "Effective_Dt"
+            },
+            {
+              "source": "Expiry_Dt",
+              "sink": "Expiry_Dt"
+            },
+            {
+              "source": "File_Source_Cd",
+              "sink": "File_Source_Cd"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        },
+        {
+          "name": "Sink_Card_Up_MCF",
+          "description": "Output pipe-delimited ADLS file for LDM entity Card_Up_MCF. Columns: Card_Id,MCF_Upd_Field1,MCF_Upd_Field2,System_Of_Record_Dt",
+          "dataset": {
+            "referenceName": "ds_ADLS_MCF_Card_Up_MCF",
+            "type": "DatasetReference"
+          },
+          "columnMappings": [
+            {
+              "source": "Card_Id",
+              "sink": "Card_Id"
+            },
+            {
+              "source": "MCF_Upd_Field1",
+              "sink": "MCF_Upd_Field1"
+            },
+            {
+              "source": "MCF_Upd_Field2",
+              "sink": "MCF_Upd_Field2"
+            },
+            {
+              "source": "System_Of_Record_Dt",
+              "sink": "System_Of_Record_Dt"
+            }
+          ]
+        }
+      ],
+      "transformations": [
+        {
+          "name": "Filter_Individual",
+          "description": "Filter and project rows for Individual entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Organization",
+          "description": "Filter and project rows for Organization entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_External_Identification_Hist",
+          "description": "Filter and project rows for External_Identification_Hist entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Individual_Name_Hist",
+          "description": "Filter and project rows for Individual_Name_Hist entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Organization_Name_Hist",
+          "description": "Filter and project rows for Organization_Name_Hist entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Party_Demographic",
+          "description": "Filter and project rows for Party_Demographic entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Party_Party_Rel_Hist",
+          "description": "Filter and project rows for Party_Party_Rel_Hist entity. Implement routing logic from DataStage CTransformerStage derivations."
+        },
+        {
+          "name": "Filter_Card_Up_MCF",
+          "description": "Filter and project rows for Card_Up_MCF entity. Implement routing logic from DataStage CTransformerStage derivations."
+        }
+      ],
+      "script": "// MANUAL ACTION REQUIRED: Implement full routing and derivation logic\n// See DataStage job J139_Transbk_Mcf_Tarjetas CTransformerStage definitions in DSX",
+      "scriptLines": [
+        "// Auto-generated skeleton. Implement Filter_* and DerivedColumn_* transforms.",
+        "// Each sink receives a filtered/projected subset of the source rows.",
+        "// Reference DataStage derivation expressions in DSX CTransformerStage stages."
+      ]
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Tarjetas",
+      "datastage_source_stage: Seq_MCF_T (CSeqFileStage, pipe-delimited, from Extraccion output)",
+      "datastage_output_count: 8 ADLS pipe-delimited files",
+      "CRITICAL_manual_action_1: Implement full derivation expressions from DSX CTransformerStage for Party/Individual/Organization entities",
+      "CRITICAL_manual_action_2: Individual vs Organization split based on AMC_NRUT logic (RUT format indicates person vs company)",
+      "CRITICAL_manual_action_3: External_Identification_Hist retroactive handling - verify EIH_Retro logic from DSX",
+      "CRITICAL_manual_action_4: Party_Party_Rel_Hist additional cardholder relationship logic from TMC_ADICIONAL flag",
+      "CRITICAL_manual_action_5: Card_Up_MCF entity (MCF update fields) - verify column mapping from TMC_ fields"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

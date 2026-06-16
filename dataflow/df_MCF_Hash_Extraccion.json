@@ -1,0 +1,149 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_MCF_Hash_Extraccion",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow for hash reference data extraction. Maps DataStage J139_Transbk_Mcf_Extraccion_Hash: LDM stage (TeradataConnector Context=1 read, 4 output links) + multiple CHashedFileStage writes. Reads 10 reference lookup tables from Teradata EDW and writes them as ADLS files (replacing DataStage .H hash files) for downstream lookup use in Cuentas/Tarjetas transformations.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "TD_BciPtc",
+          "description": "Teradata source for Hsh_Bci_Ptc. LDM output Lnk_Bci_Ptc.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "TD_Tab",
+          "description": "Teradata source for Hsh_Card_Dic. LDM output Lnk_Tab.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "TD_Tab_352",
+          "description": "Teradata source for variant Lnk_Tab_352.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "TD_EIH_Rut",
+          "description": "Teradata source for Hsh_EIH_Rut. LDM output Lnk_EIH_Rut.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "Sink_Product",
+          "description": "Write J139_Transbk_Mcf_Product.H equivalent to ADLS.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_MaxCardId",
+          "description": "Write J139_Transbk_Mcf_MaxCardId.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_StatementCycleType",
+          "description": "Write J139_Transbk_Mcf_Statement_Cycle_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_AssetLiabilityType",
+          "description": "Write J139_Transbk_Mcf_Asset_Liability_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_BalanceCategoryType",
+          "description": "Write J139_Transbk_Mcf_Balance_Category_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_SystemAbuseType",
+          "description": "Write J139_Transbk_Mcf_System_Abuse_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_AccountCardIncomeType",
+          "description": "Write J139_Transbk_Mcf_Account_Card_Income_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_FeatureCuentas",
+          "description": "Write J139_Transbk_Mcf_Feature_Cuentas.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_AcctRelationshipType",
+          "description": "Write J139_Transbk_Mcf_Acct_Relationship_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "Sink_ContractPartyRoleType",
+          "description": "Write J139_Transbk_Mcf_Contract_Party_Role_Type.H equivalent.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "transformations": [
+        {
+          "name": "Route_by_Type",
+          "description": "Route LDM output to appropriate hash file based on type code. In DataStage: separate CHashedFileStage for each hash file with distinct column sets."
+        }
+      ],
+      "script": "// MANUAL ACTION REQUIRED: Implement full Data Flow script\n// See annotations for DataStage stage-by-stage mapping",
+      "scriptLines": [
+        "// Auto-generated skeleton from DataStage DSX analysis",
+        "// Complete implementation required per manual action notes"
+      ]
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Extraccion_Hash",
+      "datastage_source: LDM TeradataConnector (Context=1=read, 4 output links)",
+      "adf_note: .H hash files are ELIMINATED. ADF Data Flow uses cache sinks or reads directly from Teradata at transformation time.",
+      "CRITICAL_manual_action: Identify exact SELECT queries for each hash file from DSX LDM XMLProperties (truncated in output)",
+      "CRITICAL_manual_action: Implement as cache sinks in downstream Data Flows instead of writing to ADLS if possible",
+      "CRITICAL_manual_action: Verify $EDW_Wrk, $EDW_Party, $EDW_Finance, $EDW_Product, $EDW_Agreement, $EDW_Party_Asset database names for each Teradata source query"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

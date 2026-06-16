@@ -1,0 +1,119 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_MCF_Extraccion_Cuentas",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow for MCF Cuentas extraction. Maps DataStage stages: EDWOS_TRANSBK_MCF(CSeqFileStage source, FixedWidth=1) -> Trf_MCF_C(CTransformerStage, splits to Cuentas/Eliminados) -> Trf_MCF_C_Final(CTransformerStage, final filter) -> Trf_MCF_Cuentas(CTransformerStage, business logic + state machine) -> Seq_MCF_C(CSeqFileStage sink) AND -> FL_Cuentas(TeradataConnector FastLoad, MCF_Account_Num_Tmp). Also: Hsh_Bci_Ptc, Hsh_Card_ANum, Hsh_Card_ANum2, Hsh_EIH_Rut lookups, LDM read stage.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "SourceCuentas",
+          "description": "IBM MCF Cuentas fixed-width file. Maps to DataStage EDWOS_TRANSBK_MCF CSeqFileStage output Lnk_MCF_Cuentas.",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Cuentas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupBciPtc",
+          "description": "Teradata LDM lookup (Hsh_Bci_Ptc). Maps Lnk_Bci_Ptc from LDM stage (Context=1, read mode). Lookup on NRUT/account keys.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupTab",
+          "description": "Teradata LDM Tab lookup (Hsh_Card_Dic). Maps Lnk_Tab from LDM stage.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupTab352",
+          "description": "Teradata LDM Tab352 lookup (variant). Maps Lnk_Tab_352 from LDM stage.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupEihRut",
+          "description": "Teradata EIH_Rut lookup (Hsh_EIH_Rut). Maps Lnk_EIH_Rut from LDM stage.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "SinkCuentasFinal",
+          "description": "Write filtered Cuentas to EDWOS.TRANSBK.MCF.CUENTA.TXT.FINAL. Maps to DataStage Seq_MCF_C (CSeqFileStage input, FileName=#$PathInput#EDWOS.TRANSBK.MCF.CUENTA.TXT.FINAL).",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Cuentas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "SinkMCFAccountNumTmp",
+          "description": "FastLoad MCF_Account_Num_Tmp in $EDW_Wrk. Maps to DataStage FL_Cuentas (TeradataConnector CC_GUI FastLoad WriteMode=0).",
+          "dataset": {
+            "referenceName": "ds_Td_MCF_Account_Num_Tmp",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "SinkNoProcessed",
+          "description": "Rejected/unprocessed records. Maps to DataStage Seq_No_Procesados CSeqFileStage.",
+          "dataset": {
+            "referenceName": "ds_AzureDataLakeStorage_S139",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "transformations": [
+        {
+          "name": "ParseFixedWidth",
+          "description": "CRITICAL: Parse COBOL fixed-width fields from IBM file. DataStage handles this via NativeType=CHARACTER/DISPLAY_NUMERIC and field positions. ADF: Use substring() expressions for each field offset. MANUAL: Implement based on COBOL copybook byte positions."
+        },
+        {
+          "name": "Trf_MCF_C",
+          "description": "Initial Cuentas split transformer. Splits into: Lnk_MCF_C_Final (valid Cuentas) + Lnk_MCF_C_Elim (eliminated records). Maps DataStage CTransformerStage Trf_MCF_C. Key logic: AMC_TIPO_REG1='01' filter, IND/TipoCuenta variable assignments."
+        },
+        {
+          "name": "StateMachine",
+          "description": "AMC_EST_CTA state machine. DataStage Trf_MCF_Cuentas assigns IND, TipoCuenta, Bloqueo1, Bloqueo2, Estado variables based on complex conditional expressions. Maps to ADF DerivedColumn with nested iif() expressions."
+        },
+        {
+          "name": "LookupBciPtcJoin",
+          "description": "Hash lookup on Hsh_Bci_Ptc. Maps DataStage CHashedFileStage lookup. ADF: Lookup transformation on LookupBciPtc source keyed on AMC_NRUT."
+        },
+        {
+          "name": "DeriveAccountNum",
+          "description": "Derive Account_Num field. DataStage: Account_Num = trim(AMC_ACCT). ADF: DerivedColumn trim(toString(AMC_ACCT))."
+        }
+      ],
+      "script": "// MANUAL ACTION REQUIRED: Implement full Data Flow script\n// See annotations for DataStage stage-by-stage mapping",
+      "scriptLines": [
+        "// Auto-generated skeleton from DataStage DSX analysis",
+        "// Complete implementation required per manual action notes"
+      ]
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Extraccion",
+      "datastage_source_stage: EDWOS_TRANSBK_MCF (CSeqFileStage, FixedWidth=1, UnicodeBOM=1, UnicodeSwapped=1)",
+      "datastage_cuentas_columns: 70+ fields including AMC_TIPO_REG1..AMC_DIAS_MORA_REAL (see ds_IBM_MCF_Cuentas dataset schema)",
+      "CRITICAL_manual_action_1: Obtain COBOL copybook for EDWOS_TRANSBK_MCF_C to get exact byte positions per field",
+      "CRITICAL_manual_action_2: Implement fixed-width parsing using ADF substring() expressions or pre-process with Databricks",
+      "CRITICAL_manual_action_3: Map all CHashedFileStage lookups (Hsh_Bci_Ptc, Hsh_Card_ANum, Hsh_Card_ANum2, Hsh_EIH_Rut) to ADF Lookup transformations with Teradata source queries",
+      "CRITICAL_manual_action_4: Implement state machine logic from CTransformerStage derivation expressions in DSX",
+      "CRITICAL_manual_action_5: FastLoad sink (SinkMCFAccountNumTmp) requires Teradata staging via ADLS - configure Copy Activity instead if Data Flow Teradata sink has issues"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

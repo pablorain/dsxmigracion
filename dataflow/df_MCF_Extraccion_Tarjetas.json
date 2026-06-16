@@ -1,0 +1,92 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_MCF_Extraccion_Tarjetas",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow for MCF Tarjetas extraction. Maps DataStage: EDWOS_TRANSBK_MCF output Lnk_MCF_Tarjetas -> Trf_MCF_T -> Trf_MCF_T_Final -> Trf_MCF_Tarjetas -> Seq_MCF_T(sink) + FL_Tarjetas(MCF_Card_Id_Tmp) + FL_Card_ANum(MCF_Card_Acct_Num_Tmp). Also: Hsh_Card_Dic, Hsh_Card_ANum, Hsh_Card_ANum2 lookups.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "SourceTarjetas",
+          "description": "IBM MCF Tarjetas fixed-width file. Maps to EDWOS_TRANSBK_MCF Lnk_MCF_Tarjetas.",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Tarjetas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupCardDic",
+          "description": "Card dictionary lookup (Hsh_Card_Dic). Maps Lnk_de_Tab from LDM.",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "LookupCardANum",
+          "description": "Card account number lookup (Hsh_Card_ANum).",
+          "dataset": {
+            "referenceName": "ds_Teradata_EDW_Generic",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "SinkTarjetasFinal",
+          "description": "Write filtered Tarjetas to EDWOS.TRANSBK.MCF.TARJETA.TXT.FINAL. Maps to Seq_MCF_T CSeqFileStage.",
+          "dataset": {
+            "referenceName": "ds_IBM_MCF_Tarjetas",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "SinkMCFCardIdTmp",
+          "description": "FastLoad MCF_Card_Id_Tmp. Maps to FL_Tarjetas TeradataConnector.",
+          "dataset": {
+            "referenceName": "ds_Td_MCF_Card_Id_Tmp",
+            "type": "DatasetReference"
+          }
+        },
+        {
+          "name": "SinkMCFCardAcctNumTmp",
+          "description": "FastLoad MCF_Card_Acct_Num_Tmp. Maps to FL_Card_ANum TeradataConnector.",
+          "dataset": {
+            "referenceName": "ds_Td_MCF_Card_Acct_Num_Tmp",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "transformations": [
+        {
+          "name": "ParseTarjetasFixed",
+          "description": "Parse COBOL fixed-width Tarjetas fields. Fields: TMC_TIPO_REG2, TMC_ACCT, TMC_CARD_ID, TMC_LOGO... MANUAL: Implement per COBOL copybook EDWOS_TRANSBK_MCF_T."
+        },
+        {
+          "name": "Trf_MCF_T",
+          "description": "Initial Tarjetas split. TMC_TIPO_REG2='02' filter. Splits valid Tarjetas from eliminados."
+        },
+        {
+          "name": "LookupCardDicJoin",
+          "description": "Card dictionary hash lookup (Hsh_Card_Dic). Keyed on TMC_CARD_ID."
+        }
+      ],
+      "script": "// MANUAL ACTION REQUIRED: Implement full Data Flow script\n// See annotations for DataStage stage-by-stage mapping",
+      "scriptLines": [
+        "// Auto-generated skeleton from DataStage DSX analysis",
+        "// Complete implementation required per manual action notes"
+      ]
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Extraccion",
+      "datastage_source: EDWOS_TRANSBK_MCF output Lnk_MCF_Tarjetas (FixedWidth)",
+      "CRITICAL_manual_action: Obtain COBOL copybook for EDWOS_TRANSBK_MCF_T for field byte positions",
+      "CRITICAL_manual_action: Implement fixed-width parsing using substring() or Databricks pre-processing",
+      "CRITICAL_manual_action: Map hash lookups to ADF Lookup transformations reading from Teradata"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

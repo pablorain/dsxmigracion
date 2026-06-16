@@ -1,0 +1,84 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J139_Transbk_Mcf_Tarjetas",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'J139_Transbk_Mcf_Tarjetas' (JobType=0, DateModified=2021-10-28). Category: \\Jobs\\Hito_2\\Agreement\\J139_Transbk_Mcf. Reads pre-filtered Tarjetas segment (EDWOS.TRANSBK.MCF.TARJETA.TXT.FINAL from $PathInput). Applies transformations (Trf_Mcf_Tarjetas, Trf_CL, Trf_CF), hash-based lookups (Hsh_Consultas, Hsh_DicAgreement, Hsh_Vigentes), pivoting (Coll_CL, Pivote_CF). Writes 8 output TXT files to $PathOutput: TARJETAS_PARTY_CARD, TARJETAS_CARD, TARJETAS_ACCOUNT_CARD, TARJETAS_CARD_UPDATE, TARJETAS_CARD_STATUS_HIST, TARJETAS_CARD_DICCIONARIO, TARJETAS_BCI_CARD_BALANCE, BCI_CARD_BALANCE.",
+    "activities": [
+      {
+        "name": "Transform_MCF_Tarjetas",
+        "description": "Core Tarjetas transformation to 8 EDW output files. DataStage stages: Seq_MCF_Tarjetas(source from $PathInput) -> Trf_Mcf_Tarjetas -> [Hsh_Consultas, Hsh_DicAgreement lookups] -> [Trf_CL, Trf_CF splits] -> [Coll_CL, Pivote_CF pivots] -> [8 CSeqFileStage sinks]. ADF: Mapping Data Flow with multiple sinks.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "4.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_MCF_Tarjetas_Transform",
+            "type": "DataFlowReference",
+            "parameters": {
+              "FechaProceso": {
+                "value": "@pipeline().parameters.FechaProceso",
+                "type": "Expression"
+              }
+            }
+          },
+          "compute": {
+            "coreCount": 16,
+            "computeType": "General"
+          },
+          "staging": {
+            "linkedService": {
+              "referenceName": "ls_AzureDataLakeStorage_S139",
+              "type": "LinkedServiceReference"
+            },
+            "folderPath": "mcf-staging/tarjetas"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date. Maps to $FechaProceso."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "Hash files path. Maps to $PathHash."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Temp path. Maps to $PathTemp."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "Extract path. Maps to $PathExtract."
+      },
+      "PathOutput": {
+        "type": "String",
+        "description": "Output path. Maps to $PathOutput."
+      },
+      "PathRejected": {
+        "type": "String",
+        "description": "Rejected path. Maps to $PathRejected."
+      }
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Tarjetas",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_date_modified: 2021-10-28",
+      "datastage_stage_types: CTransformerStage(x3), CHashedFileStage(x2), CSeqFileStage(x10+), CCustomStage.CC_GUI(x2 pivots)",
+      "datastage_key_stages: Trf_Mcf_Tarjetas, Hsh_Consultas, Hsh_DicAgreement, Hsh_Vigentes, Trf_CL, Trf_CF, Coll_CL, Pivote_CF",
+      "datastage_output_files: 8 TXT files (PARTY_CARD, CARD, ACCOUNT_CARD, CARD_UPDATE, CARD_STATUS_HIST, CARD_DICCIONARIO, TARJETAS_BCI_CARD_BALANCE, BCI_CARD_BALANCE)",
+      "CRITICAL_manual_action: Build df_MCF_Tarjetas_Transform Mapping Data Flow with 8 sinks",
+      "CRITICAL_manual_action: Implement hash lookups (Hsh_Consultas, Hsh_DicAgreement, Hsh_Vigentes) from Teradata",
+      "CRITICAL_manual_action: Coll_CL and Pivote_CF pivot logic must be analyzed from DSX transformer derivations"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Extraction"
+    }
+  }
+}

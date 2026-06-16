@@ -1,0 +1,99 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J139_Transbk_Mcf_Extraccion_Hash",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'J139_Transbk_Mcf_Extraccion_Hash' (JobType=0, DateModified=2021-10-28). Reads lookup/reference data from Teradata EDW (LDM stage, Context=1=read mode, multi-output) and writes 10 hash files (.H) to $PathHash for use as reference tables in Cuentas/Tarjetas transformations. Hash files: Product, MaxCardId, Statement_Cycle_Type, Asset_Liability_Type, Balance_Category_Type, System_Abuse_Type, Account_Card_Income_Type, Feature_Cuentas, Acct_Relationship_Type, Contract_Party_Role_Type. In ADF: hash files are ELIMINATED and replaced by ADF Mapping Data Flow cache sinks or Lookup activities reading directly from Teradata.",
+    "activities": [
+      {
+        "name": "Read_LDM_Hash_Data",
+        "description": "Read reference/lookup data from Teradata LDM. Maps to DataStage LDM stage (TeradataConnector, Context=1=read, 4 output links: Lnk_Bci_Ptc, Lnk_Tab, Lnk_Tab_352, Lnk_EIH_Rut). Output populates hash files for downstream lookup use.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "2.00:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_MCF_Hash_Extraccion",
+            "type": "DataFlowReference",
+            "parameters": {
+              "EDW_Wrk": {
+                "value": "@pipeline().parameters.EDW_Wrk",
+                "type": "Expression"
+              },
+              "EDW_Finance": {
+                "value": "@pipeline().parameters.EDW_Finance",
+                "type": "Expression"
+              },
+              "EDW_Product": {
+                "value": "@pipeline().parameters.EDW_Product",
+                "type": "Expression"
+              },
+              "EDW_Agreement": {
+                "value": "@pipeline().parameters.EDW_Agreement",
+                "type": "Expression"
+              },
+              "EDW_Party_Asset": {
+                "value": "@pipeline().parameters.EDW_Party_Asset",
+                "type": "Expression"
+              }
+            }
+          },
+          "compute": {
+            "coreCount": 8,
+            "computeType": "General"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "Teradata DSN. Maps to $Teradata_EDW_DSN."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Work DB. Maps to $EDW_Wrk."
+      },
+      "EDW_Party": {
+        "type": "String",
+        "description": "Party DB. Maps to $EDW_Party."
+      },
+      "EDW_Finance": {
+        "type": "String",
+        "description": "Finance DB. Maps to $EDW_Finance."
+      },
+      "EDW_Product": {
+        "type": "String",
+        "description": "Product DB. Maps to $EDW_Product."
+      },
+      "EDW_Agreement": {
+        "type": "String",
+        "description": "Agreement DB. Maps to $EDW_Agreement."
+      },
+      "EDW_Party_Asset": {
+        "type": "String",
+        "description": "Party Asset DB. Maps to $EDW_Party_Asset."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "Hash files path (ADLS). Maps to $PathHash. In ADF hash files are cache sinks."
+      }
+    },
+    "annotations": [
+      "datastage_job: J139_Transbk_Mcf_Extraccion_Hash",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_hash_files: J139_Transbk_Mcf_Product.H, J139_Transbk_Mcf_MaxCardId.H, J139_Transbk_Mcf_Statement_Cycle_Type.H, J139_Transbk_Mcf_Asset_Liability_Type.H, J139_Transbk_Mcf_Balance_Category_Type.H, J139_Transbk_Mcf_System_Abuse_Type.H, J139_Transbk_Mcf_Account_Card_Income_Type.H, J139_Transbk_Mcf_Feature_Cuentas.H, J139_Transbk_Mcf_Acct_Relationship_Type.H, J139_Transbk_Mcf_Contract_Party_Role_Type.H",
+      "datastage_teradata_params: $EDW_Wrk, $EDW_Party, $EDW_Finance, $EDW_Product, $EDW_Agreement, $EDW_Party_Asset",
+      "adf_architecture: Hash files are ELIMINATED. ADF Mapping Data Flow uses cache sink or inline Lookup for each reference table",
+      "CRITICAL_manual_action: Build df_MCF_Hash_Extraccion Data Flow that reads 10 reference queries from Teradata and writes to ADLS as cache or pipe-delimited reference files",
+      "CRITICAL_manual_action: Identify exact Teradata SELECT queries for each .H file from DSX transformer input links"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Hash_Management"
+    }
+  }
+}

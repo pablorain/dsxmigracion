@@ -1,0 +1,976 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_S139_Transbk_Mcf_Sequencer",
+  "properties": {
+    "description": "MASTER ORCHESTRATION PIPELINE. Migrated from DataStage Sequencer Job 'S139_Transbk_Mcf_Sequencer' (JobType=3, Server Job). Category: \\Jobs\\Hito_2\\Agreement\\J139_Transbk_Mcf. Executes 18 child jobs in dependency order across 2 data streams (Cuentas + Tarjetas) plus hash extraction and party/agreement loads. NOTE: DataStage checkpoint/restart (DSCheckPointExists/DSCheckPointSetValue) has no ADF native equivalent; use pipeline retry policy and manual restart from failed activity.",
+    "activities": [
+      {
+        "name": "J139_Mcf_Extraccion",
+        "description": "IBM mainframe flat file extraction. Reads EDWOS.TRANSBK.MCF.CUENTA.TXT and EDWOS.TRANSBK.MCF.TARJETA.TXT. Splits into Cuentas/Tarjetas streams. FastLoads temp tables MCF_Account_Num_Tmp, MCF_Card_Id_Tmp, MCF_Card_Acct_Num_Tmp. Runs FileDiff AfterSubr. Maps to DataStage J139_Transbk_Mcf_Extraccion (JobType=0, Category=\\Jobs\\Hito_2\\Agreement).",
+        "type": "ExecutePipeline",
+        "dependsOn": [],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_J139_Transbk_Mcf_Extraccion",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "FechaIBM": {
+              "value": "@pipeline().parameters.FechaIBM",
+              "type": "Expression"
+            },
+            "Teradata_EDW_DSN": {
+              "value": "@pipeline().parameters.Teradata_EDW_DSN",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Party": {
+              "value": "@pipeline().parameters.EDW_Party",
+              "type": "Expression"
+            },
+            "EDW_Param_and_Others": {
+              "value": "@pipeline().parameters.EDW_Param_and_Others",
+              "type": "Expression"
+            },
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathShell": {
+              "value": "@pipeline().parameters.PathShell",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "PathExtract": {
+              "value": "@pipeline().parameters.PathExtract",
+              "type": "Expression"
+            },
+            "PathLog": {
+              "value": "@pipeline().parameters.PathLog",
+              "type": "Expression"
+            },
+            "MsgFileDiff": {
+              "value": "@pipeline().parameters.MsgFileDiff",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "J139_Mcf_Cuentas",
+        "description": "Account transformation and output file generation. Reads Cuentas flat file segment, applies business logic, writes 22 output TXT files for downstream FLoad. Maps to DataStage J139_Transbk_Mcf_Cuentas (JobType=0).",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "J139_Mcf_Extraccion",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_J139_Transbk_Mcf_Cuentas",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "Teradata_EDW_DSN": {
+              "value": "@pipeline().parameters.Teradata_EDW_DSN",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathExtract": {
+              "value": "@pipeline().parameters.PathExtract",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "S139_Seq_Carga_Cuentas",
+        "description": "Cuentas FLoad sub-sequencer. Runs 11 FLoad jobs: Financial_Agreement, Account_Party, Loan_Account, Account_Status_History, Acct_Product_History, Acct_Acct_Relationship, Account_Credit_Limit, Account_Card_Income, Account_Abuse_History, Account_Feature, Account_Currency. Each FLoad writes temp table then calls BTEQ Stored Procedure. Maps to DataStage S139_Transbk_Mcf_Seq_Carga_Cuentas.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "J139_Mcf_Cuentas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_S139_Seq_Carga_Cuentas",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Agreement": {
+              "value": "@pipeline().parameters.EDW_Agreement",
+              "type": "Expression"
+            },
+            "EDW_Party": {
+              "value": "@pipeline().parameters.EDW_Party",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "Tabla": {
+              "value": "@pipeline().parameters.Tabla",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JBorraTemporales_1",
+        "description": "Delete temp and hash files after Cuentas load. Maps to DataStage JBorraTemporales (JobType=0, Category=\\Jobs\\Utilitarios). AfterSubr: DSU.ExecSH FileDelete $PathTemp $PathHash $JobName $FlagDelete. ADF: Databricks notebook nb_FileDelete.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "S139_Seq_Carga_Cuentas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileDelete",
+          "baseParameters": {
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "JobName": {
+              "value": "JBorraTemporales",
+              "type": "Expression"
+            },
+            "FlagDelete": {
+              "value": "@pipeline().parameters.FlagDelete",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRespaldaArchivos_1",
+        "description": "Backup/archive output files after Cuentas load. Maps to DataStage JRespaldaArchivos AfterSubr: DSU.ExecSH FileRespaldo. ADF: Databricks notebook nb_FileRespaldo.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JBorraTemporales_1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRespaldo",
+          "baseParameters": {
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathOutput_Hist": {
+              "value": "@pipeline().parameters.PathOutput_Hist",
+              "type": "Expression"
+            },
+            "PathRejected": {
+              "value": "@pipeline().parameters.PathRejected",
+              "type": "Expression"
+            },
+            "PathRejected_Hist": {
+              "value": "@pipeline().parameters.PathRejected_Hist",
+              "type": "Expression"
+            },
+            "PathExtract": {
+              "value": "@pipeline().parameters.PathExtract",
+              "type": "Expression"
+            },
+            "PathExtract_Hist": {
+              "value": "@pipeline().parameters.PathExtract_Hist",
+              "type": "Expression"
+            },
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "PathInput_Hist": {
+              "value": "@pipeline().parameters.PathInput_Hist",
+              "type": "Expression"
+            },
+            "FechaRespaldo": {
+              "value": "@pipeline().parameters.FechaRespaldo",
+              "type": "Expression"
+            },
+            "FileNamePrefix": {
+              "value": "@pipeline().parameters.FileNamePrefix",
+              "type": "Expression"
+            },
+            "FilePrefixRejected": {
+              "value": "@pipeline().parameters.FilePrefixRejected",
+              "type": "Expression"
+            },
+            "FileExtractName": {
+              "value": "@pipeline().parameters.FileExtractName",
+              "type": "Expression"
+            },
+            "FileNameIBM": {
+              "value": "@pipeline().parameters.FileNameIBMCuentas",
+              "type": "Expression"
+            },
+            "FlagRespaldo": {
+              "value": "@pipeline().parameters.FlagRespaldo",
+              "type": "Expression"
+            },
+            "PathLog": {
+              "value": "@pipeline().parameters.PathLog",
+              "type": "Expression"
+            },
+            "PathLog_Hist": {
+              "value": "@pipeline().parameters.PathLog_Hist",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "J139_Mcf_Tarjetas",
+        "description": "Card transformation and output file generation. Reads Tarjetas flat file segment from $PathInput/EDWOS.TRANSBK.MCF.TARJETA.TXT.FINAL. Writes 8 output TXT files for downstream FLoad. Maps to DataStage J139_Transbk_Mcf_Tarjetas (JobType=0).",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "JRespaldaArchivos_1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_J139_Transbk_Mcf_Tarjetas",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathExtract": {
+              "value": "@pipeline().parameters.PathExtract",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathRejected": {
+              "value": "@pipeline().parameters.PathRejected",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "S139_Seq_Carga_Tarjetas",
+        "description": "Tarjetas FLoad sub-sequencer. Runs 9 FLoad jobs: Card, Account_Card, Card_Update_Mcf, Party_Card, Card_Status_Hist, Card_Limit, Card_Feature, Bci_Card_Balance, EDW_Card. Maps to DataStage S139_Transbk_Mcf_Seq_Carga_Tarjetas.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "J139_Mcf_Tarjetas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_S139_Seq_Carga_Tarjetas",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Agreement": {
+              "value": "@pipeline().parameters.EDW_Agreement",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "Tabla": {
+              "value": "@pipeline().parameters.Tabla",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRespaldaArchivos_2",
+        "description": "Backup/archive Tarjetas output files. Maps to DataStage JRespaldaArchivos (second call in sequencer).",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "S139_Seq_Carga_Tarjetas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRespaldo",
+          "baseParameters": {
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathOutput_Hist": {
+              "value": "@pipeline().parameters.PathOutput_Hist",
+              "type": "Expression"
+            },
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "PathInput_Hist": {
+              "value": "@pipeline().parameters.PathInput_Hist",
+              "type": "Expression"
+            },
+            "FechaRespaldo": {
+              "value": "@pipeline().parameters.FechaRespaldo",
+              "type": "Expression"
+            },
+            "FileNameIBM": {
+              "value": "@pipeline().parameters.FileNameIBMTarjetas",
+              "type": "Expression"
+            },
+            "FlagRespaldo": {
+              "value": "@pipeline().parameters.FlagRespaldo",
+              "type": "Expression"
+            },
+            "PathLog": {
+              "value": "@pipeline().parameters.PathLog",
+              "type": "Expression"
+            },
+            "PathLog_Hist": {
+              "value": "@pipeline().parameters.PathLog_Hist",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRenameIBM_Cuentas",
+        "description": "Rename IBM Cuentas input file after processing. Maps to DataStage JRenameIBM AfterSubr: DSU.ExecSH FileRename $PathInput IBMFileName=EDWOS.TRANSBK.MCF.CUENTA.TXT. ADF: Databricks notebook nb_FileRename.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRespaldaArchivos_2",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRename",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "@pipeline().parameters.FileNameIBMCuentas",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRenameIBM_Tarjetas",
+        "description": "Rename IBM Tarjetas input file after processing. Maps to DataStage JRenameIBM (second call). FileRename $PathInput IBMFileName=EDWOS.TRANSBK.MCF.TARJETA.TXT.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRenameIBM_Cuentas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRename",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "@pipeline().parameters.FileNameIBMTarjetas",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "J139_Mcf_Extraccion_Hash",
+        "description": "Hash file extraction. Reads lookup data from Teradata (LDM stage Context=1=read) and writes 10 hash files (.H) for use in Cuentas/Tarjetas lookups. Maps to DataStage J139_Transbk_Mcf_Extraccion_Hash (JobType=0). Hash files replaced by ADF Mapping Data Flow cache sinks or Lookup activities.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "JRenameIBM_Tarjetas",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_J139_Transbk_Mcf_Extraccion_Hash",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "Teradata_EDW_DSN": {
+              "value": "@pipeline().parameters.Teradata_EDW_DSN",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Party": {
+              "value": "@pipeline().parameters.EDW_Party",
+              "type": "Expression"
+            },
+            "EDW_Finance": {
+              "value": "@pipeline().parameters.EDW_Finance",
+              "type": "Expression"
+            },
+            "EDW_Product": {
+              "value": "@pipeline().parameters.EDW_Product",
+              "type": "Expression"
+            },
+            "EDW_Agreement": {
+              "value": "@pipeline().parameters.EDW_Agreement",
+              "type": "Expression"
+            },
+            "EDW_Party_Asset": {
+              "value": "@pipeline().parameters.EDW_Party_Asset",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "S139_Seq_Carga_Agreement",
+        "description": "Agreement FLoad sub-sequencer. Runs 3 FLoad jobs: Agreement, Agreement_Up_Mcf, EDW_Agreement. Maps to DataStage S139_Transbk_Mcf_Seq_Carga_Agreement.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "J139_Mcf_Extraccion_Hash",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_S139_Seq_Carga_Agreement",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "EDW_Wrk": {
+              "value": "@pipeline().parameters.EDW_Wrk",
+              "type": "Expression"
+            },
+            "EDW_Agreement": {
+              "value": "@pipeline().parameters.EDW_Agreement",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "Tabla": {
+              "value": "@pipeline().parameters.Tabla",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRenameIBM_Post_Hash_2",
+        "description": "Additional IBM file rename post hash extraction. Maps to DataStage JRename_IBM2_2 in sequencer.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "S139_Seq_Carga_Agreement",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRename",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "@pipeline().parameters.FileNameIBMTarjetas",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRenameIBM_Post_Hash_1",
+        "description": "Additional IBM file rename post hash extraction. Maps to DataStage JRename_IBM2_1 in sequencer.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRenameIBM_Post_Hash_2",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRename",
+          "baseParameters": {
+            "PathInput": {
+              "value": "@pipeline().parameters.PathInput",
+              "type": "Expression"
+            },
+            "IBMFileName": {
+              "value": "@pipeline().parameters.FileNameIBMCuentas",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRespaldaArchivos_Post_Hash_2",
+        "description": "Backup post-hash files variant 2. Maps to DataStage JRespaldaArchivos2_2 in sequencer.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRenameIBM_Post_Hash_1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRespaldo",
+          "baseParameters": {
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathOutput_Hist": {
+              "value": "@pipeline().parameters.PathOutput_Hist",
+              "type": "Expression"
+            },
+            "FechaRespaldo": {
+              "value": "@pipeline().parameters.FechaRespaldo",
+              "type": "Expression"
+            },
+            "FlagRespaldo": {
+              "value": "@pipeline().parameters.FlagRespaldo",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JRespaldaArchivos_Post_Hash_1",
+        "description": "Backup post-hash files variant 1. Maps to DataStage JRespaldaArchivos2_1 in sequencer.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRespaldaArchivos_Post_Hash_2",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileRespaldo",
+          "baseParameters": {
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "PathOutput_Hist": {
+              "value": "@pipeline().parameters.PathOutput_Hist",
+              "type": "Expression"
+            },
+            "FechaRespaldo": {
+              "value": "@pipeline().parameters.FechaRespaldo",
+              "type": "Expression"
+            },
+            "FlagRespaldo": {
+              "value": "@pipeline().parameters.FlagRespaldo",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "JBorraTemporales_2",
+        "description": "Final cleanup of temp/hash files. Maps to DataStage JBorraTemporales2 in sequencer.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "JRespaldaArchivos_Post_Hash_1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileDelete",
+          "baseParameters": {
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "JobName": {
+              "value": "JBorraTemporales2",
+              "type": "Expression"
+            },
+            "FlagDelete": {
+              "value": "@pipeline().parameters.FlagDelete",
+              "type": "Expression"
+            }
+          }
+        }
+      },
+      {
+        "name": "S139_Seq_Carga_Party",
+        "description": "Party FLoad sub-sequencer. Runs 8 FLoad jobs: Party_Demographic, Organization_Name_Hist, Individual_Name_Hist, Party_Party_Relationship_Hist, Organization, Individual, External_Identification_Hist, Party. Maps to DataStage S139_Transbk_Mcf_Seq_Carga_Party.",
+        "type": "ExecutePipeline",
+        "dependsOn": [
+          {
+            "activity": "JBorraTemporales_2",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "pl_S139_Seq_Carga_Party",
+            "type": "PipelineReference"
+          },
+          "waitOnCompletion": true,
+          "parameters": {
+            "FechaProceso": {
+              "value": "@pipeline().parameters.FechaProceso",
+              "type": "Expression"
+            },
+            "EDW_Party": {
+              "value": "@pipeline().parameters.EDW_Party",
+              "type": "Expression"
+            },
+            "PathOutput": {
+              "value": "@pipeline().parameters.PathOutput",
+              "type": "Expression"
+            },
+            "Tabla": {
+              "value": "@pipeline().parameters.Tabla",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date YYYY-MM-DD. Maps to DataStage $FechaProceso."
+      },
+      "FechaIBM": {
+        "type": "String",
+        "description": "IBM file date YYYYMMDD. Maps to $FechaIBM."
+      },
+      "FechaRespaldo": {
+        "type": "String",
+        "description": "Backup date. Maps to $FechaRespaldo."
+      },
+      "Teradata_EDW_DSN": {
+        "type": "String",
+        "description": "Teradata server DSN. Maps to $Teradata_EDW_DSN. Stored in ls_Teradata_EDW linked service."
+      },
+      "EDW_Wrk": {
+        "type": "String",
+        "description": "Teradata work database. Maps to $EDW_Wrk."
+      },
+      "EDW_Party": {
+        "type": "String",
+        "description": "Teradata party database. Maps to $EDW_Party."
+      },
+      "EDW_Finance": {
+        "type": "String",
+        "description": "Teradata finance database. Maps to $EDW_Finance."
+      },
+      "EDW_Product": {
+        "type": "String",
+        "description": "Teradata product database. Maps to $EDW_Product."
+      },
+      "EDW_Agreement": {
+        "type": "String",
+        "description": "Teradata agreement database. Maps to $EDW_Agreement."
+      },
+      "EDW_Party_Asset": {
+        "type": "String",
+        "description": "Teradata party asset database. Maps to $EDW_Party_Asset."
+      },
+      "EDW_Param_and_Others": {
+        "type": "String",
+        "description": "Teradata param database. Maps to $EDW_Param_and_Others."
+      },
+      "Tabla": {
+        "type": "String",
+        "description": "Table suffix for FLoad temp tables (e.g. 'A' or 'B' for A/B loading pattern). Maps to DataStage #Tabla# in FLoad stage table names."
+      },
+      "PathInput": {
+        "type": "String",
+        "description": "ADLS path for IBM source files. Maps to $PathInput. Default: mcf-input/"
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "ADLS path for temp files. Maps to $PathTemp. Default: mcf-temp/"
+      },
+      "PathOutput": {
+        "type": "String",
+        "description": "ADLS path for output files. Maps to $PathOutput. Default: mcf-output/"
+      },
+      "PathOutput_Hist": {
+        "type": "String",
+        "description": "ADLS path for output history/backup. Maps to $PathOutput_Hist."
+      },
+      "PathRejected": {
+        "type": "String",
+        "description": "ADLS path for rejected records. Maps to $PathRejected."
+      },
+      "PathRejected_Hist": {
+        "type": "String",
+        "description": "ADLS path for rejected records history. Maps to $PathRejected_Hist."
+      },
+      "PathExtract": {
+        "type": "String",
+        "description": "ADLS path for extract files. Maps to $PathExtract."
+      },
+      "PathExtract_Hist": {
+        "type": "String",
+        "description": "ADLS path for extract history. Maps to $PathExtract_Hist."
+      },
+      "PathInput_Hist": {
+        "type": "String",
+        "description": "ADLS path for input history. Maps to $PathInput_Hist."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "ADLS path for hash files (replaced by ADF Data Flow cache). Maps to $PathHash."
+      },
+      "PathLog": {
+        "type": "String",
+        "description": "ADLS path for logs. Maps to $PathLog."
+      },
+      "PathLog_Hist": {
+        "type": "String",
+        "description": "ADLS path for log history. Maps to $PathLog_Hist."
+      },
+      "PathShell": {
+        "type": "String",
+        "description": "Shell script path (ELIMINATED in ADF - scripts become Databricks notebooks). Maps to $PathShell."
+      },
+      "PathUnproc": {
+        "type": "String",
+        "description": "ADLS path for unprocessed records. Maps to $PathUnproc."
+      },
+      "PathDiccionario": {
+        "type": "String",
+        "description": "ADLS path for dictionary files. Maps to $PathDiccionario."
+      },
+      "FileNameIBMCuentas": {
+        "type": "String",
+        "defaultValue": "EDWOS.TRANSBK.MCF.CUENTA.TXT",
+        "description": "IBM Cuentas source filename. Maps to $FileNameIBMCuentas. Default: EDWOS.TRANSBK.MCF.CUENTA.TXT"
+      },
+      "FileNameIBMTarjetas": {
+        "type": "String",
+        "defaultValue": "EDWOS.TRANSBK.MCF.TARJETA.TXT",
+        "description": "IBM Tarjetas source filename. Maps to $FileNameIBMTarjetas. Default: EDWOS.TRANSBK.MCF.TARJETA.TXT"
+      },
+      "FileNamePrefix": {
+        "type": "String",
+        "description": "Output file prefix for archiving. Maps to $FileNamePrefix via JRespaldaArchivos."
+      },
+      "FilePrefixRejected": {
+        "type": "String",
+        "description": "Rejected file prefix. Maps to $FilePrefixRejected."
+      },
+      "FileExtractName": {
+        "type": "String",
+        "description": "Extract file name. Maps to $FileExtractName."
+      },
+      "MsgFileDiff": {
+        "type": "String",
+        "description": "FileDiff validation message. Maps to $MsgFileDiff."
+      },
+      "FlagDelete": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag to control temp file deletion. Maps to $FlagDelete. 1=delete."
+      },
+      "FlagRespaldo": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Flag to control backup. Maps to $FlagRespaldo. 1=backup."
+      }
+    },
+    "policy": {
+      "timeout": "12.00:00:00",
+      "retry": 1,
+      "retryIntervalInSeconds": 300,
+      "secureOutput": false,
+      "secureInput": false
+    },
+    "annotations": [
+      "datastage_job: S139_Transbk_Mcf_Sequencer",
+      "datastage_job_type: Sequencer (JobType=3)",
+      "datastage_version: 11.7",
+      "datastage_category: \\Jobs\\Hito_2\\Agreement\\J139_Transbk_Mcf",
+      "datastage_child_jobs: J139_Transbk_Mcf_Extraccion, J139_Transbk_Mcf_Cuentas, S139_Transbk_Mcf_Seq_Carga_Cuentas, JBorraTemporales, JRespaldaArchivos(x2), J139_Transbk_Mcf_Tarjetas, S139_Transbk_Mcf_Seq_Carga_Tarjetas, JRenameIBM(x4), J139_Transbk_Mcf_Extraccion_Hash, S139_Transbk_Mcf_Seq_Carga_Agreement, S139_Transbk_Mcf_Seq_Carga_Party",
+      "checkpoint_warning: DataStage DSCheckPointExists/DSCheckPointSetValue has no ADF equivalent. Implement manual restart logic using pipeline retry + failed activity restart.",
+      "fncEvaluaCantidadRegistros_warning: Conditional record-count evaluation in DataStage replaced by ADF If Condition activity with Lookup count - implement in sub-pipelines as needed"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Sequencers"
+    }
+  }
+}

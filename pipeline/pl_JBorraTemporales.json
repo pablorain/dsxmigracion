@@ -1,0 +1,70 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_JBorraTemporales",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'JBorraTemporales' (JobType=0, Category=\\Jobs\\Utilitarios). BeforeSubr: DSU.fncCreaArchivoVacio (creates empty Vacio.tmp). AfterSubr: DSU.ExecSH FileDelete $PathTemp $PathHash $JobName $FlagDelete. ADF: Databricks notebook nb_FileDelete deletes ADLS container contents.",
+    "activities": [
+      {
+        "name": "DeleteTempFiles",
+        "description": "Delete temp and hash files from ADLS. Maps to DataStage AfterSubr: DSU.ExecSH #$PathShell#FileDelete #$PathTemp# #$PathHash# #JobName# #$FlagDelete#. Only executes if FlagDelete=1.",
+        "type": "DatabricksNotebook",
+        "dependsOn": [],
+        "linkedServiceName": {
+          "referenceName": "ls_AzureDatabricks_S139",
+          "type": "LinkedServiceReference"
+        },
+        "typeProperties": {
+          "notebookPath": "/notebooks/S139_Transbk_Mcf/nb_FileDelete",
+          "baseParameters": {
+            "PathTemp": {
+              "value": "@pipeline().parameters.PathTemp",
+              "type": "Expression"
+            },
+            "PathHash": {
+              "value": "@pipeline().parameters.PathHash",
+              "type": "Expression"
+            },
+            "JobName": {
+              "value": "@pipeline().parameters.JobName",
+              "type": "Expression"
+            },
+            "FlagDelete": {
+              "value": "@pipeline().parameters.FlagDelete",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "PathTemp": {
+        "type": "String",
+        "description": "ADLS temp path. Maps to $PathTemp."
+      },
+      "PathHash": {
+        "type": "String",
+        "description": "ADLS hash path. Maps to $PathHash. In ADF this is eliminated if cache sinks used."
+      },
+      "JobName": {
+        "type": "String",
+        "defaultValue": "JBorraTemporales",
+        "description": "Job name for logging. Maps to DataStage #JobName# local param."
+      },
+      "FlagDelete": {
+        "type": "String",
+        "defaultValue": "1",
+        "description": "Delete flag. 1=delete files. Maps to $FlagDelete."
+      }
+    },
+    "annotations": [
+      "datastage_category: \\Jobs\\Utilitarios",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_beforesubr: DSU.fncCreaArchivoVacio (creates empty Vacio.tmp marker file - ELIMINATED in ADF)",
+      "adf_pattern: Databricks notebook replaces DSU.ExecSH shell subroutine call"
+    ],
+    "folder": {
+      "name": "S139_Transbk_Mcf/Utility"
+    }
+  }
+}
