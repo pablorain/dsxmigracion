@@ -1,0 +1,195 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_Sybase_jen",
+  "properties": {
+    "type": "OdbcTable",
+    "description": "Source dataset for Sybase table journal.dbo.jen. Migrated from DataStage CODBCOutput pin 'Lnk_Sybase_Jen' on stage 'Sybase_Jen_IBM_7_Dias'. Used by J990_Jen_Extraccion_IB (PROD) and CopyOfCopyOf variant.",
+    "linkedServiceName": {
+      "referenceName": "ls_Sybase_Journal",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "DBO_Journal": {
+        "type": "String",
+        "defaultValue": "dbo"
+      }
+    },
+    "typeProperties": {
+      "tableName": {
+        "value": "@{concat(dataset().DBO_Journal, '.jen')}",
+        "type": "Expression"
+      }
+    },
+    "schema": [
+      {
+        "name": "jen_ope_evt",
+        "type": "String",
+        "length": 12,
+        "description": "Codigo operacion evento. SqlType=1 (CHAR). KeyPosition=1."
+      },
+      {
+        "name": "jen_fec_evt_neg",
+        "type": "DateTime",
+        "precision": 23,
+        "scale": 3,
+        "description": "Fecha evento negocio. SqlType=11 (TIMESTAMP)."
+      },
+      {
+        "name": "jen_fec_ctb_evt",
+        "type": "DateTime",
+        "precision": 23,
+        "scale": 3,
+        "description": "Fecha contable evento. SqlType=11 (TIMESTAMP)."
+      },
+      {
+        "name": "jen_rut_cli",
+        "type": "String",
+        "length": 9,
+        "description": "RUT cliente. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_vrf_cli",
+        "type": "String",
+        "length": 1,
+        "description": "Verificador RUT cliente. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_rut_emp",
+        "type": "String",
+        "length": 9,
+        "description": "RUT empresa. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_vrf_emp",
+        "type": "String",
+        "length": 1,
+        "description": "Verificador RUT empresa. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_cnl",
+        "type": "String",
+        "length": 10,
+        "description": "ID canal. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_est_cnl",
+        "type": "String",
+        "length": 1,
+        "description": "Estado canal. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_suc_ori",
+        "type": "String",
+        "length": 5,
+        "description": "Sucursal origen. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_med",
+        "type": "String",
+        "length": 8,
+        "description": "Medio. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_med",
+        "type": "String",
+        "length": 15,
+        "description": "ID medio. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_tip_opr_bci",
+        "type": "String",
+        "length": 3,
+        "description": "Tipo operacion BCI. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_opr",
+        "type": "String",
+        "length": 10,
+        "description": "ID operacion. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_mod_tar",
+        "type": "String",
+        "length": 1,
+        "description": "Modalidad tarjeta. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_fra_lin",
+        "type": "String",
+        "length": 1,
+        "description": "Franja linea. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_ara_cua",
+        "type": "String",
+        "length": 5,
+        "description": "Area cuadrante. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_svs",
+        "type": "String",
+        "length": 10,
+        "description": "ID servicio. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_est_evt_neg",
+        "type": "String",
+        "length": 1,
+        "description": "Estado evento negocio. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_pdt",
+        "type": "String",
+        "length": 6,
+        "description": "ID producto. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_evt",
+        "type": "String",
+        "length": 10,
+        "description": "ID evento. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_id_sub_evt",
+        "type": "String",
+        "length": 6,
+        "description": "ID sub-evento. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_clv_ppl",
+        "type": "String",
+        "length": 16,
+        "description": "Clave pipeline. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_mto",
+        "type": "Decimal",
+        "precision": 18,
+        "scale": 4,
+        "description": "Monto. SqlType=2 (NUMERIC). APTFieldProp=quote=none."
+      },
+      {
+        "name": "jen_clv_sgd",
+        "type": "String",
+        "length": 16,
+        "description": "Clave seguridad. SqlType=1 (CHAR)."
+      },
+      {
+        "name": "jen_cpo_var",
+        "type": "String",
+        "length": 16,
+        "description": "Campo variable. SqlType=1 (CHAR)."
+      }
+    ],
+    "annotations": [
+      "source_table: journal.dbo.jen",
+      "odbc_tabledef: ODBC\\SybaseProdJournal\\journal.dbo.jen",
+      "total_columns: 26",
+      "key_column: jen_ope_evt (KeyPosition=1)"
+    ],
+    "folder": {
+      "name": "J990_Jen/Source"
+    }
+  }
+}

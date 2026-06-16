@@ -1,0 +1,210 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "df_Trf_Jen",
+  "properties": {
+    "type": "MappingDataFlow",
+    "description": "Mapping Data Flow migrated from DataStage CTransformerStage 'Trf_Jen'. Applies EREPLACE(ICONV(col,'MCP'),'|',' ') to all 26 columns. ICONV 'MCP' (Multi-Code-Page) encoding normalization is handled by ADF source encoding setting. EREPLACE is replicated with replace() expression function.",
+    "typeProperties": {
+      "sources": [
+        {
+          "name": "SybaseJen",
+          "description": "Source from Sybase journal.dbo.jen via ODBC. Replaces DataStage CODBCStage 'Sybase_Jen_IBM_7_Dias'.",
+          "dataset": {
+            "referenceName": "ds_Sybase_jen",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "sinks": [
+        {
+          "name": "FileJournalJenIBM",
+          "description": "Sink to pipe-delimited flat file. Replaces DataStage CSeqFileStage 'Seq_Jen'.",
+          "dataset": {
+            "referenceName": "ds_File_JournalJen_IBM",
+            "type": "DatasetReference"
+          }
+        }
+      ],
+      "transformations": [
+        {
+          "name": "DerivedColumns_Trf_Jen",
+          "description": "Replicates DataStage Transformer derivation: EREPLACE(ICONV(col,'MCP'),'|',' ') for all 26 columns. ICONV 'MCP' = encoding normalization (handled at source level). EREPLACE('|',' ') = replace pipe delimiter char with space to avoid column splitting in output."
+        }
+      ],
+      "script": "source(allowSchemaDrift: false,\n     validateSchema: true,\n     isolationLevel: 'READ_UNCOMMITTED',\n     format: 'table') ~> SybaseJen\nSybaseJen derive(\n          jen_ope_evt = replace(toString(jen_ope_evt), '|', ' '),\n          jen_fec_evt_neg = replace(toString(jen_fec_evt_neg), '|', ' '),\n          jen_fec_ctb_evt = replace(toString(jen_fec_ctb_evt), '|', ' '),\n          jen_rut_cli = replace(toString(jen_rut_cli), '|', ' '),\n          jen_vrf_cli = replace(toString(jen_vrf_cli), '|', ' '),\n          jen_rut_emp = replace(toString(jen_rut_emp), '|', ' '),\n          jen_vrf_emp = replace(toString(jen_vrf_emp), '|', ' '),\n          jen_id_cnl = replace(toString(jen_id_cnl), '|', ' '),\n          jen_est_cnl = replace(toString(jen_est_cnl), '|', ' '),\n          jen_suc_ori = replace(toString(jen_suc_ori), '|', ' '),\n          jen_med = replace(toString(jen_med), '|', ' '),\n          jen_id_med = replace(toString(jen_id_med), '|', ' '),\n          jen_tip_opr_bci = replace(toString(jen_tip_opr_bci), '|', ' '),\n          jen_id_opr = replace(toString(jen_id_opr), '|', ' '),\n          jen_mod_tar = replace(toString(jen_mod_tar), '|', ' '),\n          jen_fra_lin = replace(toString(jen_fra_lin), '|', ' '),\n          jen_ara_cua = replace(toString(jen_ara_cua), '|', ' '),\n          jen_id_svs = replace(toString(jen_id_svs), '|', ' '),\n          jen_est_evt_neg = replace(toString(jen_est_evt_neg), '|', ' '),\n          jen_id_pdt = replace(toString(jen_id_pdt), '|', ' '),\n          jen_id_evt = replace(toString(jen_id_evt), '|', ' '),\n          jen_id_sub_evt = replace(toString(jen_id_sub_evt), '|', ' '),\n          jen_clv_ppl = replace(toString(jen_clv_ppl), '|', ' '),\n          jen_mto = replace(toString(jen_mto), '|', ' '),\n          jen_clv_sgd = replace(toString(jen_clv_sgd), '|', ' '),\n          jen_cpo_var = replace(toString(jen_cpo_var), '|', ' ')\n     ) ~> DerivedColumns_Trf_Jen\nDerivedColumns_Trf_Jen sink(\n          allowSchemaDrift: false,\n          validateSchema: false,\n          skipDuplicateMapInputs: true,\n          skipDuplicateMapOutputs: true,\n          mapColumn(\n               jen_ope_evt,\n               jen_fec_evt_neg,\n               jen_fec_ctb_evt,\n               jen_rut_cli,\n               jen_vrf_cli,\n               jen_rut_emp,\n               jen_vrf_emp,\n               jen_id_cnl,\n               jen_est_cnl,\n               jen_suc_ori,\n               jen_med,\n               jen_id_med,\n               jen_tip_opr_bci,\n               jen_id_opr,\n               jen_mod_tar,\n               jen_fra_lin,\n               jen_ara_cua,\n               jen_id_svs,\n               jen_est_evt_neg,\n               jen_id_pdt,\n               jen_id_evt,\n               jen_id_sub_evt,\n               jen_clv_ppl,\n               jen_mto,\n               jen_clv_sgd,\n               jen_cpo_var\n          )\n     ) ~> FileJournalJenIBM",
+      "columnMappings": [
+        {
+          "source": "jen_ope_evt",
+          "sink": "jen_ope_evt",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_ope_evt,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_ope_evt), '|', ' ')"
+        },
+        {
+          "source": "jen_fec_evt_neg",
+          "sink": "jen_fec_evt_neg",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_fec_evt_neg,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_fec_evt_neg), '|', ' ')",
+          "note": "Timestamp converted to string by toString(). Output SqlType changed from 11 (TIMESTAMP) to 12 (VARCHAR 26) in DataStage transformer."
+        },
+        {
+          "source": "jen_fec_ctb_evt",
+          "sink": "jen_fec_ctb_evt",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_fec_ctb_evt,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_fec_ctb_evt), '|', ' ')",
+          "note": "Timestamp converted to string by toString(). Output SqlType changed from 11 (TIMESTAMP) to 12 (VARCHAR 26) in DataStage transformer."
+        },
+        {
+          "source": "jen_rut_cli",
+          "sink": "jen_rut_cli",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_rut_cli,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_rut_cli), '|', ' ')"
+        },
+        {
+          "source": "jen_vrf_cli",
+          "sink": "jen_vrf_cli",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_vrf_cli,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_vrf_cli), '|', ' ')"
+        },
+        {
+          "source": "jen_rut_emp",
+          "sink": "jen_rut_emp",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_rut_emp,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_rut_emp), '|', ' ')"
+        },
+        {
+          "source": "jen_vrf_emp",
+          "sink": "jen_vrf_emp",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_vrf_emp,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_vrf_emp), '|', ' ')"
+        },
+        {
+          "source": "jen_id_cnl",
+          "sink": "jen_id_cnl",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_cnl,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_cnl), '|', ' ')"
+        },
+        {
+          "source": "jen_est_cnl",
+          "sink": "jen_est_cnl",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_est_cnl,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_est_cnl), '|', ' ')"
+        },
+        {
+          "source": "jen_suc_ori",
+          "sink": "jen_suc_ori",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_suc_ori,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_suc_ori), '|', ' ')"
+        },
+        {
+          "source": "jen_med",
+          "sink": "jen_med",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_med,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_med), '|', ' ')"
+        },
+        {
+          "source": "jen_id_med",
+          "sink": "jen_id_med",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_med,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_med), '|', ' ')"
+        },
+        {
+          "source": "jen_tip_opr_bci",
+          "sink": "jen_tip_opr_bci",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_tip_opr_bci,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_tip_opr_bci), '|', ' ')"
+        },
+        {
+          "source": "jen_id_opr",
+          "sink": "jen_id_opr",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_opr,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_opr), '|', ' ')"
+        },
+        {
+          "source": "jen_mod_tar",
+          "sink": "jen_mod_tar",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_mod_tar,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_mod_tar), '|', ' ')"
+        },
+        {
+          "source": "jen_fra_lin",
+          "sink": "jen_fra_lin",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_fra_lin,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_fra_lin), '|', ' ')"
+        },
+        {
+          "source": "jen_ara_cua",
+          "sink": "jen_ara_cua",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_ara_cua,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_ara_cua), '|', ' ')"
+        },
+        {
+          "source": "jen_id_svs",
+          "sink": "jen_id_svs",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_svs,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_svs), '|', ' ')"
+        },
+        {
+          "source": "jen_est_evt_neg",
+          "sink": "jen_est_evt_neg",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_est_evt_neg,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_est_evt_neg), '|', ' ')"
+        },
+        {
+          "source": "jen_id_pdt",
+          "sink": "jen_id_pdt",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_pdt,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_pdt), '|', ' ')"
+        },
+        {
+          "source": "jen_id_evt",
+          "sink": "jen_id_evt",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_evt,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_evt), '|', ' ')"
+        },
+        {
+          "source": "jen_id_sub_evt",
+          "sink": "jen_id_sub_evt",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_id_sub_evt,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_id_sub_evt), '|', ' ')"
+        },
+        {
+          "source": "jen_clv_ppl",
+          "sink": "jen_clv_ppl",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_clv_ppl,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_clv_ppl), '|', ' ')"
+        },
+        {
+          "source": "jen_mto",
+          "sink": "jen_mto",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_mto,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_mto), '|', ' ')",
+          "note": "DECIMAL(18,4). APTFieldProp=quote=none in DataStage. toString() on decimal preserves numeric representation without quotes."
+        },
+        {
+          "source": "jen_clv_sgd",
+          "sink": "jen_clv_sgd",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_clv_sgd,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_clv_sgd), '|', ' ')"
+        },
+        {
+          "source": "jen_cpo_var",
+          "sink": "jen_cpo_var",
+          "datastage_derivation": "EREPLACE(ICONV(Lnk_Sybase_Jen.jen_cpo_var,'MCP'),'|',' ')",
+          "adf_expression": "replace(toString(jen_cpo_var), '|', ' ')"
+        }
+      ]
+    },
+    "annotations": [
+      "datastage_stage: CTransformerStage Trf_Jen",
+      "datastage_input_link: Lnk_Sybase_Jen",
+      "datastage_output_link: Lnk_Jen",
+      "encoding_note: ICONV 'MCP' (MultiCodePage) in DataStage handles CP1252 encoding normalization. In ADF this is handled by the ODBC linked service encoding setting. No explicit conversion needed in the data flow.",
+      "pipe_replace_note: EREPLACE(...,'|',' ') prevents the pipe output delimiter from appearing inside field values. All 26 columns receive this treatment.",
+      "date_conversion_note: jen_fec_evt_neg and jen_fec_ctb_evt change from SqlType=11 (TIMESTAMP) to SqlType=12 (VARCHAR 26) in the transformer output, meaning DataStage serializes them as strings."
+    ],
+    "folder": {
+      "name": "J990_Jen/Extraction"
+    }
+  }
+}

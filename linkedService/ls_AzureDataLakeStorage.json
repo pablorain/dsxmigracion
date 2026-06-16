@@ -1,0 +1,35 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ls_AzureDataLakeStorage",
+  "properties": {
+    "type": "AzureBlobFS",
+    "description": "Azure Data Lake Storage Gen2 for output files. Replaces DataStage CSeqFileStage 'Seq_Jen' which wrote to local filesystem path #$PathTemp#.",
+    "typeProperties": {
+      "url": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "adls-account-url"
+      },
+      "accountKey": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "adls-account-key"
+      }
+    },
+    "annotations": [
+      "source: DataStage CSeqFileStage",
+      "original_path_param: $PathTemp",
+      "original_filename_pattern: {NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}",
+      "original_delimiter: pipe (|)",
+      "original_encoding: UnicodeBOM=1, UnixFormat=1",
+      "manual_action: Update the ADLS URL and secret name to match your environment. Map $PathTemp to an ADLS container/folder path."
+    ]
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "migration_metadata": {
+    "source_file": "J990_Jen.dsx",
+    "source_tool": "IBM InfoSphere DataStage Export",
+    "source_server": "LNX-DTSENG (EDWProd2_OP)",
+    "source_version": "11.7",
+    "export_date": "2026-06-15",
+    "migration_date": "2026-06-16",
+    "target_platform": "Azure Data Factory (ADF)",
+    "job_type": "Server Job (sequential, JobType=0)",
+    "character_set": "CP1252",
+    "jobs_in_file": 3
+  },
+  "job_variants": [
+    {
+      "datastage_name": "J990_Jen_Extraccion_IB",
+      "role": "PRODUCTION",
+      "date_modified": "2025-03-03",
+      "source_table": "journal.dbo.jen",
+      "filter_type": "parametric",
+      "filter_description": "jen_fec_evt_neg = dateadd(-7, $FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
+      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB.json"
+    },
+    {
+      "datastage_name": "CopyOfJ990_Jen_Extraccion_IB",
+      "role": "ARCHIVE_VARIANT",
+      "date_modified": "2025-03-28",
+      "source_table": "journal.dbo.jen_old3",
+      "filter_type": "parametric",
+      "filter_description": "jen_fec_evt_neg = dateadd(-7, $FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
+      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_Old3.json"
+    },
+    {
+      "datastage_name": "CopyOfCopyOfJ990_Jen_Extraccion_IB",
+      "role": "BACKFILL_HARDCODED",
+      "date_modified": "2025-03-28",
+      "source_table": "journal.dbo.jen",
+      "filter_type": "hardcoded_range",
+      "filter_description": "jen_fec_evt_neg BETWEEN dateadd(-7,'2025-03-14') AND dateadd(-7,'2025-03-21') AND SUBSTRING(jen_ope_evt,1,2)='IB'",
+      "manual_action": "Verify if this was a one-time backfill. If so, this pipeline can be run once with default parameters and then decommissioned.",
+      "adf_pipeline": "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_7dias.json"
+    }
+  ],
+  "adf_artifacts": {
+    "linkedServices": [
+      "linkedService/ls_Sybase_Journal.json",
+      "linkedService/ls_AzureDataLakeStorage.json"
+    ],
+    "datasets": {
+      "source": [
+        "dataset/Source/ds_Sybase_jen.json",
+        "dataset/Source/ds_Sybase_jen_old3.json"
+      ],
+      "sink": [
+        "dataset/Sink/ds_File_JournalJen_IBM.json"
+      ]
+    },
+    "dataflows": [
+      "dataflow/Extraction/df_Trf_Jen.json"
+    ],
+    "pipelines": [
+      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB.json",
+      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_Old3.json",
+      "pipeline/Extraction/pl_J990_Jen_Extraccion_IB_7dias.json"
+    ]
+  },
+  "stage_mapping": [
+    {
+      "datastage_stage": "Sybase_Jen_IBM_7_Dias",
+      "datastage_type": "CODBCStage",
+      "datastage_link_out": "Lnk_Sybase_Jen",
+      "adf_equivalent": "ODBC Source in df_Trf_Jen / Copy Activity source",
+      "adf_artifact": "dataset/Source/ds_Sybase_jen.json + linkedService/ls_Sybase_Journal.json",
+      "notes": "Self-Hosted Integration Runtime required for on-premises Sybase ODBC. DSN parameterized as $Sybase_Journal."
+    },
+    {
+      "datastage_stage": "Trf_Jen",
+      "datastage_type": "CTransformerStage",
+      "datastage_link_in": "Lnk_Sybase_Jen",
+      "datastage_link_out": "Lnk_Jen",
+      "adf_equivalent": "DerivedColumn transformation in Mapping Data Flow df_Trf_Jen",
+      "adf_artifact": "dataflow/Extraction/df_Trf_Jen.json",
+      "transformation_pattern": "EREPLACE(ICONV(col,'MCP'),'|',' ') -> replace(toString(col),'|',' ')",
+      "columns_transformed": 26,
+      "notes": "ICONV 'MCP' handled at linked service encoding level. EREPLACE replicated as replace() in ADF expression language. Dates (jen_fec_evt_neg, jen_fec_ctb_evt) are serialized to string (SqlType 11->12)."
+    },
+    {
+      "datastage_stage": "Seq_Jen",
+      "datastage_type": "CSeqFileStage",
+      "datastage_link_in": "Lnk_Jen",
+      "adf_equivalent": "DelimitedText Sink in df_Trf_Jen",
+      "adf_artifact": "dataset/Sink/ds_File_JournalJen_IBM.json",
+      "notes": "Original: UnixFormat=1, UnicodeBOM=1, UnicodeSwapped=1, Delimiter='|', ColHeaders=0, Append=0. CRITICAL: UnicodeBOM=1 + UnicodeSwapped=1 in DataStage = UTF-16 LE with BOM. ADF dataset configured as UTF-8. Verify downstream consumer encoding requirements."
+    }
+  ],
+  "parameter_mapping": [
+    { "datastage": "$FechaProceso",       "adf": "FechaProceso",       "format": "YYYY-MM-DD", "scope": "pipeline parameter", "default": "$PROJDEF" },
+    { "datastage": "$FechaArchExtraccion","adf": "FechaArchExtraccion", "format": "YYYYMMDD",   "scope": "pipeline parameter + dataset parameter", "default": "$PROJDEF" },
+    { "datastage": "$Sybase_Journal",     "adf": "Key Vault secret: sybase-journal-odbc-connection-string", "scope": "linked service", "default": "$PROJDEF" },
+    { "datastage": "$Sybase_User",        "adf": "Key Vault secret: sybase-journal-username", "scope": "linked service", "default": "$PROJDEF" },
+    { "datastage": "$Sybase_PWD",         "adf": "Key Vault secret: sybase-journal-password", "scope": "linked service", "default": "$PROJDEF", "original_encrypted": "{iisenc}wEKfQZUV7bMUWi7ix8v1Aw==" },
+    { "datastage": "$DBO_Journal",        "adf": "DBO_Journal",         "scope": "pipeline + dataset parameter", "default": "dbo" },
+    { "datastage": "$PathTemp",           "adf": "PathTemp / ContainerPath", "scope": "pipeline + dataset parameter", "default": "$PROJDEF" },
+    { "datastage": "$NombreJob",          "adf": "NombreJob",           "scope": "pipeline + dataset parameter", "default": "J990_Jen" }
+  ],
+  "source_columns": [
+    { "position": 1,  "name": "jen_ope_evt",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 12, "scale": 0,  "nullable": false, "key_position": 1, "adf_type": "String",  "adf_length": 12 },
+    { "position": 2,  "name": "jen_fec_evt_neg", "ds_sqltype": 11, "ds_type": "TIMESTAMP", "precision": 23, "scale": 3,  "nullable": false, "key_position": 0, "adf_type": "DateTime","adf_precision": 23, "adf_scale": 3, "transformer_out_sqltype": 12, "transformer_out_type": "VARCHAR(26)", "note": "Cast to string in transformer" },
+    { "position": 3,  "name": "jen_fec_ctb_evt", "ds_sqltype": 11, "ds_type": "TIMESTAMP", "precision": 23, "scale": 3,  "nullable": false, "key_position": 0, "adf_type": "DateTime","adf_precision": 23, "adf_scale": 3, "transformer_out_sqltype": 12, "transformer_out_type": "VARCHAR(26)", "note": "Cast to string in transformer" },
+    { "position": 4,  "name": "jen_rut_cli",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 9,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 9 },
+    { "position": 5,  "name": "jen_vrf_cli",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 6,  "name": "jen_rut_emp",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 9,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 9 },
+    { "position": 7,  "name": "jen_vrf_emp",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 8,  "name": "jen_id_cnl",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
+    { "position": 9,  "name": "jen_est_cnl",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 10, "name": "jen_suc_ori",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 5,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 5 },
+    { "position": 11, "name": "jen_med",         "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 8,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 8 },
+    { "position": 12, "name": "jen_id_med",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 15, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 15 },
+    { "position": 13, "name": "jen_tip_opr_bci", "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 3,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 3 },
+    { "position": 14, "name": "jen_id_opr",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
+    { "position": 15, "name": "jen_mod_tar",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 16, "name": "jen_fra_lin",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 17, "name": "jen_ara_cua",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 5,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 5 },
+    { "position": 18, "name": "jen_id_svs",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
+    { "position": 19, "name": "jen_est_evt_neg", "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 1,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 1 },
+    { "position": 20, "name": "jen_id_pdt",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 6,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 6 },
+    { "position": 21, "name": "jen_id_evt",      "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 10, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 10 },
+    { "position": 22, "name": "jen_id_sub_evt",  "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 6,  "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 6 },
+    { "position": 23, "name": "jen_clv_ppl",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 },
+    { "position": 24, "name": "jen_mto",         "ds_sqltype": 2,  "ds_type": "NUMERIC",   "precision": 18, "scale": 4,  "nullable": false, "key_position": 0, "adf_type": "Decimal", "adf_precision": 18, "adf_scale": 4, "apt_field_prop": "quote=none", "note": "No quoting applied. DECIMAL value written as-is to file." },
+    { "position": 25, "name": "jen_clv_sgd",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 },
+    { "position": 26, "name": "jen_cpo_var",     "ds_sqltype": 1,  "ds_type": "CHAR",      "precision": 16, "scale": 0,  "nullable": false, "key_position": 0, "adf_type": "String",  "adf_length": 16 }
+  ],
+  "manual_actions_required": [
+    {
+      "priority": "HIGH",
+      "area": "Integration Runtime",
+      "action": "Deploy a Self-Hosted Integration Runtime on a server with network access to the Sybase database. Register it in ADF and reference it in ls_Sybase_Journal linked service."
+    },
+    {
+      "priority": "HIGH",
+      "area": "Linked Service - Sybase",
+      "action": "Create an Azure Key Vault and store: (1) sybase-journal-odbc-connection-string, (2) sybase-journal-username, (3) sybase-journal-password. The original DataStage password {iisenc}wEKfQZUV7bMUWi7ix8v1Aw== is IIS-encrypted and must be decrypted on the source system before storing in Key Vault."
+    },
+    {
+      "priority": "HIGH",
+      "area": "Encoding",
+      "action": "DataStage SeqFile has UnicodeBOM=1 + UnicodeSwapped=1 which produces UTF-16 LE with BOM. ADF dataset is configured for UTF-8. If downstream consumers (file processors, next DataStage job, etc.) expect UTF-16 LE with BOM, update the encodingName in ds_File_JournalJen_IBM.json to 'UTF-16'."
+    },
+    {
+      "priority": "MEDIUM",
+      "area": "Date serialization",
+      "action": "jen_fec_evt_neg and jen_fec_ctb_evt change from TIMESTAMP to VARCHAR(26) in the DataStage transformer. Verify the exact string format Sybase outputs for TIMESTAMP(23,3) via ODBC and confirm it matches the downstream consumer's expectations. ADF's toString() on DateTime may produce a different format than DataStage's ICONV('MCP') serialization."
+    },
+    {
+      "priority": "MEDIUM",
+      "area": "CopyOfCopyOf variant",
+      "action": "pl_J990_Jen_Extraccion_IB_7dias pipeline has hardcoded dates parameterized. Verify if this was a one-time backfill (2025-03-14 to 2025-03-21). If so, it may not need to be permanently migrated."
+    },
+    {
+      "priority": "LOW",
+      "area": "ADLS path",
+      "action": "Map DataStage $PathTemp (local Linux filesystem path on LNX-DTSENG) to the appropriate ADLS Gen2 container and folder. Update ContainerPath parameter default value in ds_File_JournalJen_IBM.json."
+    }
+  ]
+}

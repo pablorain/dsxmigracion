@@ -1,0 +1,48 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ls_Sybase_Journal",
+  "properties": {
+    "type": "Odbc",
+    "description": "Linked Service for Sybase Journal source. Migrated from DataStage CODBCStage 'Sybase_Jen_IBM_7_Dias'. DSN was parameterized as #$Sybase_Journal# in DataStage.",
+    "typeProperties": {
+      "connectionString": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "sybase-journal-odbc-connection-string"
+      },
+      "authenticationType": "Basic",
+      "userName": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "sybase-journal-username"
+      },
+      "password": {
+        "type": "AzureKeyVaultSecret",
+        "store": {
+          "referenceName": "ls_AzureKeyVault",
+          "type": "LinkedServiceReference"
+        },
+        "secretName": "sybase-journal-password"
+      }
+    },
+    "connectVia": {
+      "referenceName": "integrationRuntimeSelfHosted",
+      "type": "IntegrationRuntimeReference"
+    },
+    "annotations": [
+      "source: DataStage CODBCStage",
+      "original_dsn_param: $Sybase_Journal",
+      "original_user_param: $Sybase_User",
+      "original_pwd_param: $Sybase_PWD",
+      "original_encrypted_pwd: {iisenc}wEKfQZUV7bMUWi7ix8v1Aw==",
+      "manual_action: Provide ODBC connection string for Sybase in Key Vault. A Self-Hosted Integration Runtime is required since Sybase is on-premises."
+    ]
+  }
+}

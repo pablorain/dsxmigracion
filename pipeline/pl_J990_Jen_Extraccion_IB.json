@@ -1,0 +1,116 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J990_Jen_Extraccion_IB",
+  "properties": {
+    "description": "PRODUCTION pipeline. Migrated from DataStage Server Job 'J990_Jen_Extraccion_IB' (JobType=0, sequential). Category: \\Jobs\\Fase_5\\Hito_0\\Param_and_Others\\J990_Jen. Source: journal.dbo.jen via Sybase ODBC. Filter: jen_fec_evt_neg = dateadd(-7 days, FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'. Output: pipe-delimited flat file {PathTemp}{NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}.",
+    "activities": [
+      {
+        "name": "ExecuteDataFlow_Trf_Jen",
+        "description": "Executes the Mapping Data Flow that replicates DataStage stages: CODBCStage(Sybase_Jen_IBM_7_Dias) -> CTransformerStage(Trf_Jen) -> CSeqFileStage(Seq_Jen). SQL filter applied at source.",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "1.00:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_Trf_Jen",
+            "type": "DataFlowReference",
+            "parameters": {},
+            "datasetParameters": {
+              "SybaseJen": {
+                "DBO_Journal": {
+                  "value": "@pipeline().parameters.DBO_Journal",
+                  "type": "Expression"
+                }
+              },
+              "FileJournalJenIBM": {
+                "NombreJob": {
+                  "value": "@pipeline().parameters.NombreJob",
+                  "type": "Expression"
+                },
+                "FechaArchExtraccion": {
+                  "value": "@pipeline().parameters.FechaArchExtraccion",
+                  "type": "Expression"
+                },
+                "ContainerPath": {
+                  "value": "@pipeline().parameters.PathTemp",
+                  "type": "Expression"
+                }
+              }
+            }
+          },
+          "staging": null,
+          "compute": {
+            "coreCount": 8,
+            "computeType": "General"
+          },
+          "sourceSettings": {
+            "SybaseJen": {
+              "query": {
+                "value": "SELECT jen_ope_evt, jen_fec_evt_neg, jen_fec_ctb_evt, jen_rut_cli, jen_vrf_cli, jen_rut_emp, jen_vrf_emp, jen_id_cnl, jen_est_cnl, jen_suc_ori, jen_med, jen_id_med, jen_tip_opr_bci, jen_id_opr, jen_mod_tar, jen_fra_lin, jen_ara_cua, jen_id_svs, jen_est_evt_neg, jen_id_pdt, jen_id_evt, jen_id_sub_evt, jen_clv_ppl, jen_mto, jen_clv_sgd, jen_cpo_var FROM @{pipeline().parameters.DBO_Journal}.jen WHERE CAST(jen_fec_evt_neg AS DATE) = DATEADD(day, -7, CAST('@{pipeline().parameters.FechaProceso}' AS DATE)) AND SUBSTRING(jen_ope_evt, 1, 2) = 'IB'",
+                "type": "Expression"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date in YYYY-MM-DD format. Matches DataStage $FechaProceso. Used to compute extraction window: dateadd(day,-7, FechaProceso)."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "File date suffix in YYYYMMDD format. Matches DataStage $FechaArchExtraccion. Used in output filename."
+      },
+      "Sybase_Journal": {
+        "type": "String",
+        "description": "Sybase DSN name. Matches DataStage $Sybase_Journal. Configure in ls_Sybase_Journal linked service."
+      },
+      "Sybase_User": {
+        "type": "String",
+        "description": "Sybase username. Matches DataStage $Sybase_User. Store in Key Vault."
+      },
+      "Sybase_PWD": {
+        "type": "SecureString",
+        "description": "Sybase password. Matches DataStage $Sybase_PWD. Original was IIS-encrypted: {iisenc}wEKfQZUV7bMUWi7ix8v1Aw==. Store in Key Vault."
+      },
+      "DBO_Journal": {
+        "type": "String",
+        "defaultValue": "dbo",
+        "description": "Schema/owner for journal tables. Matches DataStage $DBO_Journal. Used in table reference: {DBO_Journal}.jen"
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Output path/container. Matches DataStage $PathTemp. Maps to ADLS container or folder."
+      },
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J990_Jen",
+        "description": "Job name used in output filename. Matches DataStage $NombreJob (local param, default: J990_Jen)."
+      }
+    },
+    "annotations": [
+      "datastage_job: J990_Jen_Extraccion_IB",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_version: 11.7",
+      "datastage_server: LNX-DTSENG (EDWProd2_OP)",
+      "datastage_category: \\Jobs\\Fase_5\\Hito_0\\Param_and_Others\\J990_Jen",
+      "datastage_date_modified: 2025-03-03",
+      "source_table: journal.dbo.jen",
+      "source_filter: jen_fec_evt_neg = dateadd(-7, FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'",
+      "output_file_pattern: {PathTemp}{NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}",
+      "link_flow: Lnk_Sybase_Jen (ODBC->Transformer) -> Lnk_Jen (Transformer->SeqFile)"
+    ],
+    "folder": {
+      "name": "J990_Jen/Extraction"
+    }
+  }
+}

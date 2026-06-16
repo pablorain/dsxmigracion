@@ -1,0 +1,100 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "pl_J990_Jen_Extraccion_IB_Old3",
+  "properties": {
+    "description": "Migrated from DataStage Server Job 'CopyOfJ990_Jen_Extraccion_IB' (DateModified: 2025-03-28). Variant that reads from the ARCHIVE table journal.dbo.jen_old3 instead of jen. Same logic as PROD but points to historical data. Filter: jen_fec_evt_neg = dateadd(-7, FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'.",
+    "activities": [
+      {
+        "name": "ExecuteDataFlow_Trf_Jen_Old3",
+        "description": "Replicates DataStage flow: CODBCStage(Sybase_Jen_IBM_7_Dias on jen_old3) -> CTransformerStage(Trf_Jen) -> CSeqFileStage(Seq_Jen).",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "1.00:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "df_Trf_Jen",
+            "type": "DataFlowReference",
+            "parameters": {},
+            "datasetParameters": {
+              "SybaseJen": {
+                "DBO_Journal": {
+                  "value": "@pipeline().parameters.DBO_Journal",
+                  "type": "Expression"
+                }
+              },
+              "FileJournalJenIBM": {
+                "NombreJob": {
+                  "value": "@pipeline().parameters.NombreJob",
+                  "type": "Expression"
+                },
+                "FechaArchExtraccion": {
+                  "value": "@pipeline().parameters.FechaArchExtraccion",
+                  "type": "Expression"
+                },
+                "ContainerPath": {
+                  "value": "@pipeline().parameters.PathTemp",
+                  "type": "Expression"
+                }
+              }
+            }
+          },
+          "staging": null,
+          "compute": {
+            "coreCount": 8,
+            "computeType": "General"
+          },
+          "sourceSettings": {
+            "SybaseJen": {
+              "query": {
+                "value": "SELECT jen_ope_evt, jen_fec_evt_neg, jen_fec_ctb_evt, jen_rut_cli, jen_vrf_cli, jen_rut_emp, jen_vrf_emp, jen_id_cnl, jen_est_cnl, jen_suc_ori, jen_med, jen_id_med, jen_tip_opr_bci, jen_id_opr, jen_mod_tar, jen_fra_lin, jen_ara_cua, jen_id_svs, jen_est_evt_neg, jen_id_pdt, jen_id_evt, jen_id_sub_evt, jen_clv_ppl, jen_mto, jen_clv_sgd, jen_cpo_var FROM @{pipeline().parameters.DBO_Journal}.jen_old3 WHERE CAST(jen_fec_evt_neg AS DATE) = DATEADD(day, -7, CAST('@{pipeline().parameters.FechaProceso}' AS DATE)) AND SUBSTRING(jen_ope_evt, 1, 2) = 'IB'",
+                "type": "Expression"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "FechaProceso": {
+        "type": "String",
+        "description": "Process date YYYY-MM-DD. Maps to DataStage $FechaProceso."
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "File date YYYYMMDD. Maps to DataStage $FechaArchExtraccion."
+      },
+      "DBO_Journal": {
+        "type": "String",
+        "defaultValue": "dbo",
+        "description": "Schema/owner. Maps to DataStage $DBO_Journal. Table used: {DBO_Journal}.jen_old3."
+      },
+      "PathTemp": {
+        "type": "String",
+        "description": "Output path. Maps to DataStage $PathTemp."
+      },
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J990_Jen",
+        "description": "Job name for output file. Maps to DataStage $NombreJob."
+      }
+    },
+    "annotations": [
+      "datastage_job: CopyOfJ990_Jen_Extraccion_IB",
+      "datastage_job_type: Server Job (JobType=0, sequential)",
+      "datastage_date_modified: 2025-03-28",
+      "source_table: journal.dbo.jen_old3",
+      "difference_from_prod: reads jen_old3 (archive) instead of jen (current)",
+      "source_filter: jen_fec_evt_neg = dateadd(-7, FechaProceso) AND SUBSTRING(jen_ope_evt,1,2)='IB'"
+    ],
+    "folder": {
+      "name": "J990_Jen/Extraction"
+    }
+  }
+}

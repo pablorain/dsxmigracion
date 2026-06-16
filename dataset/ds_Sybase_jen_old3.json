@@ -1,0 +1,194 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_Sybase_jen_old3",
+  "properties": {
+    "type": "OdbcTable",
+    "description": "Source dataset for Sybase table journal.dbo.jen_old3. Used exclusively by CopyOfJ990_Jen_Extraccion_IB variant (historical/archive table). Same schema as ds_Sybase_jen.",
+    "linkedServiceName": {
+      "referenceName": "ls_Sybase_Journal",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "DBO_Journal": {
+        "type": "String",
+        "defaultValue": "dbo"
+      }
+    },
+    "typeProperties": {
+      "tableName": {
+        "value": "@{concat(dataset().DBO_Journal, '.jen_old3')}",
+        "type": "Expression"
+      }
+    },
+    "schema": [
+      {
+        "name": "jen_ope_evt",
+        "type": "String",
+        "length": 12,
+        "description": "Codigo operacion evento. SqlType=1 (CHAR). KeyPosition=1."
+      },
+      {
+        "name": "jen_fec_evt_neg",
+        "type": "DateTime",
+        "precision": 23,
+        "scale": 3,
+        "description": "Fecha evento negocio. SqlType=11 (TIMESTAMP)."
+      },
+      {
+        "name": "jen_fec_ctb_evt",
+        "type": "DateTime",
+        "precision": 23,
+        "scale": 3,
+        "description": "Fecha contable evento. SqlType=11 (TIMESTAMP)."
+      },
+      {
+        "name": "jen_rut_cli",
+        "type": "String",
+        "length": 9,
+        "description": "RUT cliente."
+      },
+      {
+        "name": "jen_vrf_cli",
+        "type": "String",
+        "length": 1,
+        "description": "Verificador RUT cliente."
+      },
+      {
+        "name": "jen_rut_emp",
+        "type": "String",
+        "length": 9,
+        "description": "RUT empresa."
+      },
+      {
+        "name": "jen_vrf_emp",
+        "type": "String",
+        "length": 1,
+        "description": "Verificador RUT empresa."
+      },
+      {
+        "name": "jen_id_cnl",
+        "type": "String",
+        "length": 10,
+        "description": "ID canal."
+      },
+      {
+        "name": "jen_est_cnl",
+        "type": "String",
+        "length": 1,
+        "description": "Estado canal."
+      },
+      {
+        "name": "jen_suc_ori",
+        "type": "String",
+        "length": 5,
+        "description": "Sucursal origen."
+      },
+      {
+        "name": "jen_med",
+        "type": "String",
+        "length": 8,
+        "description": "Medio."
+      },
+      {
+        "name": "jen_id_med",
+        "type": "String",
+        "length": 15,
+        "description": "ID medio."
+      },
+      {
+        "name": "jen_tip_opr_bci",
+        "type": "String",
+        "length": 3,
+        "description": "Tipo operacion BCI."
+      },
+      {
+        "name": "jen_id_opr",
+        "type": "String",
+        "length": 10,
+        "description": "ID operacion."
+      },
+      {
+        "name": "jen_mod_tar",
+        "type": "String",
+        "length": 1,
+        "description": "Modalidad tarjeta."
+      },
+      {
+        "name": "jen_fra_lin",
+        "type": "String",
+        "length": 1,
+        "description": "Franja linea."
+      },
+      {
+        "name": "jen_ara_cua",
+        "type": "String",
+        "length": 5,
+        "description": "Area cuadrante."
+      },
+      {
+        "name": "jen_id_svs",
+        "type": "String",
+        "length": 10,
+        "description": "ID servicio."
+      },
+      {
+        "name": "jen_est_evt_neg",
+        "type": "String",
+        "length": 1,
+        "description": "Estado evento negocio."
+      },
+      {
+        "name": "jen_id_pdt",
+        "type": "String",
+        "length": 6,
+        "description": "ID producto."
+      },
+      {
+        "name": "jen_id_evt",
+        "type": "String",
+        "length": 10,
+        "description": "ID evento."
+      },
+      {
+        "name": "jen_id_sub_evt",
+        "type": "String",
+        "length": 6,
+        "description": "ID sub-evento."
+      },
+      {
+        "name": "jen_clv_ppl",
+        "type": "String",
+        "length": 16,
+        "description": "Clave pipeline."
+      },
+      {
+        "name": "jen_mto",
+        "type": "Decimal",
+        "precision": 18,
+        "scale": 4,
+        "description": "Monto. SqlType=2 (NUMERIC). APTFieldProp=quote=none."
+      },
+      {
+        "name": "jen_clv_sgd",
+        "type": "String",
+        "length": 16,
+        "description": "Clave seguridad."
+      },
+      {
+        "name": "jen_cpo_var",
+        "type": "String",
+        "length": 16,
+        "description": "Campo variable."
+      }
+    ],
+    "annotations": [
+      "source_table: journal.dbo.jen_old3",
+      "used_by_variant: CopyOfJ990_Jen_Extraccion_IB only",
+      "note: Archive/historical table, same schema as jen"
+    ],
+    "folder": {
+      "name": "J990_Jen/Source"
+    }
+  }
+}

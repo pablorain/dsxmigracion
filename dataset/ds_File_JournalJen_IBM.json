@@ -1,0 +1,191 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/Microsoft.DataFactory.json#",
+  "contentVersion": "1.0.0.0",
+  "name": "ds_File_JournalJen_IBM",
+  "properties": {
+    "type": "DelimitedText",
+    "description": "Sink dataset for pipe-delimited output file. Migrated from DataStage CSeqFileStage 'Seq_Jen' / pin 'Lnk_Jen'. Original filename: {PathTemp}{NombreJob}_JOURNAL_JEN_IBM.TXT.{FechaArchExtraccion}. Original delimiter: | (pipe). Original encoding: UnicodeBOM=1, UnixFormat=1.",
+    "linkedServiceName": {
+      "referenceName": "ls_AzureDataLakeStorage",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "NombreJob": {
+        "type": "String",
+        "defaultValue": "J990_Jen"
+      },
+      "FechaArchExtraccion": {
+        "type": "String",
+        "description": "Date in YYYYMMDD format. Maps to DataStage $FechaArchExtraccion parameter."
+      },
+      "ContainerPath": {
+        "type": "String",
+        "defaultValue": "temp",
+        "description": "ADLS container/folder path. Maps to DataStage $PathTemp parameter."
+      }
+    },
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileSystem": {
+          "value": "@dataset().ContainerPath",
+          "type": "Expression"
+        },
+        "fileName": {
+          "value": "@{concat(dataset().NombreJob, '_JOURNAL_JEN_IBM.TXT.', dataset().FechaArchExtraccion)}",
+          "type": "Expression"
+        }
+      },
+      "columnDelimiter": "|",
+      "rowDelimiter": "\n",
+      "encodingName": "UTF-8",
+      "firstRowAsHeader": false,
+      "quoteChar": "",
+      "escapeChar": ""
+    },
+    "schema": [
+      {
+        "name": "jen_ope_evt",
+        "type": "String",
+        "description": "VARCHAR(12). Transformer: EREPLACE(ICONV(col,'MCP'),'|',' '). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_fec_evt_neg",
+        "type": "String",
+        "description": "DateTime cast to String(26) by transformer. Transformer output SqlType=12. ICONV 'MCP' applied."
+      },
+      {
+        "name": "jen_fec_ctb_evt",
+        "type": "String",
+        "description": "DateTime cast to String(26) by transformer. Transformer output SqlType=12. ICONV 'MCP' applied."
+      },
+      {
+        "name": "jen_rut_cli",
+        "type": "String",
+        "description": "VARCHAR(9). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_vrf_cli",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_rut_emp",
+        "type": "String",
+        "description": "VARCHAR(9). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_vrf_emp",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_cnl",
+        "type": "String",
+        "description": "VARCHAR(10). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_est_cnl",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_suc_ori",
+        "type": "String",
+        "description": "VARCHAR(5). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_med",
+        "type": "String",
+        "description": "VARCHAR(8). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_med",
+        "type": "String",
+        "description": "VARCHAR(15). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_tip_opr_bci",
+        "type": "String",
+        "description": "VARCHAR(3). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_opr",
+        "type": "String",
+        "description": "VARCHAR(10). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_mod_tar",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_fra_lin",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_ara_cua",
+        "type": "String",
+        "description": "VARCHAR(5). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_svs",
+        "type": "String",
+        "description": "VARCHAR(10). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_est_evt_neg",
+        "type": "String",
+        "description": "VARCHAR(1). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_pdt",
+        "type": "String",
+        "description": "VARCHAR(6). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_evt",
+        "type": "String",
+        "description": "VARCHAR(10). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_id_sub_evt",
+        "type": "String",
+        "description": "VARCHAR(6). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_clv_ppl",
+        "type": "String",
+        "description": "VARCHAR(16). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_mto",
+        "type": "String",
+        "description": "DECIMAL(18,4) as string. APTFieldProp=quote=none means no quoting. Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_clv_sgd",
+        "type": "String",
+        "description": "VARCHAR(16). Pipe chars replaced with space."
+      },
+      {
+        "name": "jen_cpo_var",
+        "type": "String",
+        "description": "VARCHAR(16). Pipe chars replaced with space."
+      }
+    ],
+    "annotations": [
+      "original_stage: CSeqFileStage Seq_Jen",
+      "original_link: Lnk_Jen",
+      "original_delimiter: pipe (|)",
+      "original_encoding: UnicodeBOM=1 UnicodeSwapped=1 UnixFormat=1",
+      "manual_action: UnicodeBOM=1 UnicodeSwapped=1 in DataStage means UTF-16 LE with BOM. Verify if downstream consumers expect this. ADF configured as UTF-8; adjust encodingName if needed.",
+      "original_filename_template: #$PathTemp##$NombreJob#_JOURNAL_JEN_IBM.TXT.#$FechaArchExtraccion#",
+      "col_headers: false (ColHeaders=0 in DataStage)"
+    ],
+    "folder": {
+      "name": "J990_Jen/Sink"
+    }
+  }
+}
